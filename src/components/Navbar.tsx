@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Mountain } from 'lucide-react';
+import { Menu, X, Mountain, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
 
 const NAV_ITEMS = [
   { label: 'Beranda', path: '/' },
@@ -13,6 +14,7 @@ const NAV_ITEMS = [
 export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
@@ -22,7 +24,6 @@ export default function Navbar() {
           <span>LookMotoTour</span>
         </Link>
 
-        {/* Desktop */}
         <nav className="hidden md:flex items-center gap-1">
           {NAV_ITEMS.map((item) => (
             <Link
@@ -40,18 +41,32 @@ export default function Navbar() {
         </nav>
 
         <div className="hidden md:flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/events">Daftar Event</Link>
-          </Button>
+          {user ? (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/profile" className="gap-2"><User className="h-4 w-4" /> Profil</Link>
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => signOut()} className="gap-2">
+                <LogOut className="h-4 w-4" /> Keluar
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="sm" asChild>
+                <Link to="/login">Masuk</Link>
+              </Button>
+              <Button size="sm" asChild>
+                <Link to="/register">Daftar</Link>
+              </Button>
+            </>
+          )}
         </div>
 
-        {/* Mobile toggle */}
         <button className="md:hidden p-2" onClick={() => setOpen(!open)} aria-label="Toggle menu">
           {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {open && (
         <nav className="md:hidden bg-card border-b border-border animate-fade-in">
           <div className="container py-4 flex flex-col gap-1">
@@ -69,9 +84,25 @@ export default function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <Button className="mt-2" asChild>
-              <Link to="/events" onClick={() => setOpen(false)}>Daftar Event</Link>
-            </Button>
+            {user ? (
+              <>
+                <Link to="/profile" onClick={() => setOpen(false)} className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted">
+                  Profil
+                </Link>
+                <Button variant="outline" className="mt-2" onClick={() => { signOut(); setOpen(false); }}>
+                  Keluar
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" className="mt-2" asChild>
+                  <Link to="/login" onClick={() => setOpen(false)}>Masuk</Link>
+                </Button>
+                <Button className="mt-1" asChild>
+                  <Link to="/register" onClick={() => setOpen(false)}>Daftar</Link>
+                </Button>
+              </>
+            )}
           </div>
         </nav>
       )}

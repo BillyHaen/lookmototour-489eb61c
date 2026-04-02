@@ -2,11 +2,12 @@ import { useState, useMemo } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventCard from '@/components/EventCard';
-import { SAMPLE_EVENTS, EVENT_CATEGORIES, EventCategory } from '@/data/events';
+import { EVENT_CATEGORIES, EventCategory } from '@/data/events';
+import { useEvents } from '@/hooks/useEvents';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Semua' },
@@ -20,9 +21,10 @@ export default function Events() {
   const [categoryFilter, setCategoryFilter] = useState<EventCategory | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'date' | 'price'>('date');
+  const { data: events, isLoading } = useEvents();
 
   const filtered = useMemo(() => {
-    let result = [...SAMPLE_EVENTS];
+    let result = [...(events || [])];
     if (search) {
       const q = search.toLowerCase();
       result = result.filter((e) => e.title.toLowerCase().includes(q) || e.location.toLowerCase().includes(q));
@@ -31,7 +33,7 @@ export default function Events() {
     if (statusFilter !== 'all') result = result.filter((e) => e.status === statusFilter);
     result.sort((a, b) => sortBy === 'date' ? new Date(a.date).getTime() - new Date(b.date).getTime() : a.price - b.price);
     return result;
-  }, [search, categoryFilter, statusFilter, sortBy]);
+  }, [events, search, categoryFilter, statusFilter, sortBy]);
 
   return (
     <div className="min-h-screen">
@@ -43,7 +45,6 @@ export default function Events() {
             <p className="text-muted-foreground">Temukan event touring, adventure, dan workshop yang sesuai untukmu.</p>
           </div>
 
-          {/* Filters */}
           <div className="space-y-4 mb-8">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
@@ -65,12 +66,7 @@ export default function Events() {
                 Semua Kategori
               </Badge>
               {Object.entries(EVENT_CATEGORIES).map(([key, cat]) => (
-                <Badge
-                  key={key}
-                  variant={categoryFilter === key ? 'default' : 'outline'}
-                  className="cursor-pointer"
-                  onClick={() => setCategoryFilter(key as EventCategory)}
-                >
+                <Badge key={key} variant={categoryFilter === key ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setCategoryFilter(key as EventCategory)}>
                   {cat.icon} {cat.label}
                 </Badge>
               ))}
@@ -78,20 +74,16 @@ export default function Events() {
 
             <div className="flex flex-wrap gap-2">
               {STATUS_FILTERS.map((s) => (
-                <Badge
-                  key={s.value}
-                  variant={statusFilter === s.value ? 'default' : 'secondary'}
-                  className="cursor-pointer"
-                  onClick={() => setStatusFilter(s.value)}
-                >
+                <Badge key={s.value} variant={statusFilter === s.value ? 'default' : 'secondary'} className="cursor-pointer" onClick={() => setStatusFilter(s.value)}>
                   {s.label}
                 </Badge>
               ))}
             </div>
           </div>
 
-          {/* Results */}
-          {filtered.length === 0 ? (
+          {isLoading ? (
+            <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">Tidak ada event yang ditemukan.</p>
               <Button variant="outline" className="mt-4" onClick={() => { setSearch(''); setCategoryFilter('all'); setStatusFilter('all'); }}>

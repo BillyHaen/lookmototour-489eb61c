@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, MapPin, Users, Gauge } from 'lucide-react';
-import { MotoEvent, EVENT_CATEGORIES, formatPrice, formatDate } from '@/data/events';
+import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory } from '@/data/events';
+import type { DbEvent } from '@/hooks/useEvents';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 const STATUS_MAP = {
@@ -11,16 +12,16 @@ const STATUS_MAP = {
   completed: { label: 'Selesai', className: 'bg-muted text-muted-foreground' },
 };
 
-const DIFFICULTY_MAP = {
+const DIFFICULTY_MAP: Record<string, string> = {
   mudah: 'bg-accent/20 text-accent',
   sedang: 'bg-primary/20 text-primary',
   sulit: 'bg-destructive/20 text-destructive',
 };
 
-export default function EventCard({ event }: { event: MotoEvent }) {
-  const cat = EVENT_CATEGORIES[event.category];
-  const status = STATUS_MAP[event.status];
-  const spotsLeft = event.maxParticipants - event.currentParticipants;
+export default function EventCard({ event }: { event: DbEvent }) {
+  const cat = EVENT_CATEGORIES[event.category as EventCategory] || EVENT_CATEGORIES.touring;
+  const status = STATUS_MAP[event.status as keyof typeof STATUS_MAP] || STATUS_MAP.upcoming;
+  const spotsLeft = event.max_participants - event.current_participants;
   const isFull = spotsLeft <= 0;
 
   return (
@@ -28,7 +29,7 @@ export default function EventCard({ event }: { event: MotoEvent }) {
       <Card className="overflow-hidden group hover:shadow-elevated transition-all duration-300 border-border h-full">
         <div className="relative aspect-[16/10] overflow-hidden">
           <img
-            src={event.image || eventPlaceholder}
+            src={event.image_url || eventPlaceholder}
             alt={event.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             loading="lazy"
@@ -56,7 +57,7 @@ export default function EventCard({ event }: { event: MotoEvent }) {
             <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{spotsLeft > 0 ? `${spotsLeft} slot tersisa` : 'Penuh'}</span>
             <span className="flex items-center gap-1">
               <Gauge className="h-3.5 w-3.5" />
-              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${DIFFICULTY_MAP[event.difficulty]}`}>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${DIFFICULTY_MAP[event.difficulty] || ''}`}>
                 {event.difficulty.charAt(0).toUpperCase() + event.difficulty.slice(1)}
               </span>
             </span>

@@ -1,17 +1,30 @@
 import { useParams, Link } from 'react-router-dom';
-import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
-import { SAMPLE_EVENTS, EVENT_CATEGORIES, formatPrice, formatDate } from '@/data/events';
+import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory } from '@/data/events';
+import { useEvent } from '@/hooks/useEvents';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 export default function EventDetail() {
   const { id } = useParams();
-  const event = SAMPLE_EVENTS.find((e) => e.id === id);
+  const { data: event, isLoading } = useEvent(id);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <div className="pt-24 flex items-center justify-center py-20">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!event) {
     return (
@@ -26,18 +39,17 @@ export default function EventDetail() {
     );
   }
 
-  const cat = EVENT_CATEGORIES[event.category];
-  const spotsLeft = event.maxParticipants - event.currentParticipants;
-  const fillPercent = (event.currentParticipants / event.maxParticipants) * 100;
+  const cat = EVENT_CATEGORIES[event.category as EventCategory] || EVENT_CATEGORIES.touring;
+  const spotsLeft = event.max_participants - event.current_participants;
+  const fillPercent = (event.current_participants / event.max_participants) * 100;
   const waLink = `https://wa.me/6281234567890?text=${encodeURIComponent(`Halo, saya tertarik dengan event "${event.title}". Bisa info lebih lanjut?`)}`;
 
   return (
     <div className="min-h-screen">
       <Navbar />
       <div className="pt-20">
-        {/* Hero image */}
         <div className="relative h-64 md:h-96 overflow-hidden">
-          <img src={event.image || eventPlaceholder} alt={event.title} className="w-full h-full object-cover" width={1920} height={600} />
+          <img src={event.image_url || eventPlaceholder} alt={event.title} className="w-full h-full object-cover" width={1920} height={600} />
           <div className="absolute inset-0 bg-gradient-hero" />
           <div className="absolute bottom-6 left-0 right-0 container">
             <Button variant="outline" size="sm" className="mb-4" style={{ borderColor: 'hsl(0 0% 80%)', color: 'hsl(0 0% 100%)', backgroundColor: 'hsla(0 0% 100% / 0.1)' }} asChild>
@@ -48,7 +60,6 @@ export default function EventDetail() {
 
         <div className="container py-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main content */}
             <div className="lg:col-span-2 space-y-6">
               <div>
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -66,8 +77,8 @@ export default function EventDetail() {
                 {[
                   { icon: CalendarDays, label: 'Tanggal', value: formatDate(event.date) },
                   { icon: MapPin, label: 'Lokasi', value: event.location },
-                  { icon: Gauge, label: 'Jarak', value: event.distance },
-                  { icon: Clock, label: 'Durasi', value: event.endDate ? `${Math.ceil((new Date(event.endDate).getTime() - new Date(event.date).getTime()) / 86400000)} hari` : '1 hari' },
+                  { icon: Gauge, label: 'Jarak', value: event.distance || '-' },
+                  { icon: Clock, label: 'Durasi', value: event.end_date ? `${Math.ceil((new Date(event.end_date).getTime() - new Date(event.date).getTime()) / 86400000)} hari` : '1 hari' },
                 ].map((info) => (
                   <div key={info.label} className="p-4 rounded-xl bg-card shadow-card border border-border">
                     <info.icon className="h-5 w-5 text-primary mb-2" />
@@ -77,11 +88,10 @@ export default function EventDetail() {
                 ))}
               </div>
 
-              {/* Highlights */}
               <div>
                 <h2 className="font-heading font-semibold text-xl mb-3">Highlight Event</h2>
                 <div className="grid grid-cols-2 gap-2">
-                  {event.highlights.map((h) => (
+                  {(event.highlights || []).map((h) => (
                     <div key={h} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
                       <span className="text-primary">✓</span> {h}
                     </div>
@@ -90,7 +100,6 @@ export default function EventDetail() {
               </div>
             </div>
 
-            {/* Sidebar */}
             <div className="space-y-4">
               <div className="p-6 rounded-xl bg-card shadow-card border border-border space-y-4 sticky top-24">
                 <div className="text-center">
@@ -101,7 +110,7 @@ export default function EventDetail() {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span className="text-muted-foreground">Kuota</span>
-                    <span className="font-medium">{event.currentParticipants}/{event.maxParticipants}</span>
+                    <span className="font-medium">{event.current_participants}/{event.max_participants}</span>
                   </div>
                   <Progress value={fillPercent} className="h-2" />
                   <p className="text-xs text-muted-foreground mt-1">{spotsLeft > 0 ? `${spotsLeft} slot tersisa` : 'Kuota penuh'}</p>

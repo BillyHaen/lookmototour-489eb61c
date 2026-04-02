@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,8 +9,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { MotoEvent, formatPrice } from '@/data/events';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { formatPrice } from '@/data/events';
 import { Loader2, CheckCircle2 } from 'lucide-react';
+import type { DbEvent } from '@/hooks/useEvents';
+import { useQueryClient } from '@tanstack/react-query';
 
 const schema = z.object({
   name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),
@@ -23,52 +28,65 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
-export default function EventRegistrationForm({ event }: { event: MotoEvent }) {
+export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const isFull = event.currentParticipants >= event.maxParticipants;
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const isFull = event.current_participants >= event.max_participants;
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', notes: '' },
   });
 
-  const onSubmit = async (data: FormData) => {
-    setLoading(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 1500));
-    
-    const registration = {
-      id: crypto.randomUUID(),
-      eventId: event.id,
-      ...data,
-      createdAt: new Date().toISOString(),
-    };
-    
-    // Store locally for now
-    const existing = JSON.parse(localStorage.getItem('registrations') || '[]');
-    
-    // Duplicate check
-    const isDuplicate = existing.some(
-      (r: { eventId: string; email: string }) => r.eventId === event.id && r.email === data.email
-    );
-    if (isDuplicate) {
-      setLoading(false);
-      toast({ title: 'Sudah terdaftar', description: 'Email ini sudah terdaftar untuk event ini.', variant: 'destructive' });
+  const handleOpen = (v: boolean) => {
+    if (v && !user) {
+      toast({ title: 'Login diperlukan', description: 'Silakan login terlebih dahulu untuk mendaftar event.', variant: 'destructive' });
+      navigate('/login');
       return;
     }
-    
-    existing.push(registration);
-    localStorage.setItem('registrations', JSON.stringify(existing));
-    
+    setOpen(v);
+    if (!v) { setSubmitted(false); form.reset(); }
+  };
+
+  const onSubmit = async (data: FormData) => {
+    if (!user) return;
+    setLoading(true);
+
+    const { error } = await supabase.from('event_registrations').insert({
+      event_id: event.id,
+      user_id: user.id,
+      name: data.name,
+      email: data.email,
+      phone: data.phone,
+      motor_type: data.motorType,
+      plate_number: data.plateNumber,
+      emergency_contact: data.emergencyContact,
+      notes: data.notes || '',
+    });
+
     setLoading(false);
+
+    if (error) {
+      if (error.code === '23505') {
+        toast({ title: 'Sudah terdaftar', description: 'Email ini sudah terdaftar untuk event ini.', variant: 'destructive' });
+      } else {
+        toast({ title: 'Gagal mendaftar', description: error.message, variant: 'destructive' });
+      }
+      return;
+    }
+
     setSubmitted(true);
+    queryClient.invalidateQueries({ queryKey: ['event', event.id] });
+    queryClient.invalidateQueries({ queryKey: ['events'] });
     toast({ title: 'Pendaftaran berhasil! 🎉', description: `Kamu sudah terdaftar untuk ${event.title}` });
   };
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setSubmitted(false); form.reset(); } }}>
+    <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
         <Button size="lg" className="w-full text-base font-semibold" disabled={isFull || event.status === 'completed'}>
           {isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : `Daftar Sekarang - ${formatPrice(event.price)}`}

@@ -5,7 +5,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
 import EventCard from '@/components/EventCard';
-import { SAMPLE_EVENTS } from '@/data/events';
+import { useEvents } from '@/hooks/useEvents';
+import { Loader2 } from 'lucide-react';
 
 const FEATURES = [
   { icon: Map, title: 'Rute Terbaik', desc: 'Rute touring yang sudah disurvey dan aman untuk semua level rider.' },
@@ -15,7 +16,8 @@ const FEATURES = [
 ];
 
 export default function Index() {
-  const upcomingEvents = SAMPLE_EVENTS.filter((e) => e.status === 'upcoming').slice(0, 3);
+  const { data: events, isLoading } = useEvents();
+  const upcomingEvents = (events || []).filter((e) => e.status === 'upcoming').slice(0, 3);
 
   return (
     <div className="min-h-screen">
@@ -55,11 +57,15 @@ export default function Index() {
               <Link to="/events">Lihat Semua <ArrowRight className="h-4 w-4" /></Link>
             </Button>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {upcomingEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
-            ))}
-          </div>
+          {isLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {upcomingEvents.map((event) => (
+                <EventCard key={event.id} event={event} />
+              ))}
+            </div>
+          )}
           <div className="sm:hidden mt-6 text-center">
             <Button variant="outline" className="gap-2" asChild>
               <Link to="/events">Lihat Semua Event <ArrowRight className="h-4 w-4" /></Link>

@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
 import EventCard from '@/components/EventCard';
+import TestimonialSection from '@/components/TestimonialSection';
 import { useEvents } from '@/hooks/useEvents';
 import { Loader2 } from 'lucide-react';
 
@@ -73,6 +74,9 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials */}
+      <TestimonialSection />
 
       {/* CTA */}
       <section className="py-20 bg-gradient-dark text-center">

@@ -1,18 +1,32 @@
 import { useParams, Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
 import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
+import { supabase } from '@/integrations/supabase/client';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 export default function EventDetail() {
   const { id } = useParams();
   const { data: event, isLoading } = useEvent(id);
+
+  const { data: itineraries } = useQuery({
+    queryKey: ['event-itineraries', id],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from('event_itineraries' as any) as any)
+        .select('*').eq('event_id', id!).order('day_number');
+      if (error) return [];
+      return data as any[];
+    },
+    enabled: !!id,
+  });
 
   if (isLoading) {
     return (
@@ -98,6 +112,34 @@ export default function EventDetail() {
                   ))}
                 </div>
               </div>
+
+              {/* Itinerary */}
+              {itineraries && itineraries.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <CalendarDays className="h-5 w-5 text-primary" /> Itinerary Perjalanan
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {itineraries.map((it: any) => (
+                        <div key={it.id} className="relative pl-6 pb-4 border-l-2 border-primary/20 last:border-l-0">
+                          <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary" />
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-heading font-semibold">Hari {it.day_number}</span>
+                              {it.date && <Badge variant="outline" className="text-xs">{formatDate(it.date)}</Badge>}
+                            </div>
+                            <p className="font-medium">{it.title}</p>
+                            <p className="text-sm text-muted-foreground">{it.description}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
             <div className="space-y-4">

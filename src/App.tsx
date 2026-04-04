@@ -14,6 +14,13 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Shop from "./pages/Shop";
+import MemberProfile from "./pages/MemberProfile";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminEvents from "./pages/admin/AdminEvents";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,11 +38,18 @@ const App = () => (
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/calendar" element={<CalendarPage />} />
             <Route path="/about" element={<About />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/member/:userId" element={<MemberProfile />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/events" element={<AdminEvents />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
+            <Route path="/admin/products" element={<AdminProducts />} />
+            <Route path="/admin/testimonials" element={<AdminTestimonials />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

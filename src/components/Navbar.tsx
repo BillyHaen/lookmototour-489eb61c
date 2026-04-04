@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Mountain, User, LogOut } from 'lucide-react';
+import { Menu, X, Mountain, User, LogOut, Shield, ShoppingBag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useAdmin';
 
 const NAV_ITEMS = [
   { label: 'Beranda', path: '/' },
   { label: 'Event', path: '/events' },
+  { label: 'Toko', path: '/shop' },
   { label: 'Kalender', path: '/calendar' },
   { label: 'Tentang', path: '/about' },
 ];
@@ -15,6 +17,7 @@ export default function Navbar() {
   const [open, setOpen] = useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { data: isAdmin } = useIsAdmin();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
@@ -43,6 +46,11 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           {user ? (
             <>
+              {isAdmin && (
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/admin" className="gap-2"><Shield className="h-4 w-4" /> Admin</Link>
+                </Button>
+              )}
               <Button variant="ghost" size="sm" asChild>
                 <Link to="/profile" className="gap-2"><User className="h-4 w-4" /> Profil</Link>
               </Button>
@@ -86,6 +94,11 @@ export default function Navbar() {
             ))}
             {user ? (
               <>
+                {isAdmin && (
+                  <Link to="/admin" onClick={() => setOpen(false)} className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted">
+                    Admin CMS
+                  </Link>
+                )}
                 <Link to="/profile" onClick={() => setOpen(false)} className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted">
                   Profil
                 </Link>

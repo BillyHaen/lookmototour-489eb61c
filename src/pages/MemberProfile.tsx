@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, User, Star, Award, Shield, Flame, Trophy } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },

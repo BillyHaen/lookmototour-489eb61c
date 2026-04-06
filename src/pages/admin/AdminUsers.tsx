@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Shield, User } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
 
 export default function AdminUsers() {
   const queryClient = useQueryClient();

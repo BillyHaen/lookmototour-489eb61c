@@ -22,6 +22,15 @@ export default function Navbar() {
   const { user, signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
 
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('name, avatar_url').eq('user_id', user!.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
       <div className="container flex items-center justify-between h-16">

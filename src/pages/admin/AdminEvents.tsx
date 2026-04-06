@@ -270,6 +270,14 @@ export default function AdminEvents() {
           </div>
         </DialogContent>
       </Dialog>
+      {participantsEvent && (
+        <AdminEventParticipants
+          eventId={participantsEvent.id}
+          eventTitle={participantsEvent.title}
+          open={!!participantsEvent}
+          onOpenChange={(o) => { if (!o) setParticipantsEvent(null); }}
+        />
+      )}
     </AdminLayout>
   );
 }

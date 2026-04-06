@@ -166,6 +166,9 @@ export default function AdminEvents() {
                 <p className="text-xs text-muted-foreground">{event.current_participants}/{event.max_participants} peserta</p>
               </div>
               <div className="flex gap-2 ml-4">
+                <Button variant="outline" size="sm" onClick={() => setParticipantsEvent({ id: event.id, title: event.title })} title="Lihat Peserta">
+                  <Users className="h-4 w-4" />
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => openEdit(event)}><Pencil className="h-4 w-4" /></Button>
                 <Button variant="destructive" size="sm" onClick={() => { if (confirm('Hapus event ini?')) deleteMutation.mutate(event.id); }}><Trash2 className="h-4 w-4" /></Button>
               </div>

@@ -19,6 +19,7 @@ import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield
 import { formatDate, formatPrice } from '@/data/events';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import AvatarUpload from '@/components/AvatarUpload';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },

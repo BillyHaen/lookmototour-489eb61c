@@ -4,6 +4,9 @@ import { Menu, X, Mountain, User, LogOut, Shield, ShoppingBag } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import UserAvatar from '@/components/UserAvatar';
 
 const NAV_ITEMS = [
   { label: 'Beranda', path: '/' },

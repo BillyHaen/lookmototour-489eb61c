@@ -11,7 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { formatPrice, formatDate } from '@/data/events';
-import { Loader2, Plus, Pencil, Trash2, CalendarDays } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users } from 'lucide-react';
+import AdminEventParticipants from './AdminEventParticipants';
 
 interface EventForm {
   title: string;

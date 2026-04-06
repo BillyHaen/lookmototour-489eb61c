@@ -40,9 +40,7 @@ export default function TestimonialSection() {
                 ))}
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                  {(t.profiles?.name || 'U')[0].toUpperCase()}
-                </div>
+                <UserAvatar src={t.profiles?.avatar_url} name={t.profiles?.name} />
                 <div>
                   <p className="text-sm font-medium">{t.profiles?.name || 'Rider'}</p>
                   <p className="text-xs text-muted-foreground">{t.events?.title || 'Event'}</p>

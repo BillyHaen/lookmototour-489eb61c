@@ -64,7 +64,10 @@ export default function Navbar() {
                 </Button>
               )}
               <Button variant="ghost" size="sm" asChild>
-                <Link to="/profile" className="gap-2"><User className="h-4 w-4" /> Profil</Link>
+                <Link to="/profile" className="gap-2">
+                  <UserAvatar src={profile?.avatar_url} name={profile?.name} className="h-6 w-6" />
+                  Profil
+                </Link>
               </Button>
               <Button variant="outline" size="sm" onClick={() => signOut()} className="gap-2">
                 <LogOut className="h-4 w-4" /> Keluar

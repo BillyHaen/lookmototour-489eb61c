@@ -125,9 +125,10 @@ export default function Profile() {
       <div className="pt-24 pb-20">
         <div className="container max-w-3xl space-y-6">
           <div className="flex items-center justify-between">
-            <h1 className="font-heading font-bold text-3xl flex items-center gap-3">
-              <User className="h-8 w-8 text-primary" /> Profil Saya
-            </h1>
+            <div className="flex items-center gap-4">
+              <AvatarUpload userId={user!.id} currentUrl={profile?.avatar_url} name={profile?.name} size="lg" />
+              <h1 className="font-heading font-bold text-3xl">Profil Saya</h1>
+            </div>
             <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
               <LogOut className="h-4 w-4" /> Keluar
             </Button>

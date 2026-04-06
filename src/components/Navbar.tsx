@@ -4,6 +4,9 @@ import { Menu, X, Mountain, User, LogOut, Shield, ShoppingBag } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import UserAvatar from '@/components/UserAvatar';
 
 const NAV_ITEMS = [
   { label: 'Beranda', path: '/' },
@@ -18,6 +21,15 @@ export default function Navbar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
+
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from('profiles').select('name, avatar_url').eq('user_id', user!.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
@@ -52,7 +64,10 @@ export default function Navbar() {
                 </Button>
               )}
               <Button variant="ghost" size="sm" asChild>
-                <Link to="/profile" className="gap-2"><User className="h-4 w-4" /> Profil</Link>
+                <Link to="/profile" className="gap-2">
+                  <UserAvatar src={profile?.avatar_url} name={profile?.name} className="h-6 w-6" />
+                  Profil
+                </Link>
               </Button>
               <Button variant="outline" size="sm" onClick={() => signOut()} className="gap-2">
                 <LogOut className="h-4 w-4" /> Keluar

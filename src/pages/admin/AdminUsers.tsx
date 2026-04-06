@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Shield, User } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
 
 export default function AdminUsers() {
   const queryClient = useQueryClient();
@@ -61,9 +62,7 @@ export default function AdminUsers() {
             return (
               <div key={profile.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    {role === 'admin' ? <Shield className="h-5 w-5 text-primary" /> : <User className="h-5 w-5 text-muted-foreground" />}
-                  </div>
+                  <UserAvatar src={profile.avatar_url} name={profile.name} className="h-10 w-10" />
                   <div>
                     <p className="font-medium">{profile.name || 'Tanpa Nama'}</p>
                     <p className="text-sm text-muted-foreground">{profile.phone || '-'}</p>

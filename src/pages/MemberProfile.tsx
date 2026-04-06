@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, User, Star, Award, Shield, Flame, Trophy } from 'lucide-react';
+import UserAvatar from '@/components/UserAvatar';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },
@@ -93,13 +94,7 @@ export default function MemberProfile() {
         <div className="container max-w-2xl">
           <Card>
             <CardContent className="p-8 text-center space-y-6">
-              <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                {profile.avatar_url ? (
-                  <img src={profile.avatar_url} alt={profile.name} className="w-24 h-24 rounded-full object-cover" />
-                ) : (
-                  <User className="h-12 w-12 text-primary" />
-                )}
-              </div>
+              <UserAvatar src={profile.avatar_url} name={profile.name} className="h-24 w-24 mx-auto text-2xl" />
 
               <div>
                 <h1 className="font-heading font-bold text-2xl">{profile.name}</h1>

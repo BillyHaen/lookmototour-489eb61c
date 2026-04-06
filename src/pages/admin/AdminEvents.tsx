@@ -44,6 +44,7 @@ export default function AdminEvents() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [participantsEvent, setParticipantsEvent] = useState<{ id: string; title: string } | null>(null);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],

@@ -28,6 +28,9 @@ interface EventForm {
   difficulty: string;
   distance: string;
   highlights: string;
+  requirements: string;
+  insurance_enabled: boolean;
+  insurance_description: string;
 }
 
 const emptyForm: EventForm = {

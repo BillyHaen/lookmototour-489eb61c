@@ -127,6 +127,9 @@ export default function AdminEvents() {
       location: event.location, price: event.price, max_participants: event.max_participants,
       image_url: event.image_url || '', status: event.status, difficulty: event.difficulty,
       distance: event.distance || '', highlights: (event.highlights || []).join(', '),
+      requirements: (event.requirements || []).join(', '),
+      insurance_enabled: event.insurance_enabled || false,
+      insurance_description: event.insurance_description || '',
     });
     // Load itineraries
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');

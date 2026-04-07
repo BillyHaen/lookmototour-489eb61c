@@ -40,8 +40,16 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', notes: '' },
+    defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', registrationType: 'single', notes: '' },
   });
+
+  const selectedType = form.watch('registrationType');
+  const priceMap: Record<string, number> = {
+    sharing: (event as any).price_sharing || 0,
+    single: (event as any).price_single || event.price || 0,
+    couple: (event as any).price_couple || 0,
+  };
+  const selectedPrice = priceMap[selectedType] || 0;
 
   const handleOpen = (v: boolean) => {
     if (v && !user) {

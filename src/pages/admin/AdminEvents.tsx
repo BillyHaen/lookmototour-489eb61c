@@ -233,10 +233,24 @@ export default function AdminEvents() {
               <Input placeholder="Lokasi" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
               <Input placeholder="Jarak (mis: 350 km)" value={form.distance} onChange={(e) => setForm({ ...form, distance: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input type="number" placeholder="Harga" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
-              <Input type="number" placeholder="Maks Peserta" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: Number(e.target.value) })} />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Biaya Pendaftaran</label>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Sharing</label>
+                  <Input type="number" placeholder="0" value={form.price_sharing} onChange={(e) => setForm({ ...form, price_sharing: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Single</label>
+                  <Input type="number" placeholder="0" value={form.price_single} onChange={(e) => setForm({ ...form, price_single: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Couple</label>
+                  <Input type="number" placeholder="0" value={form.price_couple} onChange={(e) => setForm({ ...form, price_couple: Number(e.target.value) })} />
+                </div>
+              </div>
             </div>
+            <Input type="number" placeholder="Maks Peserta" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: Number(e.target.value) })} />
             <Input placeholder="URL Gambar" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
             <Input placeholder="Highlights (pisahkan koma)" value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} />
             <Input placeholder="Persyaratan (pisahkan koma)" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />

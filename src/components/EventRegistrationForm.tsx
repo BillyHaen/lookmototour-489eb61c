@@ -199,7 +199,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
               )} />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {loading ? 'Mendaftar...' : 'Kirim Pendaftaran'}
+                {loading ? 'Mendaftar...' : `Kirim Pendaftaran - ${formatPrice(selectedPrice)}`}
               </Button>
             </form>
           </Form>

@@ -173,9 +173,31 @@ export default function EventDetail() {
 
             <div className="space-y-4">
               <div className="p-6 rounded-xl bg-card shadow-card border border-border space-y-4 sticky top-24">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground">Biaya Pendaftaran</p>
-                  <p className="font-heading font-bold text-3xl text-primary">{formatPrice(event.price)}</p>
+              <div>
+                  <p className="text-sm text-muted-foreground text-center mb-3">Biaya Pendaftaran</p>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    {(event as any).price_sharing > 0 && (
+                      <div className="p-2 rounded-lg bg-muted">
+                        <p className="text-[10px] text-muted-foreground uppercase font-medium">Sharing</p>
+                        <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_sharing)}</p>
+                      </div>
+                    )}
+                    {((event as any).price_single > 0 || event.price > 0) && (
+                      <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                        <p className="text-[10px] text-muted-foreground uppercase font-medium">Single</p>
+                        <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_single || event.price)}</p>
+                      </div>
+                    )}
+                    {(event as any).price_couple > 0 && (
+                      <div className="p-2 rounded-lg bg-muted">
+                        <p className="text-[10px] text-muted-foreground uppercase font-medium">Couple</p>
+                        <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_couple)}</p>
+                      </div>
+                    )}
+                  </div>
+                  {(event as any).price_sharing === 0 && (event as any).price_couple === 0 && (event as any).price_single === 0 && event.price === 0 && (
+                    <p className="font-heading font-bold text-3xl text-primary text-center">GRATIS</p>
+                  )}
                 </div>
 
                 <div>

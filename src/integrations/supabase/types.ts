@@ -67,6 +67,7 @@ export type Database = {
           notes: string | null
           phone: string
           plate_number: string
+          registration_type: string
           status: string
           updated_at: string
           user_id: string
@@ -82,6 +83,7 @@ export type Database = {
           notes?: string | null
           phone: string
           plate_number?: string
+          registration_type?: string
           status?: string
           updated_at?: string
           user_id: string
@@ -97,6 +99,7 @@ export type Database = {
           notes?: string | null
           phone?: string
           plate_number?: string
+          registration_type?: string
           status?: string
           updated_at?: string
           user_id?: string
@@ -130,6 +133,9 @@ export type Database = {
           location: string
           max_participants: number
           price: number
+          price_couple: number
+          price_sharing: number
+          price_single: number
           requirements: string[] | null
           status: string
           title: string
@@ -153,6 +159,9 @@ export type Database = {
           location?: string
           max_participants?: number
           price?: number
+          price_couple?: number
+          price_sharing?: number
+          price_single?: number
           requirements?: string[] | null
           status?: string
           title: string
@@ -176,6 +185,9 @@ export type Database = {
           location?: string
           max_participants?: number
           price?: number
+          price_couple?: number
+          price_sharing?: number
+          price_single?: number
           requirements?: string[] | null
           status?: string
           title?: string

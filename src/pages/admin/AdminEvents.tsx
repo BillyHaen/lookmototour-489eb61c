@@ -175,7 +175,7 @@ export default function AdminEvents() {
                   <p className="font-medium truncate">{event.title}</p>
                   <Badge variant={event.status === 'upcoming' ? 'default' : 'secondary'}>{event.status}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{formatDate(event.date)} • {event.location} • {formatPrice(event.price)}</p>
+                <p className="text-sm text-muted-foreground">{formatDate(event.date)} • {event.location} • S:{formatPrice((event as any).price_sharing || 0)} / I:{formatPrice((event as any).price_single || event.price)} / C:{formatPrice((event as any).price_couple || 0)}</p>
                 <p className="text-xs text-muted-foreground">{event.current_participants}/{event.max_participants} peserta</p>
               </div>
               <div className="flex gap-2 ml-4">

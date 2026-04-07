@@ -1,4 +1,5 @@
-import { Mountain, Shield, Map, Users, Heart } from 'lucide-react';
+import { Shield, Map, Users, Heart } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 

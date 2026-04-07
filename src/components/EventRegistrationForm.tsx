@@ -166,6 +166,30 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                   <FormMessage />
                 </FormItem>
               )} />
+              {/* Registration Type */}
+              <FormField control={form.control} name="registrationType" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipe Pendaftaran *</FormLabel>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'sharing', label: 'Sharing', price: priceMap.sharing },
+                      { value: 'single', label: 'Single', price: priceMap.single },
+                      { value: 'couple', label: 'Couple', price: priceMap.couple },
+                    ].filter(t => t.price > 0).map(t => (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => field.onChange(t.value)}
+                        className={`p-3 rounded-lg border text-center transition-all ${field.value === t.value ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}
+                      >
+                        <p className="text-xs font-medium">{t.label}</p>
+                        <p className="text-sm font-bold text-primary">{formatPrice(t.price)}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )} />
               <FormField control={form.control} name="notes" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Catatan</FormLabel>

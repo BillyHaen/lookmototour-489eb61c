@@ -23,6 +23,7 @@ const schema = z.object({
   motorType: z.string().trim().min(2, 'Masukkan tipe motor').max(100),
   plateNumber: z.string().trim().min(3, 'Masukkan plat nomor').max(15),
   emergencyContact: z.string().trim().min(10, 'Masukkan kontak darurat').max(100),
+  registrationType: z.enum(['sharing', 'single', 'couple']),
   notes: z.string().max(500).optional(),
 });
 

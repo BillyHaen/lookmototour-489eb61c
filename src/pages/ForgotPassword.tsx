@@ -43,7 +43,7 @@ export default function ForgotPassword() {
       <div className="pt-24 pb-20 flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <Mountain className="h-10 w-10 text-primary mx-auto mb-2" />
+            <img src={logo} alt="LookMotoTour" className="h-12 w-auto mx-auto mb-2" />
             <CardTitle className="font-heading text-2xl">Lupa Password</CardTitle>
             <CardDescription>Masukkan email untuk reset password</CardDescription>
           </CardHeader>

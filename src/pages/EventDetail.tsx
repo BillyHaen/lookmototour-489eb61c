@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle, Loader2 } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';

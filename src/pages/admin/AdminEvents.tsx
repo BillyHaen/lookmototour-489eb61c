@@ -36,7 +36,8 @@ interface EventForm {
 const emptyForm: EventForm = {
   title: '', description: '', category: 'touring', date: '', end_date: '',
   location: '', price: 0, max_participants: 30, image_url: '', status: 'upcoming',
-  difficulty: 'sedang', distance: '', highlights: '',
+  difficulty: 'sedang', distance: '', highlights: '', requirements: '',
+  insurance_enabled: false, insurance_description: '',
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }

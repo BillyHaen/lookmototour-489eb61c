@@ -1,4 +1,5 @@
-import { Mountain, Instagram, Youtube, MessageCircle } from 'lucide-react';
+import { Instagram, Youtube, MessageCircle } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import { Link } from 'react-router-dom';
 
 export default function Footer() {
@@ -8,8 +9,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <Link to="/" className="flex items-center gap-2 font-heading font-bold text-xl mb-4">
-              <Mountain className="h-7 w-7 text-primary" />
-              <span>LookMotoTour</span>
+              <img src={logo} alt="LookMotoTour" className="h-8 w-auto" />
             </Link>
             <p className="text-muted-foreground text-sm max-w-md">
               Komunitas touring motor terpercaya di Indonesia. Jelajahi keindahan nusantara bersama kami melalui event touring, adventure, dan workshop yang seru dan aman.

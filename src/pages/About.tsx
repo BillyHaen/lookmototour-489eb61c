@@ -1,4 +1,5 @@
-import { Mountain, Shield, Map, Users, Heart } from 'lucide-react';
+import { Shield, Map, Users, Heart } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -8,8 +9,8 @@ export default function About() {
       <Navbar />
       <div className="pt-24 pb-20">
         <div className="container max-w-3xl">
-          <h1 className="font-heading font-bold text-3xl md:text-4xl mb-6 flex items-center gap-3">
-            <Mountain className="h-8 w-8 text-primary" /> Tentang LookMotoTour
+           <h1 className="font-heading font-bold text-3xl md:text-4xl mb-6 flex items-center gap-3">
+            <img src={logo} alt="LookMotoTour" className="h-10 w-auto" /> Tentang LookMotoTour
           </h1>
 
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">

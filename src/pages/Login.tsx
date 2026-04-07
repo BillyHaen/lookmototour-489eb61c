@@ -9,7 +9,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { Loader2, Mountain } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 
@@ -46,7 +47,7 @@ export default function Login() {
       <div className="pt-24 pb-20 flex items-center justify-center px-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <Mountain className="h-10 w-10 text-primary mx-auto mb-2" />
+            <img src={logo} alt="LookMotoTour" className="h-12 w-auto mx-auto mb-2" />
             <CardTitle className="font-heading text-2xl">Masuk</CardTitle>
             <CardDescription>Masuk ke akun LookMotoTour kamu</CardDescription>
           </CardHeader>

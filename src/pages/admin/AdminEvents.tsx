@@ -67,6 +67,9 @@ export default function AdminEvents() {
         price: form.price, max_participants: form.max_participants, image_url: form.image_url,
         status: form.status, difficulty: form.difficulty, distance: form.distance,
         highlights: form.highlights.split(',').map(h => h.trim()).filter(Boolean),
+        requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
+        insurance_enabled: form.insurance_enabled,
+        insurance_description: form.insurance_description,
       };
 
       let eventId = editId;

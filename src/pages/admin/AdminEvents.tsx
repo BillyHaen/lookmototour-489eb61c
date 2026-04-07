@@ -21,7 +21,9 @@ interface EventForm {
   date: string;
   end_date: string;
   location: string;
-  price: number;
+  price_sharing: number;
+  price_single: number;
+  price_couple: number;
   max_participants: number;
   image_url: string;
   status: string;
@@ -35,7 +37,7 @@ interface EventForm {
 
 const emptyForm: EventForm = {
   title: '', description: '', category: 'touring', date: '', end_date: '',
-  location: '', price: 0, max_participants: 30, image_url: '', status: 'upcoming',
+  location: '', price_sharing: 0, price_single: 0, price_couple: 0, max_participants: 30, image_url: '', status: 'upcoming',
   difficulty: 'sedang', distance: '', highlights: '', requirements: '',
   insurance_enabled: false, insurance_description: '',
 };
@@ -64,7 +66,8 @@ export default function AdminEvents() {
       const payload = {
         title: form.title, description: form.description, category: form.category,
         date: form.date, end_date: form.end_date || null, location: form.location,
-        price: form.price, max_participants: form.max_participants, image_url: form.image_url,
+        price: form.price_single, price_sharing: form.price_sharing, price_single: form.price_single, price_couple: form.price_couple,
+        max_participants: form.max_participants, image_url: form.image_url,
         status: form.status, difficulty: form.difficulty, distance: form.distance,
         highlights: form.highlights.split(',').map(h => h.trim()).filter(Boolean),
         requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
@@ -124,7 +127,7 @@ export default function AdminEvents() {
     setForm({
       title: event.title, description: event.description, category: event.category,
       date: event.date?.slice(0, 16) || '', end_date: event.end_date?.slice(0, 16) || '',
-      location: event.location, price: event.price, max_participants: event.max_participants,
+      location: event.location, price_sharing: event.price_sharing || 0, price_single: event.price_single || event.price || 0, price_couple: event.price_couple || 0, max_participants: event.max_participants,
       image_url: event.image_url || '', status: event.status, difficulty: event.difficulty,
       distance: event.distance || '', highlights: (event.highlights || []).join(', '),
       requirements: (event.requirements || []).join(', '),
@@ -172,7 +175,7 @@ export default function AdminEvents() {
                   <p className="font-medium truncate">{event.title}</p>
                   <Badge variant={event.status === 'upcoming' ? 'default' : 'secondary'}>{event.status}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">{formatDate(event.date)} • {event.location} • {formatPrice(event.price)}</p>
+                <p className="text-sm text-muted-foreground">{formatDate(event.date)} • {event.location} • S:{formatPrice((event as any).price_sharing || 0)} / I:{formatPrice((event as any).price_single || event.price)} / C:{formatPrice((event as any).price_couple || 0)}</p>
                 <p className="text-xs text-muted-foreground">{event.current_participants}/{event.max_participants} peserta</p>
               </div>
               <div className="flex gap-2 ml-4">
@@ -230,10 +233,24 @@ export default function AdminEvents() {
               <Input placeholder="Lokasi" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
               <Input placeholder="Jarak (mis: 350 km)" value={form.distance} onChange={(e) => setForm({ ...form, distance: e.target.value })} />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <Input type="number" placeholder="Harga" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
-              <Input type="number" placeholder="Maks Peserta" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: Number(e.target.value) })} />
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Biaya Pendaftaran</label>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Sharing</label>
+                  <Input type="number" placeholder="0" value={form.price_sharing} onChange={(e) => setForm({ ...form, price_sharing: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Single</label>
+                  <Input type="number" placeholder="0" value={form.price_single} onChange={(e) => setForm({ ...form, price_single: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Couple</label>
+                  <Input type="number" placeholder="0" value={form.price_couple} onChange={(e) => setForm({ ...form, price_couple: Number(e.target.value) })} />
+                </div>
+              </div>
             </div>
+            <Input type="number" placeholder="Maks Peserta" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: Number(e.target.value) })} />
             <Input placeholder="URL Gambar" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
             <Input placeholder="Highlights (pisahkan koma)" value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} />
             <Input placeholder="Persyaratan (pisahkan koma)" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />

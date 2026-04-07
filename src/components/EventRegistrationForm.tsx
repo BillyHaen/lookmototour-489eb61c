@@ -23,6 +23,7 @@ const schema = z.object({
   motorType: z.string().trim().min(2, 'Masukkan tipe motor').max(100),
   plateNumber: z.string().trim().min(3, 'Masukkan plat nomor').max(15),
   emergencyContact: z.string().trim().min(10, 'Masukkan kontak darurat').max(100),
+  registrationType: z.enum(['sharing', 'single', 'couple']),
   notes: z.string().max(500).optional(),
 });
 
@@ -39,8 +40,16 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', notes: '' },
+    defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', registrationType: 'single', notes: '' },
   });
+
+  const selectedType = form.watch('registrationType');
+  const priceMap: Record<string, number> = {
+    sharing: (event as any).price_sharing || 0,
+    single: (event as any).price_single || event.price || 0,
+    couple: (event as any).price_couple || 0,
+  };
+  const selectedPrice = priceMap[selectedType] || 0;
 
   const handleOpen = (v: boolean) => {
     if (v && !user) {
@@ -65,6 +74,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       motor_type: data.motorType,
       plate_number: data.plateNumber,
       emergency_contact: data.emergencyContact,
+      registration_type: data.registrationType,
       notes: data.notes || '',
     });
 
@@ -89,7 +99,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
         <Button size="lg" className="w-full text-base font-semibold" disabled={isFull || event.status === 'completed'}>
-          {isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : `Daftar Sekarang - ${formatPrice(event.price)}`}
+          {isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : 'Daftar Sekarang'}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
@@ -156,6 +166,30 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                   <FormMessage />
                 </FormItem>
               )} />
+              {/* Registration Type */}
+              <FormField control={form.control} name="registrationType" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tipe Pendaftaran *</FormLabel>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { value: 'sharing', label: 'Sharing', price: priceMap.sharing },
+                      { value: 'single', label: 'Single', price: priceMap.single },
+                      { value: 'couple', label: 'Couple', price: priceMap.couple },
+                    ].filter(t => t.price > 0).map(t => (
+                      <button
+                        key={t.value}
+                        type="button"
+                        onClick={() => field.onChange(t.value)}
+                        className={`p-3 rounded-lg border text-center transition-all ${field.value === t.value ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}
+                      >
+                        <p className="text-xs font-medium">{t.label}</p>
+                        <p className="text-sm font-bold text-primary">{formatPrice(t.price)}</p>
+                      </button>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )} />
               <FormField control={form.control} name="notes" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Catatan</FormLabel>
@@ -165,7 +199,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
               )} />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {loading ? 'Mendaftar...' : 'Kirim Pendaftaran'}
+                {loading ? 'Mendaftar...' : `Kirim Pendaftaran - ${formatPrice(selectedPrice)}`}
               </Button>
             </form>
           </Form>

@@ -36,8 +36,7 @@ export default function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-lg border-b border-border">
       <div className="container flex items-center justify-between h-16">
         <Link to="/" className="flex items-center gap-2 font-heading font-bold text-xl">
-          <Mountain className="h-7 w-7 text-primary" />
-          <span>LookMotoTour</span>
+          <img src={logo} alt="LookMotoTour" className="h-8 w-auto" />
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">

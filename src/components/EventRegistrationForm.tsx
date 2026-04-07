@@ -74,6 +74,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       motor_type: data.motorType,
       plate_number: data.plateNumber,
       emergency_contact: data.emergencyContact,
+      registration_type: data.registrationType,
       notes: data.notes || '',
     });
 

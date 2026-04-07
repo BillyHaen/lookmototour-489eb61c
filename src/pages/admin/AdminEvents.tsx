@@ -236,6 +236,16 @@ export default function AdminEvents() {
             </div>
             <Input placeholder="URL Gambar" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
             <Input placeholder="Highlights (pisahkan koma)" value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} />
+            <Input placeholder="Persyaratan (pisahkan koma)" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />
+            
+            {/* Asuransi */}
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <input type="checkbox" id="insurance" checked={form.insurance_enabled} onChange={(e) => setForm({ ...form, insurance_enabled: e.target.checked })} className="h-4 w-4 rounded border-input" />
+              <label htmlFor="insurance" className="text-sm font-medium">Asuransi Tersedia</label>
+            </div>
+            {form.insurance_enabled && (
+              <Textarea placeholder="Deskripsi asuransi (jenis, cakupan, dll)" value={form.insurance_description} onChange={(e) => setForm({ ...form, insurance_description: e.target.value })} rows={2} />
+            )}
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

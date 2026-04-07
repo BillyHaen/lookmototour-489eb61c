@@ -127,7 +127,7 @@ export default function AdminEvents() {
     setForm({
       title: event.title, description: event.description, category: event.category,
       date: event.date?.slice(0, 16) || '', end_date: event.end_date?.slice(0, 16) || '',
-      location: event.location, price: event.price, max_participants: event.max_participants,
+      location: event.location, price_sharing: event.price_sharing || 0, price_single: event.price_single || event.price || 0, price_couple: event.price_couple || 0, max_participants: event.max_participants,
       image_url: event.image_url || '', status: event.status, difficulty: event.difficulty,
       distance: event.distance || '', highlights: (event.highlights || []).join(', '),
       requirements: (event.requirements || []).join(', '),

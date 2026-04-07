@@ -125,9 +125,12 @@ export type Database = {
           highlights: string[] | null
           id: string
           image_url: string | null
+          insurance_description: string | null
+          insurance_enabled: boolean
           location: string
           max_participants: number
           price: number
+          requirements: string[] | null
           status: string
           title: string
           updated_at: string
@@ -145,9 +148,12 @@ export type Database = {
           highlights?: string[] | null
           id?: string
           image_url?: string | null
+          insurance_description?: string | null
+          insurance_enabled?: boolean
           location?: string
           max_participants?: number
           price?: number
+          requirements?: string[] | null
           status?: string
           title: string
           updated_at?: string
@@ -165,9 +171,12 @@ export type Database = {
           highlights?: string[] | null
           id?: string
           image_url?: string | null
+          insurance_description?: string | null
+          insurance_enabled?: boolean
           location?: string
           max_participants?: number
           price?: number
+          requirements?: string[] | null
           status?: string
           title?: string
           updated_at?: string

@@ -28,12 +28,16 @@ interface EventForm {
   difficulty: string;
   distance: string;
   highlights: string;
+  requirements: string;
+  insurance_enabled: boolean;
+  insurance_description: string;
 }
 
 const emptyForm: EventForm = {
   title: '', description: '', category: 'touring', date: '', end_date: '',
   location: '', price: 0, max_participants: 30, image_url: '', status: 'upcoming',
-  difficulty: 'sedang', distance: '', highlights: '',
+  difficulty: 'sedang', distance: '', highlights: '', requirements: '',
+  insurance_enabled: false, insurance_description: '',
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }
@@ -63,6 +67,9 @@ export default function AdminEvents() {
         price: form.price, max_participants: form.max_participants, image_url: form.image_url,
         status: form.status, difficulty: form.difficulty, distance: form.distance,
         highlights: form.highlights.split(',').map(h => h.trim()).filter(Boolean),
+        requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
+        insurance_enabled: form.insurance_enabled,
+        insurance_description: form.insurance_description,
       };
 
       let eventId = editId;
@@ -120,6 +127,9 @@ export default function AdminEvents() {
       location: event.location, price: event.price, max_participants: event.max_participants,
       image_url: event.image_url || '', status: event.status, difficulty: event.difficulty,
       distance: event.distance || '', highlights: (event.highlights || []).join(', '),
+      requirements: (event.requirements || []).join(', '),
+      insurance_enabled: event.insurance_enabled || false,
+      insurance_description: event.insurance_description || '',
     });
     // Load itineraries
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
@@ -226,6 +236,16 @@ export default function AdminEvents() {
             </div>
             <Input placeholder="URL Gambar" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
             <Input placeholder="Highlights (pisahkan koma)" value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} />
+            <Input placeholder="Persyaratan (pisahkan koma)" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />
+            
+            {/* Asuransi */}
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <input type="checkbox" id="insurance" checked={form.insurance_enabled} onChange={(e) => setForm({ ...form, insurance_enabled: e.target.checked })} className="h-4 w-4 rounded border-input" />
+              <label htmlFor="insurance" className="text-sm font-medium">Asuransi Tersedia</label>
+            </div>
+            {form.insurance_enabled && (
+              <Textarea placeholder="Deskripsi asuransi (jenis, cakupan, dll)" value={form.insurance_description} onChange={(e) => setForm({ ...form, insurance_description: e.target.value })} rows={2} />
+            )}
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

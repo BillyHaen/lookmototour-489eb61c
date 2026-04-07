@@ -113,6 +113,35 @@ export default function EventDetail() {
                 </div>
               </div>
 
+              {/* Persyaratan */}
+              {(event as any).requirements && (event as any).requirements.length > 0 && (
+                <div>
+                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-accent" /> Persyaratan
+                  </h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    {((event as any).requirements as string[]).map((r) => (
+                      <div key={r} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
+                        <span className="text-accent">•</span> {r}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Asuransi */}
+              {(event as any).insurance_enabled && (
+                <Card className="border-primary/20">
+                  <CardContent className="flex items-start gap-3 pt-6">
+                    <ShieldCheck className="h-6 w-6 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-heading font-semibold">Asuransi Tersedia</p>
+                      <p className="text-sm text-muted-foreground">{(event as any).insurance_description || 'Event ini menyediakan asuransi untuk peserta.'}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Itinerary */}
               {itineraries && itineraries.length > 0 && (
                 <Card>

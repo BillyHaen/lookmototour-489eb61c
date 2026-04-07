@@ -21,7 +21,9 @@ interface EventForm {
   date: string;
   end_date: string;
   location: string;
-  price: number;
+  price_sharing: number;
+  price_single: number;
+  price_couple: number;
   max_participants: number;
   image_url: string;
   status: string;
@@ -35,7 +37,7 @@ interface EventForm {
 
 const emptyForm: EventForm = {
   title: '', description: '', category: 'touring', date: '', end_date: '',
-  location: '', price: 0, max_participants: 30, image_url: '', status: 'upcoming',
+  location: '', price_sharing: 0, price_single: 0, price_couple: 0, max_participants: 30, image_url: '', status: 'upcoming',
   difficulty: 'sedang', distance: '', highlights: '', requirements: '',
   insurance_enabled: false, insurance_description: '',
 };

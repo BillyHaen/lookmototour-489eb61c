@@ -39,6 +39,34 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const queryClient = useQueryClient();
   const isFull = event.current_participants >= event.max_participants;
 
+  // Check if user already registered
+  const { data: existingReg } = useQuery({
+    queryKey: ['my-registration', event.id, user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('event_registrations')
+        .select('*')
+        .eq('event_id', event.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const paymentLabel = (status: string) => {
+    if (status === 'lunas') return 'Lunas';
+    if (status?.startsWith('cicilan_')) return `Cicilan ${status.split('_')[1]}`;
+    return 'Menunggu Pembayaran';
+  };
+
+  const paymentVariant = (status: string) => {
+    if (status === 'lunas') return 'default' as const;
+    if (status?.startsWith('cicilan_')) return 'secondary' as const;
+    return 'outline' as const;
+  };
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', registrationType: 'single', notes: '' },

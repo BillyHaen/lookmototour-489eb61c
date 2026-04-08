@@ -121,6 +121,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     setSubmitted(true);
     queryClient.invalidateQueries({ queryKey: ['event', event.id] });
     queryClient.invalidateQueries({ queryKey: ['events'] });
+    queryClient.invalidateQueries({ queryKey: ['my-registration', event.id, user?.id] });
     toast({ title: 'Pendaftaran berhasil! 🎉', description: `Kamu sudah terdaftar untuk ${event.title}` });
   };
 

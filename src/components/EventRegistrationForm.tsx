@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
@@ -14,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/events';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import type { DbEvent } from '@/hooks/useEvents';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const schema = z.object({
   name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),

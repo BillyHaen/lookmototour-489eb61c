@@ -57,12 +57,14 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
 
   const paymentLabel = (status: string) => {
     if (status === 'lunas') return 'Lunas';
+    if (status === 'batal') return 'Batal';
     if (status?.startsWith('cicilan_')) return `Cicilan ${status.split('_')[1]}`;
     return 'Menunggu Pembayaran';
   };
 
   const paymentVariant = (status: string) => {
     if (status === 'lunas') return 'default' as const;
+    if (status === 'batal') return 'destructive' as const;
     if (status?.startsWith('cicilan_')) return 'secondary' as const;
     return 'outline' as const;
   };

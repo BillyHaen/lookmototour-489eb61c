@@ -20,6 +20,7 @@ interface Props {
 
 export default function AdminEventParticipants({ eventId, eventTitle, open, onOpenChange }: Props) {
   const [search, setSearch] = useState('');
+  const queryClient = useQueryClient();
 
   const { data: registrations, isLoading } = useQuery({
     queryKey: ['admin-event-registrations', eventId],

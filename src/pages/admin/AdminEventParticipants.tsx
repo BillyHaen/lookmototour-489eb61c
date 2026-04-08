@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard } from 'lucide-react';
+import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard, Trash2 } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { formatDate, formatPrice } from '@/data/events';
 import { toast } from '@/hooks/use-toast';
@@ -32,7 +33,6 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
         .order('created_at', { ascending: false });
       if (error) throw error;
 
-      // Fetch profiles for avatars
       const userIds = [...new Set((data || []).map(r => r.user_id))];
       if (userIds.length === 0) return [];
 
@@ -74,7 +74,7 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
   const updatePayment = async (regId: string, status: string, amount: number) => {
     const { error } = await supabase
       .from('event_registrations')
-      .update({ payment_status: status, installment_amount: amount } as any)
+      .update({ payment_status: status, installment_amount: amount })
       .eq('id', regId);
     if (error) {
       toast({ title: 'Gagal update', description: error.message, variant: 'destructive' });
@@ -84,16 +84,35 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
     }
   };
 
+  const deleteRegistration = async (regId: string, name: string) => {
+    const { error } = await supabase
+      .from('event_registrations')
+      .delete()
+      .eq('id', regId);
+    if (error) {
+      toast({ title: 'Gagal menghapus', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: `Peserta "${name}" berhasil dihapus` });
+      queryClient.invalidateQueries({ queryKey: ['admin-event-registrations', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    }
+  };
+
+  const canDelete = (status: string) => status === 'pending' || status === 'batal';
+
   const paymentLabel = (status: string) => {
     if (status === 'lunas') return 'Lunas';
+    if (status === 'batal') return 'Batal';
     if (status?.startsWith('cicilan_')) return `Cicilan ${status.split('_')[1]}`;
     return 'Belum Bayar';
   };
 
-  const paymentColor = (status: string) => {
+  const paymentColor = (status: string): 'default' | 'secondary' | 'outline' | 'destructive' => {
     if (status === 'lunas') return 'default';
+    if (status === 'batal') return 'destructive';
     if (status?.startsWith('cicilan_')) return 'secondary';
-    return 'outline' as const;
+    return 'outline';
   };
 
   const regTypeLabel = (t: string) => {
@@ -150,8 +169,8 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant={r.status === 'confirmed' ? 'default' : 'secondary'}>
-                      {r.status === 'confirmed' ? 'Terdaftar' : r.status}
+                    <Badge variant={paymentColor(r.payment_status)}>
+                      {paymentLabel(r.payment_status)}
                     </Badge>
                     <Button
                       variant="outline"
@@ -162,6 +181,32 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                       <MessageCircle className="h-4 w-4" />
                       WhatsApp
                     </Button>
+                    {canDelete(r.payment_status) && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-1.5 text-destructive border-destructive/30 hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Hapus Peserta?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Apakah Anda yakin ingin menghapus <strong>{r.name}</strong> dari event ini? Tindakan ini tidak bisa dibatalkan.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Batal</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              onClick={() => deleteRegistration(r.id, r.name)}
+                            >
+                              Hapus
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
                   </div>
                 </div>
 
@@ -191,9 +236,9 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                   </div>
                   <div className="flex items-center gap-3 flex-wrap">
                     <Select
-                      value={(r as any).payment_status || 'pending'}
+                      value={r.payment_status || 'pending'}
                       onValueChange={(val) => {
-                        const amt = val === 'lunas' ? 0 : (r as any).installment_amount || 0;
+                        const amt = val === 'lunas' || val === 'batal' || val === 'pending' ? 0 : r.installment_amount || 0;
                         updatePayment(r.id, val, amt);
                       }}
                     >
@@ -203,29 +248,30 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                       <SelectContent>
                         <SelectItem value="pending">Belum Bayar</SelectItem>
                         <SelectItem value="lunas">Lunas</SelectItem>
+                        <SelectItem value="batal">Batal</SelectItem>
                         {[1,2,3,4,5,6].map(n => (
                           <SelectItem key={n} value={`cicilan_${n}`}>Cicilan {n}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {(r as any).payment_status?.startsWith('cicilan_') && (
+                    {r.payment_status?.startsWith('cicilan_') && (
                       <div className="flex items-center gap-1.5">
                         <span className="text-xs text-muted-foreground">Sudah bayar:</span>
                         <Input
                           type="number"
                           className="w-[140px] h-8 text-xs"
                           placeholder="Jumlah cicilan"
-                          defaultValue={(r as any).installment_amount || ''}
+                          defaultValue={r.installment_amount || ''}
                           onBlur={(e) => {
                             const val = parseInt(e.target.value) || 0;
-                            updatePayment(r.id, (r as any).payment_status, val);
+                            updatePayment(r.id, r.payment_status, val);
                           }}
                         />
                       </div>
                     )}
-                    {(r as any).installment_amount > 0 && (r as any).payment_status?.startsWith('cicilan_') && (
+                    {r.installment_amount > 0 && r.payment_status?.startsWith('cicilan_') && (
                       <span className="text-xs text-muted-foreground">
-                        ({formatPrice((r as any).installment_amount)})
+                        ({formatPrice(r.installment_amount)})
                       </span>
                     )}
                   </div>

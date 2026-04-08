@@ -183,6 +183,54 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                   </div>
                 </div>
 
+                {/* Payment section */}
+                <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <CreditCard className="h-4 w-4 text-primary" />
+                    Pembayaran — <Badge variant="outline">{regTypeLabel(r.registration_type)}</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Select
+                      value={(r as any).payment_status || 'pending'}
+                      onValueChange={(val) => {
+                        const amt = val === 'lunas' ? 0 : (r as any).installment_amount || 0;
+                        updatePayment(r.id, val, amt);
+                      }}
+                    >
+                      <SelectTrigger className="w-[160px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Belum Bayar</SelectItem>
+                        <SelectItem value="lunas">Lunas</SelectItem>
+                        {[1,2,3,4,5,6].map(n => (
+                          <SelectItem key={n} value={`cicilan_${n}`}>Cicilan {n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {(r as any).payment_status?.startsWith('cicilan_') && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Sudah bayar:</span>
+                        <Input
+                          type="number"
+                          className="w-[140px] h-8 text-xs"
+                          placeholder="Jumlah cicilan"
+                          defaultValue={(r as any).installment_amount || ''}
+                          onBlur={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            updatePayment(r.id, (r as any).payment_status, val);
+                          }}
+                        />
+                      </div>
+                    )}
+                    {(r as any).installment_amount > 0 && (r as any).payment_status?.startsWith('cicilan_') && (
+                      <span className="text-xs text-muted-foreground">
+                        ({formatPrice((r as any).installment_amount)})
+                      </span>
+                    )}
+                  </div>
+                </div>
+
                 {r.notes && (
                   <p className="text-xs text-muted-foreground bg-muted/50 rounded p-2">
                     Catatan: {r.notes}

@@ -126,11 +126,25 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg" className="w-full text-base font-semibold" disabled={isFull || event.status === 'completed'}>
-          {isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : 'Daftar Sekarang'}
-        </Button>
-      </DialogTrigger>
+      {existingReg ? (
+        <div className="w-full text-center space-y-2">
+          <Button size="lg" className="w-full text-base font-semibold" disabled>
+            ✅ Anda Sudah Mendaftar
+          </Button>
+          <Badge variant={paymentVariant((existingReg as any).payment_status || 'pending')} className="text-sm">
+            {paymentLabel((existingReg as any).payment_status || 'pending')}
+            {(existingReg as any).payment_status?.startsWith('cicilan_') && (existingReg as any).installment_amount > 0 && (
+              <span className="ml-1">— {formatPrice((existingReg as any).installment_amount)}</span>
+            )}
+          </Badge>
+        </div>
+      ) : (
+        <DialogTrigger asChild>
+          <Button size="lg" className="w-full text-base font-semibold" disabled={isFull || event.status === 'completed'}>
+            {isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : 'Daftar Sekarang'}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-heading text-xl">

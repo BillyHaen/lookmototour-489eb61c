@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
-import { formatDate } from '@/data/events';
+import { formatDate, formatPrice } from '@/data/events';
+import { toast } from '@/hooks/use-toast';
 
 interface Props {
   eventId: string;

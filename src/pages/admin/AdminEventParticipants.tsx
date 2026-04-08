@@ -71,6 +71,37 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
     window.open(`https://wa.me/${waNum}?text=${msg}`, '_blank');
   };
 
+  const updatePayment = async (regId: string, status: string, amount: number) => {
+    const { error } = await supabase
+      .from('event_registrations')
+      .update({ payment_status: status, installment_amount: amount } as any)
+      .eq('id', regId);
+    if (error) {
+      toast({ title: 'Gagal update', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Status pembayaran diperbarui' });
+      queryClient.invalidateQueries({ queryKey: ['admin-event-registrations', eventId] });
+    }
+  };
+
+  const paymentLabel = (status: string) => {
+    if (status === 'lunas') return 'Lunas';
+    if (status?.startsWith('cicilan_')) return `Cicilan ${status.split('_')[1]}`;
+    return 'Belum Bayar';
+  };
+
+  const paymentColor = (status: string) => {
+    if (status === 'lunas') return 'default';
+    if (status?.startsWith('cicilan_')) return 'secondary';
+    return 'outline' as const;
+  };
+
+  const regTypeLabel = (t: string) => {
+    if (t === 'sharing') return 'Sharing';
+    if (t === 'couple') return 'Couple';
+    return 'Single';
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

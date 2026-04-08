@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
@@ -14,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/events';
 import { Loader2, CheckCircle2 } from 'lucide-react';
 import type { DbEvent } from '@/hooks/useEvents';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 
 const schema = z.object({
   name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),
@@ -37,6 +38,34 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isFull = event.current_participants >= event.max_participants;
+
+  // Check if user already registered
+  const { data: existingReg } = useQuery({
+    queryKey: ['my-registration', event.id, user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('event_registrations')
+        .select('*')
+        .eq('event_id', event.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const paymentLabel = (status: string) => {
+    if (status === 'lunas') return 'Lunas';
+    if (status?.startsWith('cicilan_')) return `Cicilan ${status.split('_')[1]}`;
+    return 'Menunggu Pembayaran';
+  };
+
+  const paymentVariant = (status: string) => {
+    if (status === 'lunas') return 'default' as const;
+    if (status?.startsWith('cicilan_')) return 'secondary' as const;
+    return 'outline' as const;
+  };
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -92,16 +121,31 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     setSubmitted(true);
     queryClient.invalidateQueries({ queryKey: ['event', event.id] });
     queryClient.invalidateQueries({ queryKey: ['events'] });
+    queryClient.invalidateQueries({ queryKey: ['my-registration', event.id, user?.id] });
     toast({ title: 'Pendaftaran berhasil! 🎉', description: `Kamu sudah terdaftar untuk ${event.title}` });
   };
 
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <DialogTrigger asChild>
-        <Button size="lg" className="w-full text-base font-semibold" disabled={isFull || event.status === 'completed'}>
-          {isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : 'Daftar Sekarang'}
-        </Button>
-      </DialogTrigger>
+      {existingReg ? (
+        <div className="w-full text-center space-y-2">
+          <Button size="lg" className="w-full text-base font-semibold" disabled>
+            ✅ Anda Sudah Mendaftar
+          </Button>
+          <Badge variant={paymentVariant((existingReg as any).payment_status || 'pending')} className="text-sm">
+            {paymentLabel((existingReg as any).payment_status || 'pending')}
+            {(existingReg as any).payment_status?.startsWith('cicilan_') && (existingReg as any).installment_amount > 0 && (
+              <span className="ml-1">— {formatPrice((existingReg as any).installment_amount)}</span>
+            )}
+          </Badge>
+        </div>
+      ) : (
+        <DialogTrigger asChild>
+          <Button size="lg" className="w-full text-base font-semibold" disabled={isFull || event.status === 'completed'}>
+            {isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : 'Daftar Sekarang'}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-heading text-xl">

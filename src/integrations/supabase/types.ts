@@ -62,9 +62,11 @@ export type Database = {
           emergency_contact: string
           event_id: string
           id: string
+          installment_amount: number
           motor_type: string
           name: string
           notes: string | null
+          payment_status: string
           phone: string
           plate_number: string
           registration_type: string
@@ -78,9 +80,11 @@ export type Database = {
           emergency_contact?: string
           event_id: string
           id?: string
+          installment_amount?: number
           motor_type?: string
           name: string
           notes?: string | null
+          payment_status?: string
           phone: string
           plate_number?: string
           registration_type?: string
@@ -94,9 +98,11 @@ export type Database = {
           emergency_contact?: string
           event_id?: string
           id?: string
+          installment_amount?: number
           motor_type?: string
           name?: string
           notes?: string | null
+          payment_status?: string
           phone?: string
           plate_number?: string
           registration_type?: string

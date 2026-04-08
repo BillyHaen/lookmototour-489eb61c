@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
-import { formatDate } from '@/data/events';
+import { formatDate, formatPrice } from '@/data/events';
+import { toast } from '@/hooks/use-toast';
 
 interface Props {
   eventId: string;
@@ -18,6 +20,7 @@ interface Props {
 
 export default function AdminEventParticipants({ eventId, eventTitle, open, onOpenChange }: Props) {
   const [search, setSearch] = useState('');
+  const queryClient = useQueryClient();
 
   const { data: registrations, isLoading } = useQuery({
     queryKey: ['admin-event-registrations', eventId],
@@ -66,6 +69,37 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
     const waNum = formatWhatsApp(phone);
     const msg = encodeURIComponent(`Halo ${name}, ini dari LookMotoTour mengenai event "${eventTitle}".`);
     window.open(`https://wa.me/${waNum}?text=${msg}`, '_blank');
+  };
+
+  const updatePayment = async (regId: string, status: string, amount: number) => {
+    const { error } = await supabase
+      .from('event_registrations')
+      .update({ payment_status: status, installment_amount: amount } as any)
+      .eq('id', regId);
+    if (error) {
+      toast({ title: 'Gagal update', description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: 'Status pembayaran diperbarui' });
+      queryClient.invalidateQueries({ queryKey: ['admin-event-registrations', eventId] });
+    }
+  };
+
+  const paymentLabel = (status: string) => {
+    if (status === 'lunas') return 'Lunas';
+    if (status?.startsWith('cicilan_')) return `Cicilan ${status.split('_')[1]}`;
+    return 'Belum Bayar';
+  };
+
+  const paymentColor = (status: string) => {
+    if (status === 'lunas') return 'default';
+    if (status?.startsWith('cicilan_')) return 'secondary';
+    return 'outline' as const;
+  };
+
+  const regTypeLabel = (t: string) => {
+    if (t === 'sharing') return 'Sharing';
+    if (t === 'couple') return 'Couple';
+    return 'Single';
   };
 
   return (
@@ -146,6 +180,54 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                   </div>
                   <div className="text-muted-foreground">
                     <span className="text-xs">Darurat: {r.emergency_contact || '-'}</span>
+                  </div>
+                </div>
+
+                {/* Payment section */}
+                <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <CreditCard className="h-4 w-4 text-primary" />
+                    Pembayaran — <Badge variant="outline">{regTypeLabel(r.registration_type)}</Badge>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Select
+                      value={(r as any).payment_status || 'pending'}
+                      onValueChange={(val) => {
+                        const amt = val === 'lunas' ? 0 : (r as any).installment_amount || 0;
+                        updatePayment(r.id, val, amt);
+                      }}
+                    >
+                      <SelectTrigger className="w-[160px] h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Belum Bayar</SelectItem>
+                        <SelectItem value="lunas">Lunas</SelectItem>
+                        {[1,2,3,4,5,6].map(n => (
+                          <SelectItem key={n} value={`cicilan_${n}`}>Cicilan {n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {(r as any).payment_status?.startsWith('cicilan_') && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-muted-foreground">Sudah bayar:</span>
+                        <Input
+                          type="number"
+                          className="w-[140px] h-8 text-xs"
+                          placeholder="Jumlah cicilan"
+                          defaultValue={(r as any).installment_amount || ''}
+                          onBlur={(e) => {
+                            const val = parseInt(e.target.value) || 0;
+                            updatePayment(r.id, (r as any).payment_status, val);
+                          }}
+                        />
+                      </div>
+                    )}
+                    {(r as any).installment_amount > 0 && (r as any).payment_status?.startsWith('cicilan_') && (
+                      <span className="text-xs text-muted-foreground">
+                        ({formatPrice((r as any).installment_amount)})
+                      </span>
+                    )}
                   </div>
                 </div>
 

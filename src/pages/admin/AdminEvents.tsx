@@ -31,6 +31,8 @@ interface EventForm {
   distance: string;
   highlights: string;
   requirements: string;
+  includes: string;
+  excludes: string;
   insurance_enabled: boolean;
   insurance_description: string;
   towing_enabled: boolean;
@@ -42,6 +44,7 @@ const emptyForm: EventForm = {
   title: '', description: '', category: 'touring', date: '', end_date: '',
   location: '', price_sharing: 0, price_single: 0, price_couple: 0, max_participants: 30, image_url: '', status: 'upcoming',
   difficulty: 'sedang', distance: '', highlights: '', requirements: '',
+  includes: '', excludes: '',
   insurance_enabled: false, insurance_description: '',
   towing_enabled: false, towing_pergi_price: 0, towing_pulang_price: 0,
 };

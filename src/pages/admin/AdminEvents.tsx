@@ -117,7 +117,7 @@ export default function AdminEvents() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+    mutationFn: async ({ id }: { id: string }) => {
       // Check if any participant has paid (lunas)
       const { data: paidRegs } = await supabase
         .from('event_registrations')
@@ -128,11 +128,6 @@ export default function AdminEvents() {
 
       if (paidRegs && paidRegs.length > 0) {
         throw new Error('Tidak bisa menghapus event yang memiliki peserta dengan status pembayaran LUNAS.');
-      }
-
-      // If event is completed, change status instead of deleting
-      if (status === 'completed') {
-        throw new Error('Event sudah selesai. Status event sudah diubah menjadi "Selesai" dan pendaftaran dinonaktifkan.');
       }
 
       const { error } = await supabase.from('events').update({ deleted_at: new Date().toISOString() }).eq('id', id);
@@ -211,7 +206,7 @@ export default function AdminEvents() {
                   <Users className="h-4 w-4" />
                 </Button>
                 <Button variant="outline" size="sm" onClick={() => openEdit(event)}><Pencil className="h-4 w-4" /></Button>
-                <Button variant="destructive" size="sm" onClick={() => { if (confirm('Hapus event ini?')) deleteMutation.mutate({ id: event.id, status: event.status }); }}><Trash2 className="h-4 w-4" /></Button>
+                <Button variant="destructive" size="sm" onClick={() => { if (confirm('Hapus event ini?')) deleteMutation.mutate({ id: event.id }); }}><Trash2 className="h-4 w-4" /></Button>
               </div>
             </div>
           ))}

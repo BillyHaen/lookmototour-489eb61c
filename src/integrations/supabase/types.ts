@@ -137,9 +137,11 @@ export type Database = {
           difficulty: string
           distance: string | null
           end_date: string | null
+          excludes: string[] | null
           highlights: string[] | null
           id: string
           image_url: string | null
+          includes: string[] | null
           insurance_description: string | null
           insurance_enabled: boolean
           location: string
@@ -166,9 +168,11 @@ export type Database = {
           difficulty?: string
           distance?: string | null
           end_date?: string | null
+          excludes?: string[] | null
           highlights?: string[] | null
           id?: string
           image_url?: string | null
+          includes?: string[] | null
           insurance_description?: string | null
           insurance_enabled?: boolean
           location?: string
@@ -195,9 +199,11 @@ export type Database = {
           difficulty?: string
           distance?: string | null
           end_date?: string | null
+          excludes?: string[] | null
           highlights?: string[] | null
           id?: string
           image_url?: string | null
+          includes?: string[] | null
           insurance_description?: string | null
           insurance_enabled?: boolean
           location?: string

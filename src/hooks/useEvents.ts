@@ -12,6 +12,7 @@ export function useEvents() {
         .from('events')
         .select('*')
         .is('deleted_at', null)
+        .neq('status', 'draft')
         .order('date', { ascending: true });
       if (error) throw error;
       return data as DbEvent[];

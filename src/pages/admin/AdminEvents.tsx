@@ -203,7 +203,9 @@ export default function AdminEvents() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <p className="font-medium truncate">{event.title}</p>
-                  <Badge variant={event.status === 'upcoming' ? 'default' : 'secondary'}>{event.status}</Badge>
+                  <Badge variant={event.status === 'draft' ? 'outline' : event.status === 'upcoming' ? 'default' : 'secondary'}>
+                    {event.status === 'draft' ? '📝 Draft' : event.status}
+                  </Badge>
                 </div>
                 <p className="text-sm text-muted-foreground">{formatDate(event.date)} • {event.location} • S:{formatPrice((event as any).price_sharing || 0)} / I:{formatPrice((event as any).price_single || event.price)} / C:{formatPrice((event as any).price_couple || 0)}</p>
                 <p className="text-xs text-muted-foreground">{event.current_participants}/{event.max_participants} peserta</p>
@@ -331,6 +333,7 @@ export default function AdminEvents() {
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
+                <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="upcoming">Akan Datang</SelectItem>
                 <SelectItem value="ongoing">Berlangsung</SelectItem>
                 <SelectItem value="completed">Selesai</SelectItem>
@@ -365,10 +368,28 @@ export default function AdminEvents() {
               </CardContent>
             </Card>
 
-            <Button className="w-full" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending || !form.title || !form.date}>
-              {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              {editId ? 'Simpan Perubahan' : 'Tambah Event'}
-            </Button>
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => {
+                  setForm({ ...form, status: 'draft' });
+                  setTimeout(() => saveMutation.mutate(), 0);
+                }}
+                disabled={saveMutation.isPending || !form.title}
+              >
+                {saveMutation.isPending && form.status === 'draft' && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                💾 Simpan Draft
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={() => saveMutation.mutate()}
+                disabled={saveMutation.isPending || !form.title || !form.date}
+              >
+                {saveMutation.isPending && form.status !== 'draft' && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {editId ? 'Simpan & Publikasi' : 'Tambah & Publikasi'}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

@@ -2,7 +2,7 @@ import { ReactNode, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useAdmin';
-import { Loader2, LayoutDashboard, CalendarDays, Users, ShoppingBag, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Loader2, LayoutDashboard, CalendarDays, Users, ShoppingBag, MessageSquare, Settings, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const ADMIN_NAV = [
@@ -11,6 +11,7 @@ const ADMIN_NAV = [
   { label: 'User', path: '/admin/users', icon: Users },
   { label: 'Produk', path: '/admin/products', icon: ShoppingBag },
   { label: 'Testimoni', path: '/admin/testimonials', icon: MessageSquare },
+  { label: 'Pengaturan', path: '/admin/settings', icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {

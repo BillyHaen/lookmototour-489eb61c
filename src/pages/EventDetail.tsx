@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -182,6 +182,27 @@ export default function EventDetail() {
                     <div>
                       <p className="font-heading font-semibold">Asuransi Tersedia</p>
                       <p className="text-sm text-muted-foreground">{(event as any).insurance_description || 'Event ini menyediakan asuransi untuk peserta.'}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Towing Motor */}
+              {(event as any).towing_enabled && (
+                <Card className="border-accent/20">
+                  <CardContent className="flex items-start gap-3 pt-6">
+                    <Truck className="h-6 w-6 text-accent shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-heading font-semibold">Towing Motor Tersedia</p>
+                      <p className="text-sm text-muted-foreground">{(event as any).towing_description || 'Event ini menyediakan layanan towing motor untuk peserta.'}</p>
+                      <div className="flex gap-4 mt-2">
+                        {(event as any).towing_pergi_price > 0 && (
+                          <span className="text-sm font-medium">Pergi: <span className="text-primary">{formatPrice((event as any).towing_pergi_price)}</span></span>
+                        )}
+                        {(event as any).towing_pulang_price > 0 && (
+                          <span className="text-sm font-medium">Pulang: <span className="text-primary">{formatPrice((event as any).towing_pulang_price)}</span></span>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

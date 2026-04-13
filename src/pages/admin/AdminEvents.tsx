@@ -37,6 +37,7 @@ interface EventForm {
   insurance_enabled: boolean;
   insurance_description: string;
   towing_enabled: boolean;
+  towing_description: string;
   towing_pergi_price: number;
   towing_pulang_price: number;
 }
@@ -47,7 +48,7 @@ const emptyForm: EventForm = {
   difficulty: 'sedang', distance: '', highlights: '', requirements: '',
   includes: '', excludes: '',
   insurance_enabled: false, insurance_description: '',
-  towing_enabled: false, towing_pergi_price: 0, towing_pulang_price: 0,
+  towing_enabled: false, towing_description: '', towing_pergi_price: 0, towing_pulang_price: 0,
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }
@@ -85,6 +86,7 @@ export default function AdminEvents() {
         insurance_enabled: form.insurance_enabled,
         insurance_description: form.insurance_description,
         towing_enabled: form.towing_enabled,
+        towing_description: form.towing_description,
         towing_pergi_price: form.towing_pergi_price,
         towing_pulang_price: form.towing_pulang_price,
       };
@@ -163,6 +165,7 @@ export default function AdminEvents() {
       insurance_enabled: event.insurance_enabled || false,
       insurance_description: event.insurance_description || '',
       towing_enabled: (event as any).towing_enabled || false,
+      towing_description: (event as any).towing_description || '',
       towing_pergi_price: (event as any).towing_pergi_price || 0,
       towing_pulang_price: (event as any).towing_pulang_price || 0,
     });

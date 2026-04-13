@@ -154,6 +154,7 @@ export type Database = {
           requirements: string[] | null
           status: string
           title: string
+          towing_description: string | null
           towing_enabled: boolean
           towing_pergi_price: number
           towing_pulang_price: number
@@ -186,6 +187,7 @@ export type Database = {
           requirements?: string[] | null
           status?: string
           title: string
+          towing_description?: string | null
           towing_enabled?: boolean
           towing_pergi_price?: number
           towing_pulang_price?: number
@@ -218,6 +220,7 @@ export type Database = {
           requirements?: string[] | null
           status?: string
           title?: string
+          towing_description?: string | null
           towing_enabled?: boolean
           towing_pergi_price?: number
           towing_pulang_price?: number

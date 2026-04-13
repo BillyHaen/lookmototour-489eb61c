@@ -208,7 +208,22 @@ export default function AdminEvents() {
                 <p className="text-sm text-muted-foreground">{formatDate(event.date)} • {event.location} • S:{formatPrice((event as any).price_sharing || 0)} / I:{formatPrice((event as any).price_single || event.price)} / C:{formatPrice((event as any).price_couple || 0)}</p>
                 <p className="text-xs text-muted-foreground">{event.current_participants}/{event.max_participants} peserta</p>
               </div>
-              <div className="flex gap-2 ml-4">
+              <div className="flex items-center gap-2 ml-4">
+                {(event as any).force_full && <Badge variant="destructive" className="text-xs">Slot Penuh</Badge>}
+                <Button
+                  variant={(event as any).force_full ? "destructive" : "outline"}
+                  size="sm"
+                  title={`${(event as any).force_full ? 'Buka' : 'Tutup'} Pendaftaran`}
+                  onClick={async () => {
+                    const newVal = !(event as any).force_full;
+                    await supabase.from('events').update({ force_full: newVal } as any).eq('id', event.id);
+                    queryClient.invalidateQueries({ queryKey: ['admin-events'] });
+                    queryClient.invalidateQueries({ queryKey: ['events'] });
+                    toast({ title: newVal ? 'Pendaftaran ditutup (Slot Penuh) 🔒' : 'Pendaftaran dibuka kembali ✅' });
+                  }}
+                >
+                  {(event as any).force_full ? '🔒' : '🔓'}
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => setParticipantsEvent({ id: event.id, title: event.title })} title="Lihat Peserta">
                   <Users className="h-4 w-4" />
                 </Button>

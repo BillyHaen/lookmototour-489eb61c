@@ -324,14 +324,17 @@ export default function AdminEvents() {
               <label htmlFor="towing" className="text-sm font-medium">Towing Motor Tersedia</label>
             </div>
             {form.towing_enabled && (
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Harga Towing Pergi</label>
-                  <Input type="number" placeholder="0" value={form.towing_pergi_price} onChange={(e) => setForm({ ...form, towing_pergi_price: Number(e.target.value) })} />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Harga Towing Pulang</label>
-                  <Input type="number" placeholder="0" value={form.towing_pulang_price} onChange={(e) => setForm({ ...form, towing_pulang_price: Number(e.target.value) })} />
+              <div className="space-y-3">
+                <Textarea placeholder="Deskripsi towing (jenis layanan, rute, dll)" value={form.towing_description} onChange={(e) => setForm({ ...form, towing_description: e.target.value })} rows={2} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground">Harga Towing Pergi</label>
+                    <Input type="number" placeholder="0" value={form.towing_pergi_price} onChange={(e) => setForm({ ...form, towing_pergi_price: Number(e.target.value) })} />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground">Harga Towing Pulang</label>
+                    <Input type="number" placeholder="0" value={form.towing_pulang_price} onChange={(e) => setForm({ ...form, towing_pulang_price: Number(e.target.value) })} />
+                  </div>
                 </div>
               </div>
             )}

@@ -65,8 +65,9 @@ export default function EventDetail() {
   }
 
   const cat = EVENT_CATEGORIES[event.category as EventCategory] || EVENT_CATEGORIES.touring;
-  const spotsLeft = event.max_participants - event.current_participants;
-  const fillPercent = (event.current_participants / event.max_participants) * 100;
+  const forceFull = (event as any).force_full || false;
+  const spotsLeft = forceFull ? 0 : event.max_participants - event.current_participants;
+  const fillPercent = forceFull ? 100 : (event.current_participants / event.max_participants) * 100;
   const waNumber = footerSettings?.whatsapp_number || '6281234567890';
   const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo, saya tertarik dengan event "${event.title}". Bisa info lebih lanjut?`)}`;
 

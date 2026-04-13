@@ -39,7 +39,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const isFull = event.current_participants >= event.max_participants;
+  const isFull = event.current_participants >= event.max_participants || (event as any).force_full;
 
   // Check if user already registered
   const { data: existingReg } = useQuery({
@@ -158,7 +158,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     <Dialog open={open} onOpenChange={handleOpen}>
       <DialogTrigger asChild>
         <Button size="lg" className="w-full text-base font-semibold" disabled={isFull || event.status === 'completed'}>
-          {isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : 'Daftar Sekarang'}
+          {(event as any).force_full ? 'Kuota Penuh' : isFull ? 'Event Penuh' : event.status === 'completed' ? 'Event Selesai' : 'Daftar Sekarang'}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">

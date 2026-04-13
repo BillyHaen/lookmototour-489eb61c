@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Plus, Trash2 } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface FooterSettings {
   description: string;
@@ -19,43 +20,52 @@ interface FooterSettings {
   email: string;
 }
 
+interface ValueCard {
+  icon: string;
+  title: string;
+  desc: string;
+}
+
+interface AboutSettings {
+  description: string;
+  visi: string;
+  misi: string;
+  values: ValueCard[];
+}
+
 const defaultFooter: FooterSettings = {
-  description: '',
-  instagram_url: '',
-  youtube_url: '',
-  whatsapp_number: '',
-  address: '',
-  phone: '',
-  email: '',
+  description: '', instagram_url: '', youtube_url: '', whatsapp_number: '',
+  address: '', phone: '', email: '',
 };
 
-export default function AdminSettings() {
+const defaultAbout: AboutSettings = {
+  description: '', visi: '', misi: '', values: [],
+};
+
+const ICON_OPTIONS = ['Heart', 'Shield', 'Map', 'Users', 'Star', 'Zap', 'Target', 'Award', 'Globe', 'Compass'];
+
+function useSiteSettings<T>(key: string, defaultValue: T) {
+  const [form, setForm] = useState<T>(defaultValue);
   const queryClient = useQueryClient();
-  const [footer, setFooter] = useState<FooterSettings>(defaultFooter);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['site-settings', 'footer'],
+    queryKey: ['site-settings', key],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('site_settings')
-        .select('value')
-        .eq('key', 'footer')
-        .single();
+        .from('site_settings').select('value').eq('key', key).single();
       if (error) throw error;
-      return data.value as unknown as FooterSettings;
+      return data.value as unknown as T;
     },
   });
 
-  useEffect(() => {
-    if (data) setFooter(data);
-  }, [data]);
+  useEffect(() => { if (data) setForm(data); }, [data]);
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (value: T) => {
       const { error } = await supabase
         .from('site_settings')
-        .update({ value: footer as any, updated_at: new Date().toISOString() })
-        .eq('key', 'footer');
+        .update({ value: value as any, updated_at: new Date().toISOString() })
+        .eq('key', key);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -65,6 +75,15 @@ export default function AdminSettings() {
     onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
 
+  return { form, setForm, isLoading, saveMutation };
+}
+
+export default function AdminSettings() {
+  const footer = useSiteSettings<FooterSettings>('footer', defaultFooter);
+  const about = useSiteSettings<AboutSettings>('about', defaultAbout);
+
+  const isLoading = footer.isLoading || about.isLoading;
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -73,89 +92,145 @@ export default function AdminSettings() {
     );
   }
 
+  const addValueCard = () => {
+    about.setForm({
+      ...about.form,
+      values: [...about.form.values, { icon: 'Heart', title: '', desc: '' }],
+    });
+  };
+
+  const updateValueCard = (index: number, field: keyof ValueCard, value: string) => {
+    const updated = [...about.form.values];
+    updated[index] = { ...updated[index], [field]: value };
+    about.setForm({ ...about.form, values: updated });
+  };
+
+  const removeValueCard = (index: number) => {
+    about.setForm({ ...about.form, values: about.form.values.filter((_, i) => i !== index) });
+  };
+
   return (
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-heading font-bold text-2xl">Pengaturan Situs</h1>
       </div>
 
-      <Card className="max-w-2xl">
-        <CardHeader>
-          <CardTitle className="text-lg">Footer</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-1 block">Deskripsi</label>
-            <Textarea
-              value={footer.description}
-              onChange={(e) => setFooter({ ...footer, description: e.target.value })}
-              rows={3}
-            />
-          </div>
+      <Tabs defaultValue="footer" className="max-w-2xl">
+        <TabsList>
+          <TabsTrigger value="footer">Footer</TabsTrigger>
+          <TabsTrigger value="about">Halaman About</TabsTrigger>
+        </TabsList>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">URL Instagram</label>
-              <Input
-                placeholder="https://instagram.com/..."
-                value={footer.instagram_url}
-                onChange={(e) => setFooter({ ...footer, instagram_url: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">URL YouTube</label>
-              <Input
-                placeholder="https://youtube.com/..."
-                value={footer.youtube_url}
-                onChange={(e) => setFooter({ ...footer, youtube_url: e.target.value })}
-              />
-            </div>
-          </div>
+        <TabsContent value="footer">
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Footer</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Deskripsi</label>
+                <Textarea value={footer.form.description} onChange={(e) => footer.setForm({ ...footer.form, description: e.target.value })} rows={3} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">URL Instagram</label>
+                  <Input placeholder="https://instagram.com/..." value={footer.form.instagram_url} onChange={(e) => footer.setForm({ ...footer.form, instagram_url: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">URL YouTube</label>
+                  <Input placeholder="https://youtube.com/..." value={footer.form.youtube_url} onChange={(e) => footer.setForm({ ...footer.form, youtube_url: e.target.value })} />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Nomor WhatsApp</label>
+                <Input placeholder="6281234567890" value={footer.form.whatsapp_number} onChange={(e) => footer.setForm({ ...footer.form, whatsapp_number: e.target.value })} />
+                <p className="text-xs text-muted-foreground mt-1">Format tanpa + atau spasi, contoh: 6281234567890</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Alamat</label>
+                <Input placeholder="Jakarta, Indonesia" value={footer.form.address} onChange={(e) => footer.setForm({ ...footer.form, address: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Telepon</label>
+                  <Input placeholder="+62 812-3456-7890" value={footer.form.phone} onChange={(e) => footer.setForm({ ...footer.form, phone: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Email</label>
+                  <Input placeholder="info@lookmototour.com" value={footer.form.email} onChange={(e) => footer.setForm({ ...footer.form, email: e.target.value })} />
+                </div>
+              </div>
+              <Button onClick={() => footer.saveMutation.mutate(footer.form)} disabled={footer.saveMutation.isPending} className="gap-2">
+                {footer.saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Simpan Footer
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <div>
-            <label className="text-sm font-medium mb-1 block">Nomor WhatsApp</label>
-            <Input
-              placeholder="6281234567890"
-              value={footer.whatsapp_number}
-              onChange={(e) => setFooter({ ...footer, whatsapp_number: e.target.value })}
-            />
-            <p className="text-xs text-muted-foreground mt-1">Format tanpa + atau spasi, contoh: 6281234567890</p>
-          </div>
+        <TabsContent value="about">
+          <Card>
+            <CardHeader><CardTitle className="text-lg">Halaman About</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Deskripsi</label>
+                <Textarea value={about.form.description} onChange={(e) => about.setForm({ ...about.form, description: e.target.value })} rows={3} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Visi</label>
+                <Textarea value={about.form.visi} onChange={(e) => about.setForm({ ...about.form, visi: e.target.value })} rows={2} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Misi</label>
+                <Textarea value={about.form.misi} onChange={(e) => about.setForm({ ...about.form, misi: e.target.value })} rows={2} />
+              </div>
 
-          <div>
-            <label className="text-sm font-medium mb-1 block">Alamat</label>
-            <Input
-              placeholder="Jakarta, Indonesia"
-              value={footer.address}
-              onChange={(e) => setFooter({ ...footer, address: e.target.value })}
-            />
-          </div>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-medium">Value Cards</label>
+                  <Button type="button" variant="outline" size="sm" onClick={addValueCard} className="gap-1">
+                    <Plus className="h-3 w-3" /> Tambah
+                  </Button>
+                </div>
+                {about.form.values.map((v, i) => (
+                  <div key={i} className="p-3 rounded-lg border border-border space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Card {i + 1}</span>
+                      <Button type="button" variant="ghost" size="sm" onClick={() => removeValueCard(i)}><Trash2 className="h-3 w-3" /></Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground">Icon</label>
+                        <select
+                          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                          value={v.icon}
+                          onChange={(e) => updateValueCard(i, 'icon', e.target.value)}
+                        >
+                          {ICON_OPTIONS.map((ico) => (
+                            <option key={ico} value={ico}>{ico}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">Judul</label>
+                        <Input value={v.title} onChange={(e) => updateValueCard(i, 'title', e.target.value)} placeholder="Judul" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground">Deskripsi</label>
+                      <Input value={v.desc} onChange={(e) => updateValueCard(i, 'desc', e.target.value)} placeholder="Deskripsi singkat" />
+                    </div>
+                  </div>
+                ))}
+                {!about.form.values.length && <p className="text-sm text-muted-foreground text-center py-2">Belum ada value card.</p>}
+              </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">Telepon</label>
-              <Input
-                placeholder="+62 812-3456-7890"
-                value={footer.phone}
-                onChange={(e) => setFooter({ ...footer, phone: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Email</label>
-              <Input
-                placeholder="info@lookmototour.com"
-                value={footer.email}
-                onChange={(e) => setFooter({ ...footer, email: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="gap-2">
-            {saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            Simpan Pengaturan
-          </Button>
-        </CardContent>
-      </Card>
+              <Button onClick={() => about.saveMutation.mutate(about.form)} disabled={about.saveMutation.isPending} className="gap-2">
+                {about.saveMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Simpan About
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </AdminLayout>
   );
 }

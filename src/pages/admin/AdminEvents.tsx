@@ -69,13 +69,14 @@ export default function AdminEvents() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (statusOverride?: string) => {
+      const finalStatus = statusOverride || form.status;
       const payload = {
         title: form.title, description: form.description, category: form.category,
         date: form.date, end_date: form.end_date || null, location: form.location,
         price: form.price_single, price_sharing: form.price_sharing, price_single: form.price_single, price_couple: form.price_couple,
         max_participants: form.max_participants, image_url: form.image_url,
-        status: form.status, difficulty: form.difficulty, distance: form.distance,
+        status: finalStatus, difficulty: form.difficulty, distance: form.distance,
         highlights: form.highlights.split(',').map(h => h.trim()).filter(Boolean),
         requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
         includes: form.includes.split(',').map(i => i.trim()).filter(Boolean),

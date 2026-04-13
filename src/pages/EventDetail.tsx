@@ -206,7 +206,7 @@ export default function EventDetail() {
                               {it.date && <Badge variant="outline" className="text-xs">{formatDate(it.date)}</Badge>}
                             </div>
                             <p className="font-medium">{it.title}</p>
-                            <p className="text-sm text-muted-foreground">{it.description}</p>
+                            <p className="text-sm text-muted-foreground whitespace-pre-line">{it.description}</p>
                           </div>
                         </div>
                       ))}

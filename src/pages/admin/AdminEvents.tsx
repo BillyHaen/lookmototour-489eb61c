@@ -362,7 +362,7 @@ export default function AdminEvents() {
                       <Input type="date" value={it.date} onChange={(e) => updateItinerary(i, 'date', e.target.value)} placeholder="Tanggal" />
                       <Input value={it.title} onChange={(e) => updateItinerary(i, 'title', e.target.value)} placeholder="Judul hari ini" />
                     </div>
-                    <Textarea value={it.description} onChange={(e) => updateItinerary(i, 'description', e.target.value)} placeholder="Deskripsi kegiatan hari ini..." rows={2} />
+                    <Textarea value={it.description} onChange={(e) => updateItinerary(i, 'description', e.target.value)} placeholder="Deskripsi kegiatan hari ini...&#10;Contoh:&#10;06:00 : Morning Regroup&#10;07:00 : Breakfast" rows={5} />
                   </div>
                 ))}
                 {!itineraries.length && <p className="text-sm text-muted-foreground text-center py-2">Belum ada itinerary.</p>}

@@ -11,6 +11,7 @@ import EventRegistrationForm from '@/components/EventRegistrationForm';
 import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 export default function EventDetail() {
@@ -26,6 +27,16 @@ export default function EventDetail() {
       return data as any[];
     },
     enabled: !!id,
+  });
+
+  const { data: footerSettings } = useQuery({
+    queryKey: ['site-settings', 'footer'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('site_settings').select('value').eq('key', 'footer').single();
+      if (error) return null;
+      return data.value as any;
+    },
+    staleTime: 5 * 60 * 1000,
   });
 
   if (isLoading) {
@@ -56,7 +67,8 @@ export default function EventDetail() {
   const cat = EVENT_CATEGORIES[event.category as EventCategory] || EVENT_CATEGORIES.touring;
   const spotsLeft = event.max_participants - event.current_participants;
   const fillPercent = (event.current_participants / event.max_participants) * 100;
-  const waLink = `https://wa.me/6281234567890?text=${encodeURIComponent(`Halo, saya tertarik dengan event "${event.title}". Bisa info lebih lanjut?`)}`;
+  const waNumber = footerSettings?.whatsapp_number || '6281234567890';
+  const waLink = `https://wa.me/${waNumber}?text=${encodeURIComponent(`Halo, saya tertarik dengan event "${event.title}". Bisa info lebih lanjut?`)}`;
 
   return (
     <div className="min-h-screen">
@@ -249,7 +261,14 @@ export default function EventDetail() {
                       <MessageCircle className="h-4 w-4" /> WhatsApp
                     </a>
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => { navigator.clipboard.writeText(window.location.href); }}>
+                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => {
+                    if (navigator.share) {
+                      navigator.share({ title: event.title, url: window.location.href }).catch(() => {});
+                    } else {
+                      navigator.clipboard.writeText(window.location.href);
+                      toast({ title: 'Link disalin! 📋', description: 'Link event berhasil disalin ke clipboard.' });
+                    }
+                  }}>
                     <Share2 className="h-4 w-4" /> Bagikan
                   </Button>
                 </div>

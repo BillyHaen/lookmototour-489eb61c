@@ -59,7 +59,7 @@ export default function Profile() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('event_registrations')
-        .select('*, events(id, title, date, location, price, status)')
+        .select('*, events(id, title, date, location, price, price_sharing, price_single, price_couple, towing_pergi_price, towing_pulang_price, status)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;

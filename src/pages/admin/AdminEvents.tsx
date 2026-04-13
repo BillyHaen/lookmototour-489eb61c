@@ -13,6 +13,7 @@ import { toast } from '@/hooks/use-toast';
 import { formatPrice, formatDate } from '@/data/events';
 import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users } from 'lucide-react';
 import AdminEventParticipants from './AdminEventParticipants';
+import EventImageUpload from '@/components/EventImageUpload';
 
 interface EventForm {
   title: string;
@@ -299,7 +300,7 @@ export default function AdminEvents() {
               </div>
             </div>
             <Input type="number" placeholder="Maks Peserta" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: Number(e.target.value) })} />
-            <Input placeholder="URL Gambar" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+            <EventImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
             <Input placeholder="Highlights (pisahkan koma)" value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} />
             <Input placeholder="Persyaratan (pisahkan koma)" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />
             <Input placeholder="Include (pisahkan koma)" value={form.includes} onChange={(e) => setForm({ ...form, includes: e.target.value })} />

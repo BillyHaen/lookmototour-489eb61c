@@ -26,9 +26,9 @@ export default function MemberProfile() {
   const { data: profile, isLoading } = useQuery({
     queryKey: ['member-profile', userId],
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('user_id', userId!).single();
+      const { data, error } = await supabase.rpc('get_public_profile', { _user_id: userId! });
       if (error) throw error;
-      return data;
+      return (data as any[])?.[0] || null;
     },
     enabled: !!userId,
   });

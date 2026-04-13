@@ -368,6 +368,30 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_approved_testimonials_with_profiles: {
+        Args: never
+        Returns: {
+          content: string
+          created_at: string
+          event_id: string
+          event_title: string
+          id: string
+          rating: number
+          status: string
+          user_avatar_url: string
+          user_id: string
+          user_name: string
+        }[]
+      }
+      get_public_profile: {
+        Args: { _user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          name: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

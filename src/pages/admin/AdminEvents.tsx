@@ -75,6 +75,8 @@ export default function AdminEvents() {
         status: form.status, difficulty: form.difficulty, distance: form.distance,
         highlights: form.highlights.split(',').map(h => h.trim()).filter(Boolean),
         requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
+        includes: form.includes.split(',').map(i => i.trim()).filter(Boolean),
+        excludes: form.excludes.split(',').map(e => e.trim()).filter(Boolean),
         insurance_enabled: form.insurance_enabled,
         insurance_description: form.insurance_description,
         towing_enabled: form.towing_enabled,
@@ -151,6 +153,8 @@ export default function AdminEvents() {
       image_url: event.image_url || '', status: event.status, difficulty: event.difficulty,
       distance: event.distance || '', highlights: (event.highlights || []).join(', '),
       requirements: (event.requirements || []).join(', '),
+      includes: ((event as any).includes || []).join(', '),
+      excludes: ((event as any).excludes || []).join(', '),
       insurance_enabled: event.insurance_enabled || false,
       insurance_description: event.insurance_description || '',
       towing_enabled: (event as any).towing_enabled || false,
@@ -277,6 +281,8 @@ export default function AdminEvents() {
             <Input placeholder="URL Gambar" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
             <Input placeholder="Highlights (pisahkan koma)" value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} />
             <Input placeholder="Persyaratan (pisahkan koma)" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />
+            <Input placeholder="Include (pisahkan koma)" value={form.includes} onChange={(e) => setForm({ ...form, includes: e.target.value })} />
+            <Input placeholder="Exclude (pisahkan koma)" value={form.excludes} onChange={(e) => setForm({ ...form, excludes: e.target.value })} />
             
             {/* Asuransi */}
             <div className="flex items-center gap-3 p-3 rounded-lg border border-border">

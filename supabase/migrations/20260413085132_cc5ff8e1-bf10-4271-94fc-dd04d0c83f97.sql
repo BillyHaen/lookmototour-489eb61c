@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN towing_description text DEFAULT '';

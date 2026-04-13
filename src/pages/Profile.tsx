@@ -233,15 +233,19 @@ export default function Profile() {
                         <div className="flex flex-wrap gap-2 text-xs">
                           <Badge variant="outline">{regTypeLabel}</Badge>
                           {reg.towing_pergi && (
-                            <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> Towing Pergi</Badge>
+                            <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> Towing Pergi — {formatPrice(reg.events?.towing_pergi_price || 0)}</Badge>
                           )}
                           {reg.towing_pulang && (
-                            <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> Towing Pulang</Badge>
+                            <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> Towing Pulang — {formatPrice(reg.events?.towing_pulang_price || 0)}</Badge>
                           )}
                         </div>
-                        <p className="text-sm font-bold text-primary">
-                          {reg.events?.price !== undefined ? formatPrice(reg.events.price) : ''}
-                        </p>
+                        {(() => {
+                          const ev = reg.events;
+                          if (!ev) return null;
+                          const basePrice = reg.registration_type === 'sharing' ? (ev.price_sharing || 0) : reg.registration_type === 'couple' ? (ev.price_couple || 0) : (ev.price_single || ev.price || 0);
+                          const towingTotal = (reg.towing_pergi ? (ev.towing_pergi_price || 0) : 0) + (reg.towing_pulang ? (ev.towing_pulang_price || 0) : 0);
+                          return <p className="text-sm font-bold text-primary">{formatPrice(basePrice + towingTotal)}</p>;
+                        })()}
                       </div>
                     );
                   })}

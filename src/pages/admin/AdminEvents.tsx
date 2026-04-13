@@ -373,21 +373,18 @@ export default function AdminEvents() {
               <Button
                 variant="outline"
                 className="flex-1"
-                onClick={() => {
-                  setForm({ ...form, status: 'draft' });
-                  setTimeout(() => saveMutation.mutate(), 0);
-                }}
+                onClick={() => saveMutation.mutate('draft')}
                 disabled={saveMutation.isPending || !form.title}
               >
-                {saveMutation.isPending && form.status === 'draft' && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 💾 Simpan Draft
               </Button>
               <Button
                 className="flex-1"
-                onClick={() => saveMutation.mutate()}
+                onClick={() => saveMutation.mutate(form.status === 'draft' ? 'upcoming' : undefined)}
                 disabled={saveMutation.isPending || !form.title || !form.date}
               >
-                {saveMutation.isPending && form.status !== 'draft' && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {editId ? 'Simpan & Publikasi' : 'Tambah & Publikasi'}
               </Button>
             </div>

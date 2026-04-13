@@ -25,6 +25,8 @@ const schema = z.object({
   plateNumber: z.string().trim().min(3, 'Masukkan plat nomor').max(15),
   emergencyContact: z.string().trim().min(10, 'Masukkan kontak darurat').max(100),
   registrationType: z.enum(['sharing', 'single', 'couple']),
+  towingPergi: z.boolean().optional(),
+  towingPulang: z.boolean().optional(),
   notes: z.string().max(500).optional(),
 });
 
@@ -71,16 +73,23 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', registrationType: 'single', notes: '' },
+    defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', registrationType: 'single', towingPergi: false, towingPulang: false, notes: '' },
   });
 
   const selectedType = form.watch('registrationType');
+  const towingPergi = form.watch('towingPergi');
+  const towingPulang = form.watch('towingPulang');
+  const towingEnabled = (event as any).towing_enabled || false;
+  const towingPergiPrice = (event as any).towing_pergi_price || 0;
+  const towingPulangPrice = (event as any).towing_pulang_price || 0;
   const priceMap: Record<string, number> = {
     sharing: (event as any).price_sharing || 0,
     single: (event as any).price_single || event.price || 0,
     couple: (event as any).price_couple || 0,
   };
-  const selectedPrice = priceMap[selectedType] || 0;
+  const basePrice = priceMap[selectedType] || 0;
+  const towingTotal = (towingPergi ? towingPergiPrice : 0) + (towingPulang ? towingPulangPrice : 0);
+  const selectedPrice = basePrice + towingTotal;
 
   const handleOpen = (v: boolean) => {
     if (v && !user) {
@@ -106,6 +115,8 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       plate_number: data.plateNumber,
       emergency_contact: data.emergencyContact,
       registration_type: data.registrationType,
+      towing_pergi: data.towingPergi || false,
+      towing_pulang: data.towingPulang || false,
       notes: data.notes || '',
     });
 
@@ -238,6 +249,29 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                   <FormMessage />
                 </FormItem>
               )} />
+              {/* Towing Options */}
+              {towingEnabled && (
+                <div className="space-y-2 p-3 rounded-lg border border-border">
+                  <p className="text-sm font-medium">Opsi Towing Motor</p>
+                  {towingPergiPrice > 0 && (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={towingPergi} onChange={(e) => form.setValue('towingPergi', e.target.checked)} className="h-4 w-4 rounded border-input" />
+                      <span className="text-sm">Towing Pergi</span>
+                      <span className="text-sm font-bold text-primary ml-auto">{formatPrice(towingPergiPrice)}</span>
+                    </label>
+                  )}
+                  {towingPulangPrice > 0 && (
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input type="checkbox" checked={towingPulang} onChange={(e) => form.setValue('towingPulang', e.target.checked)} className="h-4 w-4 rounded border-input" />
+                      <span className="text-sm">Towing Pulang</span>
+                      <span className="text-sm font-bold text-primary ml-auto">{formatPrice(towingPulangPrice)}</span>
+                    </label>
+                  )}
+                  {towingTotal > 0 && (
+                    <p className="text-xs text-muted-foreground pt-1 border-t border-border">Tambahan towing: {formatPrice(towingTotal)}</p>
+                  )}
+                </div>
+              )}
               <FormField control={form.control} name="notes" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Catatan</FormLabel>

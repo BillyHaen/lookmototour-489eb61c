@@ -21,8 +21,9 @@ const DIFFICULTY_MAP: Record<string, string> = {
 export default function EventCard({ event }: { event: DbEvent }) {
   const cat = EVENT_CATEGORIES[event.category as EventCategory] || EVENT_CATEGORIES.touring;
   const status = STATUS_MAP[event.status as keyof typeof STATUS_MAP] || STATUS_MAP.upcoming;
-  const spotsLeft = event.max_participants - event.current_participants;
-  const isFull = spotsLeft <= 0;
+  const forceFull = (event as any).force_full || false;
+  const spotsLeft = forceFull ? 0 : event.max_participants - event.current_participants;
+  const isFull = spotsLeft <= 0 || forceFull;
 
   return (
     <Link to={`/events/${event.id}`}>

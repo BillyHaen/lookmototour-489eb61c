@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN force_full boolean NOT NULL DEFAULT false;

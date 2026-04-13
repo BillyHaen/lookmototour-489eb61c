@@ -138,6 +138,7 @@ export type Database = {
           distance: string | null
           end_date: string | null
           excludes: string[] | null
+          force_full: boolean
           highlights: string[] | null
           id: string
           image_url: string | null
@@ -169,6 +170,7 @@ export type Database = {
           distance?: string | null
           end_date?: string | null
           excludes?: string[] | null
+          force_full?: boolean
           highlights?: string[] | null
           id?: string
           image_url?: string | null
@@ -200,6 +202,7 @@ export type Database = {
           distance?: string | null
           end_date?: string | null
           excludes?: string[] | null
+          force_full?: boolean
           highlights?: string[] | null
           id?: string
           image_url?: string | null

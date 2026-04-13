@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy } from 'lucide-react';
+import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck } from 'lucide-react';
 import { formatDate, formatPrice } from '@/data/events';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -203,24 +203,48 @@ export default function Profile() {
                 <p className="text-muted-foreground text-sm py-4">Belum ada pendaftaran event.</p>
               ) : (
                 <div className="space-y-3">
-                  {registrations.map((r) => (
-                    <div key={r.id} className="flex items-center justify-between p-4 rounded-lg border border-border">
-                      <div>
-                        <p className="font-medium">{(r as any).events?.title}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {(r as any).events?.date ? formatDate((r as any).events.date) : ''} • {(r as any).events?.location}
+                  {registrations.map((r) => {
+                    const reg = r as any;
+                    const regTypeLabel = reg.registration_type === 'sharing' ? 'Sharing' : reg.registration_type === 'couple' ? 'Couple' : 'Single';
+                    const paymentStatus = reg.payment_status || 'pending';
+                    const paymentLabel = paymentStatus === 'lunas' ? 'Lunas' : paymentStatus === 'batal' ? 'Batal' : paymentStatus?.startsWith('cicilan_') ? `Cicilan ${paymentStatus.split('_')[1]}` : 'Menunggu Pembayaran';
+                    const paymentVariant = paymentStatus === 'lunas' ? 'default' : paymentStatus === 'batal' ? 'destructive' : paymentStatus?.startsWith('cicilan_') ? 'secondary' : 'outline';
+                    return (
+                      <div key={r.id} className="p-4 rounded-lg border border-border space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{reg.events?.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {reg.events?.date ? formatDate(reg.events.date) : ''} • {reg.events?.location}
+                            </p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <Badge variant={r.status === 'confirmed' ? 'default' : 'secondary'}>
+                              {r.status === 'confirmed' ? 'Terdaftar' : r.status}
+                            </Badge>
+                            <Badge variant={paymentVariant as any} className="block">
+                              {paymentLabel}
+                              {paymentStatus?.startsWith('cicilan_') && reg.installment_amount > 0 && (
+                                <span className="ml-1">— {formatPrice(reg.installment_amount)}</span>
+                              )}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <Badge variant="outline">{regTypeLabel}</Badge>
+                          {reg.towing_pergi && (
+                            <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> Towing Pergi</Badge>
+                          )}
+                          {reg.towing_pulang && (
+                            <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> Towing Pulang</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm font-bold text-primary">
+                          {reg.events?.price !== undefined ? formatPrice(reg.events.price) : ''}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <Badge variant={r.status === 'confirmed' ? 'default' : 'secondary'}>
-                          {r.status === 'confirmed' ? 'Terdaftar' : r.status}
-                        </Badge>
-                        <p className="text-sm font-bold text-primary mt-1">
-                          {(r as any).events?.price !== undefined ? formatPrice((r as any).events.price) : ''}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

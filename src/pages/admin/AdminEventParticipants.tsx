@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard, Trash2 } from 'lucide-react';
+import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard, Trash2, Truck } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { formatDate, formatPrice } from '@/data/events';
 import { toast } from '@/hooks/use-toast';
@@ -276,6 +276,15 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                     )}
                   </div>
                 </div>
+
+                {/* Towing info */}
+                {((r as any).towing_pergi || (r as any).towing_pulang) && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Truck className="h-3.5 w-3.5" />
+                    {(r as any).towing_pergi && <Badge variant="outline" className="text-xs">Towing Pergi</Badge>}
+                    {(r as any).towing_pulang && <Badge variant="outline" className="text-xs">Towing Pulang</Badge>}
+                  </div>
+                )}
 
                 {r.notes && (
                   <p className="text-xs text-muted-foreground bg-muted/50 rounded p-2">

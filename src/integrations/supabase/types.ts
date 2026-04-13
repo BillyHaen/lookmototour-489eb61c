@@ -71,6 +71,8 @@ export type Database = {
           plate_number: string
           registration_type: string
           status: string
+          towing_pergi: boolean
+          towing_pulang: boolean
           updated_at: string
           user_id: string
         }
@@ -89,6 +91,8 @@ export type Database = {
           plate_number?: string
           registration_type?: string
           status?: string
+          towing_pergi?: boolean
+          towing_pulang?: boolean
           updated_at?: string
           user_id: string
         }
@@ -107,6 +111,8 @@ export type Database = {
           plate_number?: string
           registration_type?: string
           status?: string
+          towing_pergi?: boolean
+          towing_pulang?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -145,6 +151,9 @@ export type Database = {
           requirements: string[] | null
           status: string
           title: string
+          towing_enabled: boolean
+          towing_pergi_price: number
+          towing_pulang_price: number
           updated_at: string
         }
         Insert: {
@@ -171,6 +180,9 @@ export type Database = {
           requirements?: string[] | null
           status?: string
           title: string
+          towing_enabled?: boolean
+          towing_pergi_price?: number
+          towing_pulang_price?: number
           updated_at?: string
         }
         Update: {
@@ -197,6 +209,9 @@ export type Database = {
           requirements?: string[] | null
           status?: string
           title?: string
+          towing_enabled?: boolean
+          towing_pergi_price?: number
+          towing_pulang_price?: number
           updated_at?: string
         }
         Relationships: []

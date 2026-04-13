@@ -33,6 +33,9 @@ interface EventForm {
   requirements: string;
   insurance_enabled: boolean;
   insurance_description: string;
+  towing_enabled: boolean;
+  towing_pergi_price: number;
+  towing_pulang_price: number;
 }
 
 const emptyForm: EventForm = {
@@ -40,6 +43,7 @@ const emptyForm: EventForm = {
   location: '', price_sharing: 0, price_single: 0, price_couple: 0, max_participants: 30, image_url: '', status: 'upcoming',
   difficulty: 'sedang', distance: '', highlights: '', requirements: '',
   insurance_enabled: false, insurance_description: '',
+  towing_enabled: false, towing_pergi_price: 0, towing_pulang_price: 0,
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }
@@ -73,6 +77,9 @@ export default function AdminEvents() {
         requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
         insurance_enabled: form.insurance_enabled,
         insurance_description: form.insurance_description,
+        towing_enabled: form.towing_enabled,
+        towing_pergi_price: form.towing_pergi_price,
+        towing_pulang_price: form.towing_pulang_price,
       };
 
       let eventId = editId;
@@ -133,6 +140,9 @@ export default function AdminEvents() {
       requirements: (event.requirements || []).join(', '),
       insurance_enabled: event.insurance_enabled || false,
       insurance_description: event.insurance_description || '',
+      towing_enabled: (event as any).towing_enabled || false,
+      towing_pergi_price: (event as any).towing_pergi_price || 0,
+      towing_pulang_price: (event as any).towing_pulang_price || 0,
     });
     // Load itineraries
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
@@ -262,6 +272,24 @@ export default function AdminEvents() {
             </div>
             {form.insurance_enabled && (
               <Textarea placeholder="Deskripsi asuransi (jenis, cakupan, dll)" value={form.insurance_description} onChange={(e) => setForm({ ...form, insurance_description: e.target.value })} rows={2} />
+            )}
+
+            {/* Towing */}
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <input type="checkbox" id="towing" checked={form.towing_enabled} onChange={(e) => setForm({ ...form, towing_enabled: e.target.checked })} className="h-4 w-4 rounded border-input" />
+              <label htmlFor="towing" className="text-sm font-medium">Towing Motor Tersedia</label>
+            </div>
+            {form.towing_enabled && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-muted-foreground">Harga Towing Pergi</label>
+                  <Input type="number" placeholder="0" value={form.towing_pergi_price} onChange={(e) => setForm({ ...form, towing_pergi_price: Number(e.target.value) })} />
+                </div>
+                <div>
+                  <label className="text-xs text-muted-foreground">Harga Towing Pulang</label>
+                  <Input type="number" placeholder="0" value={form.towing_pulang_price} onChange={(e) => setForm({ ...form, towing_pulang_price: Number(e.target.value) })} />
+                </div>
+              </div>
             )}
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>

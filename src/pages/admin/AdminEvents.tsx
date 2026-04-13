@@ -117,7 +117,24 @@ export default function AdminEvents() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      // Check if any participant has paid (lunas)
+      const { data: paidRegs } = await supabase
+        .from('event_registrations')
+        .select('id')
+        .eq('event_id', id)
+        .eq('payment_status', 'lunas')
+        .limit(1);
+
+      if (paidRegs && paidRegs.length > 0) {
+        throw new Error('Tidak bisa menghapus event yang memiliki peserta dengan status pembayaran LUNAS.');
+      }
+
+      // If event is completed, change status instead of deleting
+      if (status === 'completed') {
+        throw new Error('Event sudah selesai. Status event sudah diubah menjadi "Selesai" dan pendaftaran dinonaktifkan.');
+      }
+
       const { error } = await supabase.from('events').update({ deleted_at: new Date().toISOString() }).eq('id', id);
       if (error) throw error;
     },
@@ -125,6 +142,7 @@ export default function AdminEvents() {
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({ title: 'Event dihapus ✅' });
     },
+    onError: (e: Error) => toast({ title: 'Gagal menghapus', description: e.message, variant: 'destructive' }),
   });
 
   const openCreate = () => { setEditId(null); setForm(emptyForm); setItineraries([]); setOpen(true); };

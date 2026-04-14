@@ -87,7 +87,14 @@ export default function Events() {
         <div className="container">
           <div className="mb-8">
             <h1 className="font-heading font-bold text-3xl md:text-4xl mb-2">Semua Event</h1>
-            <p className="text-muted-foreground">Temukan event touring, adventure, dan workshop yang sesuai untukmu.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-muted-foreground">Temukan event touring, adventure, dan workshop yang sesuai untukmu.</p>
+              <Link to="/trip-match">
+                <Button className="gap-2 whitespace-nowrap">
+                  <Sparkles className="h-4 w-4" /> Find My Ride
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Compact Filter Bar */}

@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
-import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle } from '@/data/events';
+import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -119,7 +119,7 @@ export default function EventDetail() {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[
-                  { icon: CalendarDays, label: 'Tanggal', value: formatDate(event.date) },
+                  { icon: CalendarDays, label: 'Tanggal', value: (event as any).tentative_month ? `${formatTentativeMonth((event as any).tentative_month)} (Tentative)` : formatDate(event.date) },
                   { icon: MapPin, label: 'Lokasi', value: event.location },
                   { icon: Gauge, label: 'Jarak', value: event.distance || '-' },
                   { icon: Clock, label: 'Durasi', value: event.end_date ? `${Math.ceil((new Date(event.end_date).getTime() - new Date(event.date).getTime()) / 86400000)} hari` : '1 hari' },

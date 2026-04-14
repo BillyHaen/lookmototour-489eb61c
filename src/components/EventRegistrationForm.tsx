@@ -13,9 +13,9 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/events';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, Heart } from 'lucide-react';
 import type { DbEvent } from '@/hooks/useEvents';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const schema = z.object({
   name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),
@@ -39,6 +39,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const isTentative = !!(event as any).tentative_month;
   const isFull = event.current_participants >= event.max_participants || (event as any).force_full;
 
   // Check if user already registered
@@ -56,6 +57,63 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     },
     enabled: !!user,
   });
+
+  // Check if user already expressed interest (tentative events)
+  const { data: existingInterest } = useQuery({
+    queryKey: ['my-interest', event.id, user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('event_interests')
+        .select('*')
+        .eq('event_id', event.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user && isTentative,
+  });
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['my-profile-interest', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from('profiles').select('name, phone').eq('user_id', user.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user && isTentative,
+  });
+
+  const interestMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Login diperlukan');
+      const { error } = await supabase.from('event_interests').insert({
+        event_id: event.id, user_id: user.id,
+        name: userProfile?.name || '', phone: userProfile?.phone || '',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-interest', event.id, user?.id] });
+      toast({ title: 'Minat tercatat! 🎉', description: 'Kami akan menghubungi kamu saat tanggal sudah fix.' });
+    },
+    onError: (e: Error) => {
+      if (e.message.includes('duplicate') || e.message.includes('23505')) {
+        toast({ title: 'Sudah tercatat', description: 'Kamu sudah menyatakan minat untuk trip ini.' });
+      } else {
+        toast({ title: 'Gagal', description: e.message, variant: 'destructive' });
+      }
+    },
+  });
+
+  const handleInterest = () => {
+    if (!user) {
+      toast({ title: 'Login diperlukan', description: 'Silakan login terlebih dahulu.', variant: 'destructive' });
+      navigate('/login');
+      return;
+    }
+    interestMutation.mutate();
+  };
 
   const paymentLabel = (status: string) => {
     if (status === 'lunas') return 'Lunas';
@@ -137,6 +195,28 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     queryClient.invalidateQueries({ queryKey: ['my-registration', event.id, user?.id] });
     toast({ title: 'Pendaftaran berhasil! 🎉', description: `Kamu sudah terdaftar untuk ${event.title}` });
   };
+
+  // Tentative event → show interest button
+  if (isTentative) {
+    if (existingInterest) {
+      return (
+        <Button size="lg" className="w-full text-base font-semibold" disabled>
+          ✅ Anda Sudah Menyatakan Minat
+        </Button>
+      );
+    }
+    return (
+      <Button
+        size="lg"
+        className="w-full text-base font-semibold gap-2"
+        onClick={handleInterest}
+        disabled={interestMutation.isPending}
+      >
+        {interestMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className="h-5 w-5" />}
+        🙋 Saya Minat Trip Ini!
+      </Button>
+    );
+  }
 
   if (existingReg) {
     return (

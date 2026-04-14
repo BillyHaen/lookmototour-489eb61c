@@ -201,3 +201,9 @@ export function formatDate(dateStr: string): string {
     day: 'numeric', month: 'long', year: 'numeric',
   });
 }
+
+export function formatTentativeMonth(month: string): string {
+  const [year, m] = month.split('-');
+  const date = new Date(Number(year), Number(m) - 1);
+  return date.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+}

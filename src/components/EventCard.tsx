@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CalendarDays, MapPin, Users, Gauge, Clock, Zap } from 'lucide-react';
-import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory, FATIGUE_LABELS } from '@/data/events';
+import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, FATIGUE_LABELS } from '@/data/events';
 import type { DbEvent } from '@/hooks/useEvents';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
@@ -40,6 +40,7 @@ export default function EventCard({ event }: { event: DbEvent }) {
           <div className="absolute top-3 left-3 flex gap-2">
             <Badge className={status.className}>{status.label}</Badge>
             <Badge variant="secondary">{cat.icon} {cat.label}</Badge>
+            {(event as any).tentative_month && <Badge variant="outline" className="bg-background/80">📅 Tentative</Badge>}
           </div>
           {isFull && (
             <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">
@@ -53,7 +54,7 @@ export default function EventCard({ event }: { event: DbEvent }) {
           </h3>
           <p className="text-sm text-muted-foreground line-clamp-2">{event.description.replace(/<[^>]*>/g, '')}</p>
           <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{formatDate(event.date)}</span>
+            <span className="flex items-center gap-1"><CalendarDays className="h-3.5 w-3.5" />{(event as any).tentative_month ? `${formatTentativeMonth((event as any).tentative_month)} (Tentative)` : formatDate(event.date)}</span>
             <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{event.location.split(',')[0]}</span>
             <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{spotsLeft > 0 ? `${spotsLeft} slot tersisa` : 'Penuh'}</span>
             <span className="flex items-center gap-1">

@@ -101,6 +101,41 @@ export type Database = {
         }
         Relationships: []
       }
+      event_interests: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          name: string
+          phone: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          name?: string
+          phone?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          name?: string
+          phone?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_interests_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_itineraries: {
         Row: {
           created_at: string
@@ -245,6 +280,7 @@ export type Database = {
           riding_hours_per_day: number
           slug: string
           status: string
+          tentative_month: string | null
           title: string
           touring_style: string
           towing_description: string | null
@@ -284,6 +320,7 @@ export type Database = {
           riding_hours_per_day?: number
           slug?: string
           status?: string
+          tentative_month?: string | null
           title: string
           touring_style?: string
           towing_description?: string | null
@@ -323,6 +360,7 @@ export type Database = {
           riding_hours_per_day?: number
           slug?: string
           status?: string
+          tentative_month?: string | null
           title?: string
           touring_style?: string
           towing_description?: string | null

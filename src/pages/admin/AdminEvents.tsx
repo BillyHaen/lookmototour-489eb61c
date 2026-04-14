@@ -97,9 +97,11 @@ export default function AdminEvents() {
     mutationFn: async (statusOverride?: string) => {
       const finalStatus = statusOverride || form.status;
       const slug = form.slug || generateSlug(form.title);
+      const isTentative = !!form.tentative_month;
+      const dateValue = isTentative && !form.date ? `${form.tentative_month}-01T00:00` : form.date;
       const payload = {
         title: form.title, slug, description: form.description, category: form.category,
-        date: form.date, end_date: form.end_date || null, location: form.location,
+        date: dateValue, end_date: form.end_date || null, location: form.location,
         price: form.price_single, price_sharing: form.price_sharing, price_single: form.price_single, price_couple: form.price_couple,
         max_participants: form.max_participants, image_url: form.image_url,
         status: finalStatus, difficulty: form.difficulty, distance: form.distance,
@@ -118,6 +120,7 @@ export default function AdminEvents() {
         touring_style: form.touring_style,
         riding_hours_per_day: form.riding_hours_per_day,
         fatigue_level: form.fatigue_level,
+        tentative_month: form.tentative_month || null,
       };
 
       let eventId = editId;

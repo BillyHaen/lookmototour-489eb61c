@@ -371,6 +371,36 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          link: string | null
+          message: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string
+          title?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          link?: string | null
+          message?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category: string
@@ -692,6 +722,13 @@ export type Database = {
           user_avatar_url: string
           user_id: string
           user_name: string
+        }[]
+      }
+      get_event_interest_counts: {
+        Args: never
+        Returns: {
+          event_id: string
+          interest_count: number
         }[]
       }
       get_public_profile: {

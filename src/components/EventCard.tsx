@@ -97,7 +97,11 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
           )}
           <div className="flex items-center justify-between pt-2 border-t border-border">
             <span className="font-heading font-bold text-lg text-primary">
-              {(event as any).price_single > 0 ? `Mulai ${formatPrice(Math.min(...[((event as any).price_sharing || Infinity), ((event as any).price_single || Infinity), ((event as any).price_couple || Infinity)].filter(p => p > 0 && p !== Infinity)))}` : formatPrice(event.price)}
+              {(event as any).tentative_month
+                ? '🔥 Mau gass dong!'
+                : (event as any).price_single > 0
+                  ? `Mulai ${formatPrice(Math.min(...[((event as any).price_sharing || Infinity), ((event as any).price_single || Infinity), ((event as any).price_couple || Infinity)].filter(p => p > 0 && p !== Infinity)))}`
+                  : formatPrice(event.price)}
             </span>
             <span className="text-xs text-muted-foreground">{event.distance}</span>
           </div>

@@ -108,6 +108,11 @@ export default function AdminEvents() {
         towing_description: form.towing_description,
         towing_pergi_price: form.towing_pergi_price,
         towing_pulang_price: form.towing_pulang_price,
+        rider_level: form.rider_level,
+        motor_types: form.motor_types,
+        touring_style: form.touring_style,
+        riding_hours_per_day: form.riding_hours_per_day,
+        fatigue_level: form.fatigue_level,
       };
 
       let eventId = editId;
@@ -187,6 +192,11 @@ export default function AdminEvents() {
       towing_description: (event as any).towing_description || '',
       towing_pergi_price: (event as any).towing_pergi_price || 0,
       towing_pulang_price: (event as any).towing_pulang_price || 0,
+      rider_level: event.rider_level || 'all',
+      motor_types: event.motor_types || [],
+      touring_style: event.touring_style || 'adventure',
+      riding_hours_per_day: event.riding_hours_per_day || 0,
+      fatigue_level: event.fatigue_level || 1,
     });
     // Load itineraries
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');

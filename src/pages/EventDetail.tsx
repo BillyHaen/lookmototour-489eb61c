@@ -42,10 +42,10 @@ export default function EventDetail() {
       const found = (data as any[])?.find((r: any) => r.event_id === event!.id);
       return found ? Number(found.interest_count) : 0;
     },
-    enabled: !!event?.id && isTentative,
+    enabled: !!event?.id && !!(event as any)?.tentative_month,
   });
 
-  const isTentativeEarly = !!(event as any)?.tentative_month;
+  const { data: footerSettings } = useQuery({
     queryKey: ['site-settings', 'footer'],
     queryFn: async () => {
       const { data, error } = await supabase.from('site_settings').select('value').eq('key', 'footer').single();

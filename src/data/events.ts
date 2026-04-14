@@ -33,6 +33,40 @@ export interface EventRegistration {
   createdAt: string;
 }
 
+export const RIDER_LEVELS = {
+  all: { label: 'Semua Level', icon: '👥' },
+  beginner: { label: 'Beginner', icon: '🟢' },
+  intermediate: { label: 'Intermediate', icon: '🟡' },
+  hardcore: { label: 'Hardcore', icon: '🔴' },
+} as const;
+
+export const MOTOR_TYPES = {
+  sport: { label: 'Sport', icon: '🏎️' },
+  adv: { label: 'ADV', icon: '🏔️' },
+  cruiser: { label: 'Cruiser', icon: '🛣️' },
+  matic: { label: 'Matic', icon: '🛵' },
+  bebek: { label: 'Bebek', icon: '🏍️' },
+} as const;
+
+export const TOURING_STYLES = {
+  santai: { label: 'Santai (Coffee Ride)', icon: '☕' },
+  adventure: { label: 'Adventure', icon: '⛰️' },
+  luxury: { label: 'Luxury Touring', icon: '💎' },
+  spiritual: { label: 'Spiritual Touring', icon: '🕌' },
+} as const;
+
+export const FATIGUE_LABELS: Record<number, string> = {
+  1: 'Sangat Ringan',
+  2: 'Ringan',
+  3: 'Sedang',
+  4: 'Berat',
+  5: 'Sangat Berat',
+};
+
+export type RiderLevel = keyof typeof RIDER_LEVELS;
+export type MotorType = keyof typeof MOTOR_TYPES;
+export type TouringStyle = keyof typeof TOURING_STYLES;
+
 export const EVENT_CATEGORIES: Record<EventCategory, { label: string; color: string; icon: string }> = {
   touring: { label: 'Touring', color: 'bg-primary', icon: '🏍️' },
   adventure: { label: 'Adventure', color: 'bg-accent', icon: '🏔️' },

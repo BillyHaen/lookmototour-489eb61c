@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
-import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory } from '@/data/events';
+import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
@@ -105,6 +105,12 @@ export default function EventDetail() {
                   </Badge>
                   <Badge variant="secondary">{cat.icon} {cat.label}</Badge>
                   <Badge variant="outline" className="capitalize">{event.difficulty}</Badge>
+                  {(event as any).rider_level && (event as any).rider_level !== 'all' && (
+                    <Badge variant="outline">{RIDER_LEVELS[(event as any).rider_level as RiderLevel]?.icon} {RIDER_LEVELS[(event as any).rider_level as RiderLevel]?.label}</Badge>
+                  )}
+                  {(event as any).touring_style && (
+                    <Badge variant="outline">{TOURING_STYLES[(event as any).touring_style as TouringStyle]?.icon} {TOURING_STYLES[(event as any).touring_style as TouringStyle]?.label}</Badge>
+                  )}
                 </div>
                 <h1 className="font-heading font-bold text-2xl md:text-4xl mb-2">{event.title}</h1>
                 <RichTextContent content={event.description} className="text-muted-foreground" />
@@ -124,6 +130,56 @@ export default function EventDetail() {
                   </div>
                 ))}
               </div>
+
+              {/* Smart Touring Info */}
+              {((event as any).riding_hours_per_day > 0 || (event as any).fatigue_level > 1 || ((event as any).motor_types || []).length > 0) && (
+                <Card>
+                  <CardContent className="pt-6 space-y-4">
+                    <h3 className="font-heading font-semibold text-lg">🔎 Info Touring</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {(event as any).riding_hours_per_day > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Jam Riding / Hari</p>
+                          <p className="font-medium flex items-center gap-1"><Clock className="h-4 w-4 text-primary" /> {(event as any).riding_hours_per_day} jam</p>
+                        </div>
+                      )}
+                      {(event as any).fatigue_level > 1 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Tingkat Capek</p>
+                          <div className="flex items-center gap-2">
+                            <div className="w-24 h-2 rounded-full bg-secondary overflow-hidden">
+                              <div
+                                className="h-full rounded-full transition-all"
+                                style={{
+                                  width: `${((event as any).fatigue_level / 5) * 100}%`,
+                                  backgroundColor: (event as any).fatigue_level <= 2 ? 'hsl(var(--primary))' : (event as any).fatigue_level <= 3 ? 'hsl(40 100% 50%)' : 'hsl(var(--destructive))',
+                                }}
+                              />
+                            </div>
+                            <span className="text-sm font-medium">{FATIGUE_LABELS[(event as any).fatigue_level]}</span>
+                          </div>
+                        </div>
+                      )}
+                      {(event as any).rider_level && (event as any).rider_level !== 'all' && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Level Rider</p>
+                          <p className="font-medium">{RIDER_LEVELS[(event as any).rider_level as RiderLevel]?.icon} {RIDER_LEVELS[(event as any).rider_level as RiderLevel]?.label}</p>
+                        </div>
+                      )}
+                    </div>
+                    {((event as any).motor_types || []).length > 0 && (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Tipe Motor yang Cocok</p>
+                        <div className="flex flex-wrap gap-2">
+                          {((event as any).motor_types as string[]).map((mt) => (
+                            <Badge key={mt} variant="secondary">{MOTOR_TYPES[mt as MotorType]?.icon} {MOTOR_TYPES[mt as MotorType]?.label}</Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               <div>
                 <h2 className="font-heading font-semibold text-xl mb-3">Highlight Event</h2>

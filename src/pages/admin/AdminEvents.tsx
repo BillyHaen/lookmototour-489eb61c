@@ -165,7 +165,7 @@ export default function AdminEvents() {
         }
       }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({ title: editId ? 'Event diperbarui ✅' : 'Event ditambahkan ✅' });
       setOpen(false);

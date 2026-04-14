@@ -312,9 +312,6 @@ export default function EventDetail() {
                   <div className="text-center py-4">
                     <p className="text-muted-foreground text-sm">Biaya perjalanan akan diupdate!</p>
                   </div>
-                ) : null}
-                {isTentative && <InterestedUsers eventId={event.id} />}
-                {!isTentative ? (
                 ) : (
                   <>
                     <div>
@@ -354,6 +351,8 @@ export default function EventDetail() {
                     </div>
                   </>
                 )}
+
+                {isTentative && <InterestedUsers eventId={event.id} />}
 
                 <EventRegistrationForm event={event} />
 

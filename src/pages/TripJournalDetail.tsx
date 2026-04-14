@@ -83,7 +83,7 @@ export default function TripJournalDetail() {
               contentId={journal.id}
               title={journal.title}
               description={journal.content?.replace(/<[^>]*>/g, '').slice(0, 160)}
-              url={window.location.href}
+              slug={journal.slug || journal.id}
             />
           </div>
 

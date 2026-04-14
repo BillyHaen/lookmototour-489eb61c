@@ -10,10 +10,16 @@ interface ShareButtonProps {
   title: string;
   description?: string;
   imageUrl?: string | null;
-  url?: string;
+  slug?: string;
 }
 
-export default function ShareButton({ contentType, contentId, title, description, imageUrl, url }: ShareButtonProps) {
+function getShareUrl(contentType: string, slug: string): string {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const siteUrl = window.location.origin;
+  return `${supabaseUrl}/functions/v1/share-meta?type=${contentType}&slug=${encodeURIComponent(slug)}&site=${encodeURIComponent(siteUrl)}`;
+}
+
+export default function ShareButton({ contentType, contentId, title, description, slug }: ShareButtonProps) {
   const [shareCount, setShareCount] = useState<number>(0);
 
   useEffect(() => {
@@ -30,7 +36,7 @@ export default function ShareButton({ contentType, contentId, title, description
   }, [contentType, contentId]);
 
   const handleShare = async () => {
-    const shareUrl = url || window.location.href;
+    const shareUrl = getShareUrl(contentType, slug || contentId);
     const shareData: ShareData = {
       title,
       text: description || '',
@@ -45,14 +51,12 @@ export default function ShareButton({ contentType, contentId, title, description
         toast({ title: 'Link berhasil disalin! 📋' });
       }
 
-      // Increment share count
       const { data } = await supabase.rpc('increment_share_count', {
         _content_type: contentType,
         _content_id: contentId,
       });
       if (typeof data === 'number') setShareCount(data);
     } catch (err: any) {
-      // User cancelled share dialog
       if (err?.name === 'AbortError') return;
     }
   };

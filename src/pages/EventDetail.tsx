@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
+import InterestedUsers from '@/components/InterestedUsers';
 import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
@@ -350,6 +351,8 @@ export default function EventDetail() {
                     </div>
                   </>
                 )}
+
+                {isTentative && <InterestedUsers eventId={event.id} />}
 
                 <EventRegistrationForm event={event} />
 

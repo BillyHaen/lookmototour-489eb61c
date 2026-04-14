@@ -3,7 +3,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2, X, ChevronDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventCard from '@/components/EventCard';
@@ -12,7 +15,7 @@ import { useEvents } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 
 const STATUS_FILTERS = [
-  { value: 'all', label: 'Semua' },
+  { value: 'all', label: 'Semua Status' },
   { value: 'upcoming', label: 'Akan Datang' },
   { value: 'ongoing', label: 'Berlangsung' },
   { value: 'completed', label: 'Selesai' },
@@ -20,9 +23,9 @@ const STATUS_FILTERS = [
 
 const DIFFICULTY_FILTERS = [
   { value: 'all', label: 'Semua Tingkat' },
-  { value: 'mudah', label: '🟢 Mudah' },
-  { value: 'sedang', label: '🟡 Sedang' },
-  { value: 'sulit', label: '🔴 Sulit' },
+  { value: 'mudah', label: 'Mudah' },
+  { value: 'sedang', label: 'Sedang' },
+  { value: 'sulit', label: 'Sulit' },
 ];
 
 export default function Events() {
@@ -46,6 +49,19 @@ export default function Events() {
       return map;
     },
   });
+
+  const activeFilterCount = [statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter]
+    .filter((f) => f !== 'all').length;
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setCategoryFilter('all');
+    setStatusFilter('all');
+    setDifficultyFilter('all');
+    setRiderLevelFilter('all');
+    setMotorTypeFilter('all');
+    setTouringStyleFilter('all');
+  };
 
   const filtered = useMemo(() => {
     let result = [...(events || [])];
@@ -73,82 +89,160 @@ export default function Events() {
             <p className="text-muted-foreground">Temukan event touring, adventure, dan workshop yang sesuai untukmu.</p>
           </div>
 
-          <div className="space-y-4 mb-8">
-            <div className="flex flex-col sm:flex-row gap-3">
+          {/* Compact Filter Bar */}
+          <div className="space-y-3 mb-8">
+            {/* Row 1: Search + Sort + Advanced Filter */}
+            <div className="flex gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Cari event atau lokasi..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+                <Input placeholder="Cari event atau lokasi..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 h-10" />
               </div>
-              <div className="flex gap-2">
-                <Button variant={sortBy === 'date' ? 'default' : 'outline'} size="sm" onClick={() => setSortBy('date')}>
-                  <SlidersHorizontal className="h-4 w-4 mr-1" /> Tanggal
-                </Button>
-                <Button variant={sortBy === 'price' ? 'default' : 'outline'} size="sm" onClick={() => setSortBy('price')}>
-                  Harga
-                </Button>
-              </div>
+              <Select value={sortBy} onValueChange={(v) => setSortBy(v as 'date' | 'price')}>
+                <SelectTrigger className="w-[130px] h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="date">Tanggal</SelectItem>
+                  <SelectItem value="price">Harga</SelectItem>
+                </SelectContent>
+              </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-10 gap-1.5 relative">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span className="hidden sm:inline">Filter</span>
+                    {activeFilterCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-4 space-y-4" align="end">
+                  <div className="flex items-center justify-between">
+                    <p className="font-heading font-semibold text-sm">Filter Lanjutan</p>
+                    {activeFilterCount > 0 && (
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => { setStatusFilter('all'); setDifficultyFilter('all'); setRiderLevelFilter('all'); setMotorTypeFilter('all'); setTouringStyleFilter('all'); }}>
+                        Reset
+                      </Button>
+                    )}
+                  </div>
+                  <Separator />
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Status</label>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {STATUS_FILTERS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Tingkat Kesulitan</label>
+                      <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {DIFFICULTY_FILTERS.map((d) => <SelectItem key={d.value} value={d.value}>{d.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Level Rider</label>
+                      <Select value={riderLevelFilter} onValueChange={setRiderLevelFilter}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Level</SelectItem>
+                          {Object.entries(RIDER_LEVELS).filter(([k]) => k !== 'all').map(([key, val]) => (
+                            <SelectItem key={key} value={key}>{val.icon} {val.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Tipe Motor</label>
+                      <Select value={motorTypeFilter} onValueChange={setMotorTypeFilter}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Motor</SelectItem>
+                          {Object.entries(MOTOR_TYPES).map(([key, val]) => (
+                            <SelectItem key={key} value={key}>{val.icon} {val.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Style Touring</label>
+                      <Select value={touringStyleFilter} onValueChange={setTouringStyleFilter}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Style</SelectItem>
+                          {Object.entries(TOURING_STYLES).map(([key, val]) => (
+                            <SelectItem key={key} value={key}>{val.icon} {val.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={categoryFilter === 'all' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setCategoryFilter('all')}>
-                Semua Kategori
+            {/* Row 2: Category pills (compact, scrollable on mobile) */}
+            <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
+              <Badge
+                variant={categoryFilter === 'all' ? 'default' : 'outline'}
+                className="cursor-pointer shrink-0 text-xs"
+                onClick={() => setCategoryFilter('all')}
+              >
+                Semua
               </Badge>
               {Object.entries(EVENT_CATEGORIES).map(([key, cat]) => (
-                <Badge key={key} variant={categoryFilter === key ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setCategoryFilter(key as EventCategory)}>
+                <Badge
+                  key={key}
+                  variant={categoryFilter === key ? 'default' : 'outline'}
+                  className="cursor-pointer shrink-0 text-xs"
+                  onClick={() => setCategoryFilter(key as EventCategory)}
+                >
                   {cat.icon} {cat.label}
                 </Badge>
               ))}
             </div>
 
-            <div className="flex flex-wrap gap-2">
-              {STATUS_FILTERS.map((s) => (
-                <Badge key={s.value} variant={statusFilter === s.value ? 'default' : 'secondary'} className="cursor-pointer" onClick={() => setStatusFilter(s.value)}>
-                  {s.label}
-                </Badge>
-              ))}
-            </div>
-
-            {/* Smart Touring Filters */}
-            <div className="flex flex-wrap gap-2">
-              {DIFFICULTY_FILTERS.map((d) => (
-                <Badge key={d.value} variant={difficultyFilter === d.value ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setDifficultyFilter(d.value)}>
-                  {d.label}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={riderLevelFilter === 'all' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setRiderLevelFilter('all')}>
-                👥 Semua Level
-              </Badge>
-              {Object.entries(RIDER_LEVELS).filter(([k]) => k !== 'all').map(([key, val]) => (
-                <Badge key={key} variant={riderLevelFilter === key ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setRiderLevelFilter(key)}>
-                  {val.icon} {val.label}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={motorTypeFilter === 'all' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setMotorTypeFilter('all')}>
-                🏍️ Semua Motor
-              </Badge>
-              {Object.entries(MOTOR_TYPES).map(([key, val]) => (
-                <Badge key={key} variant={motorTypeFilter === key ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setMotorTypeFilter(key)}>
-                  {val.icon} {val.label}
-                </Badge>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <Badge variant={touringStyleFilter === 'all' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setTouringStyleFilter('all')}>
-                🗺️ Semua Style
-              </Badge>
-              {Object.entries(TOURING_STYLES).map(([key, val]) => (
-                <Badge key={key} variant={touringStyleFilter === key ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setTouringStyleFilter(key)}>
-                  {val.icon} {val.label}
-                </Badge>
-              ))}
-            </div>
+            {/* Active filter chips */}
+            {activeFilterCount > 0 && (
+              <div className="flex flex-wrap gap-1.5 items-center">
+                <span className="text-xs text-muted-foreground mr-1">Filter aktif:</span>
+                {statusFilter !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 text-xs cursor-pointer" onClick={() => setStatusFilter('all')}>
+                    {STATUS_FILTERS.find((s) => s.value === statusFilter)?.label} <X className="h-3 w-3" />
+                  </Badge>
+                )}
+                {difficultyFilter !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 text-xs cursor-pointer" onClick={() => setDifficultyFilter('all')}>
+                    {DIFFICULTY_FILTERS.find((d) => d.value === difficultyFilter)?.label} <X className="h-3 w-3" />
+                  </Badge>
+                )}
+                {riderLevelFilter !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 text-xs cursor-pointer" onClick={() => setRiderLevelFilter('all')}>
+                    {RIDER_LEVELS[riderLevelFilter as keyof typeof RIDER_LEVELS]?.label} <X className="h-3 w-3" />
+                  </Badge>
+                )}
+                {motorTypeFilter !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 text-xs cursor-pointer" onClick={() => setMotorTypeFilter('all')}>
+                    {MOTOR_TYPES[motorTypeFilter as keyof typeof MOTOR_TYPES]?.label} <X className="h-3 w-3" />
+                  </Badge>
+                )}
+                {touringStyleFilter !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 text-xs cursor-pointer" onClick={() => setTouringStyleFilter('all')}>
+                    {TOURING_STYLES[touringStyleFilter as keyof typeof TOURING_STYLES]?.label} <X className="h-3 w-3" />
+                  </Badge>
+                )}
+                <Button variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground px-2" onClick={clearAllFilters}>
+                  Hapus semua
+                </Button>
+              </div>
+            )}
           </div>
 
           {isLoading ? (
@@ -156,7 +250,7 @@ export default function Events() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">Tidak ada event yang ditemukan.</p>
-              <Button variant="outline" className="mt-4" onClick={() => { setSearch(''); setCategoryFilter('all'); setStatusFilter('all'); setDifficultyFilter('all'); setRiderLevelFilter('all'); setMotorTypeFilter('all'); setTouringStyleFilter('all'); }}>
+              <Button variant="outline" className="mt-4" onClick={clearAllFilters}>
                 Reset Filter
               </Button>
             </div>

@@ -1,4 +1,5 @@
 import { Instagram, Youtube, MessageCircle } from 'lucide-react';
+import RichTextContent from '@/components/RichTextContent';
 import logo from '@/assets/logo.png';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
@@ -49,7 +50,7 @@ export default function Footer() {
             <Link to="/" className="flex items-center gap-2 font-heading font-bold text-xl mb-4">
               <img src={logo} alt="LookMotoTour" className="h-8 w-auto" />
             </Link>
-            <p className="text-muted-foreground text-sm max-w-md">{s.description}</p>
+            <RichTextContent content={s.description} className="text-muted-foreground text-sm max-w-md" />
             <div className="flex gap-3 mt-4">
               {s.instagram_url && (
                 <a href={s.instagram_url} target="_blank" rel="noreferrer" className="p-2 rounded-lg bg-muted text-muted-foreground hover:text-primary transition-colors" aria-label="Instagram">

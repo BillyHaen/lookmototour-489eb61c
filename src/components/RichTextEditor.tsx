@@ -3,8 +3,9 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading2, Heading3, Undo, Redo, Minus } from 'lucide-react';
+import Link from '@tiptap/extension-link';
+import { useCallback, useEffect } from 'react';
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading2, Heading3, Undo, Redo, Minus, Link as LinkIcon, Unlink } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
 
@@ -24,6 +25,10 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Tulis s
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({ placeholder }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: 'text-primary underline cursor-pointer' },
+      }),
     ],
     content: value || '',
     onUpdate: ({ editor }) => {
@@ -36,6 +41,17 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Tulis s
       editor.commands.setContent(value || '');
     }
   }, [value, editor]);
+
+  const setLink = useCallback(() => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL', previousUrl);
+    if (url === null) return;
+    if (url === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+  }, [editor]);
 
   if (!editor) return null;
 
@@ -85,6 +101,12 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Tulis s
           <AlignRight className="h-3.5 w-3.5" />
         </ToolBtn>
         <Separator orientation="vertical" className="mx-0.5 h-6" />
+        <ToolBtn active={editor.isActive('link')} onClick={setLink} title="Link">
+          <LinkIcon className="h-3.5 w-3.5" />
+        </ToolBtn>
+        <ToolBtn onClick={() => editor.chain().focus().unsetLink().run()} title="Unlink">
+          <Unlink className="h-3.5 w-3.5" />
+        </ToolBtn>
         <ToolBtn onClick={() => editor.chain().focus().setHorizontalRule().run()} title="Horizontal Rule">
           <Minus className="h-3.5 w-3.5" />
         </ToolBtn>

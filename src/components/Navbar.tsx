@@ -8,6 +8,7 @@ import { useIsAdmin } from '@/hooks/useAdmin';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import UserAvatar from '@/components/UserAvatar';
+import NotificationBell from '@/components/NotificationBell';
 
 const NAV_ITEMS = [
   { label: 'Beranda', path: '/' },
@@ -60,6 +61,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           {user ? (
             <>
+              <NotificationBell />
               {isAdmin && (
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/admin" className="gap-2"><Shield className="h-4 w-4" /> Admin</Link>

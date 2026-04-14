@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import TripMatchQuiz, { type TripMatchAnswers } from '@/components/TripMatchQuiz';
 import TripMatchResults from '@/components/TripMatchResults';
 import { useEvents } from '@/hooks/useEvents';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -17,6 +18,11 @@ export default function TripMatch() {
   const [result, setResult] = useState<MatchResult | null>(null);
   const [isMatching, setIsMatching] = useState(false);
   const { data: events = [] } = useEvents();
+
+  useSeoMeta({
+    title: 'AI Trip Match - Find Your Perfect Ride | LookMotoTour',
+    description: 'Temukan touring motor terbaik untukmu dengan AI Trip Match. Jawab 4 pertanyaan dan dapatkan rekomendasi personalisasi.',
+  });
 
   const { data: interestCounts = {} } = useQuery({
     queryKey: ['event-interest-counts'],

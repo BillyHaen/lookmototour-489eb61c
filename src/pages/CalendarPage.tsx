@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { EVENT_CATEGORIES, formatPrice, EventCategory } from '@/data/events';
 import { useEvents, DbEvent } from '@/hooks/useEvents';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { getHolidaysForMonth, HolidayInfo } from '@/data/indonesianHolidays';
 
 const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -21,6 +22,11 @@ export default function CalendarPage() {
   const [month, setMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const { data: events, isLoading } = useEvents();
+
+  useSeoMeta({
+    title: 'Kalender Event Touring Motor | LookMotoTour',
+    description: 'Lihat jadwal event touring motor di kalender. Rencanakan perjalanan touring kamu bersama LookMotoTour.',
+  });
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);

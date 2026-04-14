@@ -2,12 +2,18 @@ import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useBlogPosts } from '@/hooks/useBlog';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Loader2, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 
 export default function Blog() {
   const { data: posts, isLoading } = useBlogPosts();
+
+  useSeoMeta({
+    title: 'Blog - Tips Touring & Cerita Komunitas | LookMotoTour',
+    description: 'Baca berita terbaru, tips touring motor, dan cerita inspiratif dari komunitas LookMotoTour.',
+  });
 
   return (
     <div className="min-h-screen">

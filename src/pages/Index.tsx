@@ -9,6 +9,7 @@ import EventCard from '@/components/EventCard';
 import TestimonialSection from '@/components/TestimonialSection';
 import { useEvents } from '@/hooks/useEvents';
 import { useBlogPosts } from '@/hooks/useBlog';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
@@ -35,6 +36,11 @@ export default function Index() {
   });
   const upcomingEvents = (events || []).filter((e) => e.status === 'upcoming').slice(0, 3);
   const latestPosts = (blogPosts || []).slice(0, 3);
+
+  useSeoMeta({
+    title: 'LookMotoTour - Jelajahi Indonesia di Atas Motor',
+    description: 'Komunitas touring motor terpercaya di Indonesia. Event touring, adventure, workshop untuk penghobi motor.',
+  });
 
   return (
     <div className="min-h-screen">

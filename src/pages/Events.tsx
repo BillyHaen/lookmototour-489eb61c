@@ -13,6 +13,7 @@ import Footer from '@/components/Footer';
 import EventCard from '@/components/EventCard';
 import { EVENT_CATEGORIES, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES } from '@/data/events';
 import { useEvents } from '@/hooks/useEvents';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { supabase } from '@/integrations/supabase/client';
 
 const STATUS_FILTERS = [
@@ -39,6 +40,11 @@ export default function Events() {
   const [touringStyleFilter, setTouringStyleFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'date' | 'price'>('date');
   const { data: events, isLoading } = useEvents();
+
+  useSeoMeta({
+    title: 'Event Touring Motor Indonesia | LookMotoTour',
+    description: 'Temukan event touring, adventure, dan workshop motor terbaik di Indonesia. Filter berdasarkan kategori, level, dan gaya touring.',
+  });
 
   const { data: interestCounts } = useQuery({
     queryKey: ['event-interest-counts'],

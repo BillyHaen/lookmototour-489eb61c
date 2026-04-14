@@ -2,11 +2,17 @@ import { Link } from 'react-router-dom';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useTripJournals } from '@/hooks/useTripJournals';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Loader2, CalendarDays, Images } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function TripJournals() {
   const { data: journals, isLoading } = useTripJournals();
+
+  useSeoMeta({
+    title: 'Jurnal Trip - Dokumentasi Perjalanan | LookMotoTour',
+    description: 'Baca dokumentasi dan cerita seru dari setiap perjalanan touring motor LookMotoTour.',
+  });
 
   return (
     <div className="min-h-screen">

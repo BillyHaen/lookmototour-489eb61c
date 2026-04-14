@@ -5,6 +5,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 
 const iconMap: Record<string, LucideIcon> = {
   Heart, Shield, Map, Users, Star, Zap, Target, Award, Globe, Compass,
@@ -53,6 +54,11 @@ export default function About() {
   });
 
   const s = about || defaults;
+
+  useSeoMeta({
+    title: 'Tentang Kami - LookMotoTour',
+    description: 'Kenali LookMotoTour, komunitas touring motor terpercaya di Indonesia. Visi, misi, dan nilai-nilai kami.',
+  });
 
   return (
     <div className="min-h-screen">

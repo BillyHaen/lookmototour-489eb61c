@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import RichTextContent from '@/components/RichTextContent';
 import Footer from "@/components/Footer";
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,11 @@ const CATEGORIES = ["semua", "aksesoris", "apparel", "sparepart", "merchandise",
 export default function Shop() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("semua");
+
+  useSeoMeta({
+    title: 'Shop - Aksesoris & Merchandise | LookMotoTour',
+    description: 'Belanja aksesoris, apparel, sparepart, dan merchandise touring motor di LookMotoTour Shop.',
+  });
 
   const { data: products, isLoading } = useQuery({
     queryKey: ["shop-products"],

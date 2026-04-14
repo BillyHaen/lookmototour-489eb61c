@@ -86,6 +86,8 @@ export default function CalendarPage() {
                     const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
                     const isSelected = selectedDate === dateStr;
                     const isSunday = new Date(year, month, day).getDay() === 0;
+                    const hasLibur = dayHolidays.some(h => h.type === 'libur');
+                    const hasCuti = dayHolidays.some(h => h.type === 'cuti');
                     const isHoliday = dayHolidays.length > 0;
 
                     return (

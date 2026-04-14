@@ -89,9 +89,12 @@ export default function Navbar() {
           )}
         </div>
 
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)} aria-label="Toggle menu">
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          {user && <NotificationBell />}
+          <button className="p-2" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {open && (

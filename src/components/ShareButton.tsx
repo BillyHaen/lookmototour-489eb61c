@@ -12,14 +12,10 @@ interface ShareButtonProps {
   slug?: string;
 }
 
-function getPageUrl(contentType: string, slug: string): string {
-  const base = window.location.origin;
-  switch (contentType) {
-    case 'blog_post': return `${base}/blog/${slug}`;
-    case 'trip_journal': return `${base}/jurnal/${slug}`;
-    case 'event': return `${base}/events/${slug}`;
-    default: return base;
-  }
+function getShareUrl(contentType: string, slug: string): string {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const siteUrl = window.location.origin;
+  return `${supabaseUrl}/functions/v1/share-meta?type=${contentType}&slug=${encodeURIComponent(slug)}&site=${encodeURIComponent(siteUrl)}`;
 }
 
 export default function ShareButton({ contentType, contentId, title, description, slug }: ShareButtonProps) {
@@ -39,16 +35,11 @@ export default function ShareButton({ contentType, contentId, title, description
   }, [contentType, contentId]);
 
   const handleShare = async () => {
-    const shareUrl = getPageUrl(contentType, slug || contentId);
-    const shareData: ShareData = {
-      title,
-      text: description || '',
-      url: shareUrl,
-    };
+    const shareUrl = getShareUrl(contentType, slug || contentId);
 
     try {
       if (navigator.share) {
-        await navigator.share(shareData);
+        await navigator.share({ title, text: description || '', url: shareUrl });
       } else {
         await navigator.clipboard.writeText(shareUrl);
         toast({ title: 'Link berhasil disalin! 📋' });

@@ -249,8 +249,11 @@ export default function AdminEvents() {
                   <Badge variant={event.status === 'draft' ? 'outline' : event.status === 'upcoming' ? 'default' : 'secondary'}>
                     {event.status === 'draft' ? '📝 Draft' : event.status}
                   </Badge>
+                  {(event as any).tentative_month && <Badge variant="outline" className="text-xs">📅 Tentative</Badge>}
                 </div>
-                <p className="text-sm text-muted-foreground">{formatDate(event.date)} • {event.location} • S:{formatPrice((event as any).price_sharing || 0)} / I:{formatPrice((event as any).price_single || event.price)} / C:{formatPrice((event as any).price_couple || 0)}</p>
+                <p className="text-sm text-muted-foreground">
+                  {(event as any).tentative_month ? `${formatTentativeMonth((event as any).tentative_month)} (Tentative)` : formatDate(event.date)} • {event.location} • S:{formatPrice((event as any).price_sharing || 0)} / I:{formatPrice((event as any).price_single || event.price)} / C:{formatPrice((event as any).price_couple || 0)}
+                </p>
                 <p className="text-xs text-muted-foreground">{event.current_participants}/{event.max_participants} peserta</p>
               </div>
               <div className="flex items-center gap-2 ml-4">
@@ -272,6 +275,11 @@ export default function AdminEvents() {
                 <Button variant="outline" size="sm" onClick={() => setParticipantsEvent({ id: event.id, title: event.title })} title="Lihat Peserta">
                   <Users className="h-4 w-4" />
                 </Button>
+                {(event as any).tentative_month && (
+                  <Button variant="outline" size="sm" onClick={() => setInterestsEvent({ id: event.id, title: event.title })} title="Lihat Peminat">
+                    <Heart className="h-4 w-4" />
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={() => openEdit(event)}><Pencil className="h-4 w-4" /></Button>
                 <Button variant="destructive" size="sm" onClick={() => { if (confirm('Hapus event ini?')) deleteMutation.mutate({ id: event.id }); }}><Trash2 className="h-4 w-4" /></Button>
               </div>
@@ -324,16 +332,40 @@ export default function AdminEvents() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-muted-foreground">Tanggal Mulai</label>
-                <Input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-              </div>
-              <div>
-                <label className="text-sm text-muted-foreground">Tanggal Selesai</label>
-                <Input type="datetime-local" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
-              </div>
+            {/* Tentative Toggle */}
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <Switch
+                id="tentative"
+                checked={!!form.tentative_month}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    const now = new Date();
+                    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+                    setForm({ ...form, tentative_month: month, date: '' });
+                  } else {
+                    setForm({ ...form, tentative_month: '' });
+                  }
+                }}
+              />
+              <label htmlFor="tentative" className="text-sm font-medium">Tanggal Tentative (belum pasti)</label>
             </div>
+            {form.tentative_month ? (
+              <div>
+                <label className="text-sm text-muted-foreground">Bulan & Tahun (Tentative)</label>
+                <Input type="month" value={form.tentative_month} onChange={(e) => setForm({ ...form, tentative_month: e.target.value })} />
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-muted-foreground">Tanggal Mulai</label>
+                  <Input type="datetime-local" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground">Tanggal Selesai</label>
+                  <Input type="datetime-local" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} />
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <Input placeholder="Lokasi" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
               <Input placeholder="Jarak (mis: 350 km)" value={form.distance} onChange={(e) => setForm({ ...form, distance: e.target.value })} />
@@ -515,7 +547,7 @@ export default function AdminEvents() {
               <Button
                 className="flex-1"
                 onClick={() => saveMutation.mutate(form.status === 'draft' ? 'upcoming' : undefined)}
-                disabled={saveMutation.isPending || !form.title || !form.date}
+                disabled={saveMutation.isPending || !form.title || (!form.date && !form.tentative_month)}
               >
                 {saveMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {editId ? 'Simpan & Publikasi' : 'Tambah & Publikasi'}
@@ -530,6 +562,14 @@ export default function AdminEvents() {
           eventTitle={participantsEvent.title}
           open={!!participantsEvent}
           onOpenChange={(o) => { if (!o) setParticipantsEvent(null); }}
+        />
+      )}
+      {interestsEvent && (
+        <AdminEventInterests
+          eventId={interestsEvent.id}
+          eventTitle={interestsEvent.title}
+          open={!!interestsEvent}
+          onOpenChange={(o) => { if (!o) setInterestsEvent(null); }}
         />
       )}
     </AdminLayout>

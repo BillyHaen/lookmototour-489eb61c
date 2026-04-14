@@ -122,7 +122,7 @@ export default function CalendarPage() {
                       {selectedEvents.map((event) => {
                         const cat = EVENT_CATEGORIES[event.category as EventCategory] || EVENT_CATEGORIES.touring;
                         return (
-                          <Link key={event.id} to={`/events/${event.id}`}
+                          <Link key={event.id} to={`/events/${(event as any).slug || event.id}`}
                             className="flex items-center gap-4 p-4 rounded-xl bg-card shadow-card border border-border hover:shadow-elevated transition-all group">
                             <div className="text-2xl">{cat.icon}</div>
                             <div className="flex-1 min-w-0">

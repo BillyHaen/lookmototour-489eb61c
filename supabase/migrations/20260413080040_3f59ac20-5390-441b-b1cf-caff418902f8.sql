@@ -17,7 +17,7 @@ CREATE POLICY "Admins can delete site settings" ON public.site_settings FOR DELE
 -- Seed default footer settings
 INSERT INTO public.site_settings (key, value) VALUES
 ('footer', '{
-  "description": "Komunitas touring motor terpercaya di Indonesia. Jelajahi keindahan nusantara bersama kami melalui event touring, adventure, dan workshop yang seru dan aman.",
+  "description": "#1 Moto Touring Organizer Indonesia. Jelajahi keindahan nusantara bersama kami melalui event touring, adventure, dan workshop yang seru dan aman.",
   "instagram_url": "",
   "youtube_url": "",
   "whatsapp_number": "6281234567890",

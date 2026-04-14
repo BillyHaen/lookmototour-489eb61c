@@ -1,17 +1,30 @@
-import { Shield, Map, Users, Heart, Star, Zap, Target, Award, Globe, Compass, LucideIcon } from 'lucide-react';
-import RichTextContent from '@/components/RichTextContent';
-import logo from '@/assets/logo.png';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useSeoMeta } from '@/hooks/useSeoMeta';
+import { Shield, Map, Users, Heart, Star, Zap, Target, Award, Globe, Compass, LucideIcon } from "lucide-react";
+import RichTextContent from "@/components/RichTextContent";
+import logo from "@/assets/logo.png";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useSeoMeta } from "@/hooks/useSeoMeta";
 
 const iconMap: Record<string, LucideIcon> = {
-  Heart, Shield, Map, Users, Star, Zap, Target, Award, Globe, Compass,
+  Heart,
+  Shield,
+  Map,
+  Users,
+  Star,
+  Zap,
+  Target,
+  Award,
+  Globe,
+  Compass,
 };
 
-interface ValueCard { icon: string; title: string; desc: string; }
+interface ValueCard {
+  icon: string;
+  title: string;
+  desc: string;
+}
 interface AboutSettings {
   description: string;
   visi: string;
@@ -26,17 +39,17 @@ interface FooterSettings {
 }
 
 const defaults: AboutSettings = {
-  description: 'LookMotoTour adalah komunitas touring motor yang berbasis di Indonesia.',
-  visi: '',
-  misi: 'Menjadi platform touring motor terdepan di Indonesia.',
+  description: "LookMotoTour adalah komunitas touring motor yang berbasis di Indonesia.",
+  visi: "",
+  misi: "Menjadi platform touring motor terdepan di Indonesia.",
   values: [],
 };
 
 export default function About() {
   const { data: about } = useQuery({
-    queryKey: ['site-settings', 'about'],
+    queryKey: ["site-settings", "about"],
     queryFn: async () => {
-      const { data, error } = await supabase.from('site_settings').select('value').eq('key', 'about').single();
+      const { data, error } = await supabase.from("site_settings").select("value").eq("key", "about").single();
       if (error) return defaults;
       return data.value as unknown as AboutSettings;
     },
@@ -44,9 +57,9 @@ export default function About() {
   });
 
   const { data: footer } = useQuery({
-    queryKey: ['site-settings', 'footer'],
+    queryKey: ["site-settings", "footer"],
     queryFn: async () => {
-      const { data, error } = await supabase.from('site_settings').select('value').eq('key', 'footer').single();
+      const { data, error } = await supabase.from("site_settings").select("value").eq("key", "footer").single();
       if (error) return null;
       return data.value as unknown as FooterSettings;
     },
@@ -56,8 +69,8 @@ export default function About() {
   const s = about || defaults;
 
   useSeoMeta({
-    title: 'Tentang Kami - LookMotoTour',
-    description: 'Kenali LookMotoTour, komunitas touring motor terpercaya di Indonesia. Visi, misi, dan nilai-nilai kami.',
+    title: "Tentang Kami - LookMotoTour",
+    description: "Kenali LookMotoTour, #1 Moto Touring Organizer Indonesia. Visi, misi, dan nilai-nilai kami.",
   });
 
   return (
@@ -101,10 +114,22 @@ export default function About() {
 
             <h2 className="font-heading font-bold text-2xl">Kontak</h2>
             <ul className="text-muted-foreground space-y-1">
-              <li>📍 {footer?.address || 'Jakarta, Indonesia'}</li>
-              <li>📞 {footer?.phone || '+62 812-3456-7890'}</li>
-              <li>✉️ {footer?.email || 'info@lookmototour.com'}</li>
-              {footer?.instagram_url && <li>🌐 Instagram: <a href={footer.instagram_url} target="_blank" rel="noreferrer" className="text-primary hover:underline">{footer.instagram_url}</a></li>}
+              <li>📍 {footer?.address || "Jakarta, Indonesia"}</li>
+              <li>📞 {footer?.phone || "+62 812-3456-7890"}</li>
+              <li>✉️ {footer?.email || "info@lookmototour.com"}</li>
+              {footer?.instagram_url && (
+                <li>
+                  🌐 Instagram:{" "}
+                  <a
+                    href={footer.instagram_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    {footer.instagram_url}
+                  </a>
+                </li>
+              )}
             </ul>
           </div>
         </div>

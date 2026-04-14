@@ -41,8 +41,7 @@ export default function Index() {
 
   useSeoMeta({
     title: "LookMotoTour - Jelajahi Indonesia & Dunia di Atas Motor",
-    description:
-      "Komunitas touring motor terpercaya di Indonesia. Event touring, adventure, workshop untuk penghobi motor.",
+    description: "#1 Moto Touring Organizer Indonesia. Event touring, adventure, workshop untuk penghobi motor.",
   });
 
   return (

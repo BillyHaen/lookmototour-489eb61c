@@ -47,6 +47,15 @@ const defaultAbout: AboutSettings = {
   description: '', visi: '', misi: '', values: [],
 };
 
+const defaultHero: HeroSettings = {
+  images: [],
+  stats: [
+    { icon: 'Users', label: 'Riders', value: '500+' },
+    { icon: 'MapPin', label: 'Rute', value: '50+' },
+    { icon: 'Calendar', label: 'Event/tahun', value: '12+' },
+  ],
+};
+
 const ICON_OPTIONS = ['Heart', 'Shield', 'Map', 'Users', 'Star', 'Zap', 'Target', 'Award', 'Globe', 'Compass'];
 
 function useSiteSettings<T>(key: string, defaultValue: T) {

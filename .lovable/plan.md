@@ -1,86 +1,54 @@
 
 
-## Review: Smart Touring Finder
+## Fitur: Event Tanggal Tentative + Tombol "Saya Minat Trip Ini!"
 
-### Yang Sudah Ada
+### Konsep
+- Admin bisa buat event tanpa tanggal pasti, cukup pilih **bulan & tahun** (tentative)
+- Selama tanggal belum fix, tombol registrasi berubah menjadi **"Saya Minat Trip Ini!"**
+- Klik tombol minat → simpan data peminat ke tabel baru `event_interests`
+- Admin bisa lihat jumlah & daftar peminat di dashboard
+- Setelah admin set tanggal fix → tombol otomatis berubah ke "Daftar Sekarang" seperti biasa
 
-| Fitur | Status |
-|-------|--------|
-| Search teks (judul/lokasi) | Ada |
-| Filter kategori (Touring, Adventure, Race, Gathering, Workshop) | Ada |
-| Filter status (Akan Datang, Berlangsung, Selesai) | Ada |
-| Sort tanggal & harga | Ada |
-| Difficulty (mudah/sedang/sulit) | Ada di EventCard, tapi **tidak bisa difilter** |
-| Jarak total | Ada di EventCard & EventDetail |
-| Estimasi jam riding per hari | Tidak ada |
-| Tingkat capek (visual bar) | Tidak ada |
-| Filter level rider | Tidak ada |
-| Filter tipe motor | Tidak ada |
-| Filter style touring | Tidak ada |
+### Perubahan
 
-### Yang Perlu Ditambahkan
+#### 1. Database Migration
+- Tambah kolom `tentative_month` (text, nullable) di tabel `events` — format "2026-07" untuk bulan tentative
+- Buat tabel baru `event_interests`:
+  - `id` (uuid, PK)
+  - `event_id` (uuid, NOT NULL)
+  - `user_id` (uuid, NOT NULL)
+  - `name` (text)
+  - `phone` (text)
+  - `created_at` (timestamptz)
+  - Unique constraint on (event_id, user_id)
+- RLS: authenticated users can insert own, view own; admins can view all
 
-Fitur ini membutuhkan **2 bagian**: perubahan database (kolom baru) + perubahan UI (filter & tampilan).
+#### 2. Admin Events (`AdminEvents.tsx`)
+- Tambah toggle "Tanggal Tentative" — jika aktif, field tanggal berubah jadi picker bulan/tahun saja, dan kolom `date` di-set ke awal bulan sebagai placeholder
+- Tampilkan badge "📅 Tentative" di list event admin
+- Tambah tombol untuk melihat **daftar peminat** (mirip tombol peserta yang sudah ada)
+- Buat komponen `AdminEventInterests` untuk menampilkan tabel peminat + jumlah total
 
----
+#### 3. EventRegistrationForm (`EventRegistrationForm.tsx`)
+- Cek apakah event tentative: `event.tentative_month && event.tentative_month !== ''`
+- Jika tentative → tampilkan tombol "🙋 Saya Minat Trip Ini!" (bukan form registrasi)
+- Klik → simpan ke `event_interests` (nama & phone dari profil user, atau prompt sederhana)
+- Jika sudah pernah klik → tampilkan "✅ Anda Sudah Menyatakan Minat"
+- Jika bukan tentative → tampilkan form registrasi seperti biasa
 
-### 1. Database Migration -- Tambah Kolom Baru di Tabel `events`
+#### 4. EventCard & EventDetail
+- Jika tentative, tampilkan bulan saja: "Juli 2026 (Tentative)" bukan tanggal lengkap
+- Badge "Tentative" di EventCard
 
-```sql
-ALTER TABLE public.events
-  ADD COLUMN rider_level text NOT NULL DEFAULT 'all',
-  ADD COLUMN motor_types text[] NOT NULL DEFAULT '{}',
-  ADD COLUMN touring_style text NOT NULL DEFAULT 'adventure',
-  ADD COLUMN riding_hours_per_day numeric(3,1) NOT NULL DEFAULT 0,
-  ADD COLUMN fatigue_level integer NOT NULL DEFAULT 1;
-```
-
-Penjelasan kolom:
-- `rider_level`: 'beginner' | 'intermediate' | 'hardcore' | 'all'
-- `motor_types`: array, misalnya `{'sport','adv','cruiser'}`
-- `touring_style`: 'santai' | 'adventure' | 'luxury' | 'spiritual'
-- `riding_hours_per_day`: estimasi jam riding per hari (misal 4.5)
-- `fatigue_level`: 1-5 (ditampilkan sebagai visual bar)
-
-### 2. Admin Events -- Tambah Input Kolom Baru
-
-Di `AdminEvents.tsx`, tambahkan field form untuk:
-- Rider Level (Select: Semua / Beginner / Intermediate / Hardcore)
-- Tipe Motor (multi-checkbox: Sport, ADV, Cruiser, Matic, Bebek)
-- Style Touring (Select: Santai, Adventure, Luxury, Spiritual)
-- Jam Riding per Hari (number input)
-- Tingkat Capek (slider 1-5)
-
-### 3. Events Page -- Smart Filter UI
-
-Di `Events.tsx`, tambahkan filter baru:
-- **Filter Difficulty** (badge pills: Mudah / Sedang / Sulit) -- sudah ada datanya, tinggal jadikan filter
-- **Filter Rider Level** (badge pills: Beginner / Intermediate / Hardcore)
-- **Filter Tipe Motor** (badge pills: Sport / ADV / Cruiser / Matic)
-- **Filter Style Touring** (badge pills: Santai / Adventure / Luxury / Spiritual)
-- Semua filter menggunakan pola badge yang sama seperti filter kategori yang sudah ada
-
-### 4. EventCard -- Tampilkan Info Tambahan
-
-Di `EventCard.tsx`, tambahkan:
-- Estimasi jam riding per hari (icon Clock + "4.5 jam/hari")
-- Tingkat capek sebagai visual progress bar mini (menggunakan warna gradient hijau-kuning-merah)
-
-### 5. EventDetail -- Tampilkan Info Lengkap
-
-Di `EventDetail.tsx`, tambahkan di info grid:
-- Jam riding per hari
-- Tingkat capek (visual bar besar + label)
-- Rider level badge
-- Tipe motor yang cocok (badge list)
-- Style touring
+#### 5. Data Constants (`events.ts`)
+- Tambah helper `formatTentativeMonth(month: string)` → "Juli 2026"
 
 ### File yang Akan Diubah
-
-1. **Database migration** -- tambah 5 kolom baru
-2. `src/pages/admin/AdminEvents.tsx` -- form input kolom baru
-3. `src/pages/Events.tsx` -- tambah filter baru
-4. `src/components/EventCard.tsx` -- tampilkan info tambahan
-5. `src/pages/EventDetail.tsx` -- tampilkan info lengkap
-6. `src/data/events.ts` -- tambah konstanta untuk filter options
+1. **Database migration** — kolom `tentative_month` + tabel `event_interests` + RLS
+2. `src/pages/admin/AdminEvents.tsx` — toggle tentative, lihat peminat
+3. `src/pages/admin/AdminEventInterests.tsx` — komponen baru untuk daftar peminat
+4. `src/components/EventRegistrationForm.tsx` — logika tombol minat vs registrasi
+5. `src/components/EventCard.tsx` — tampilkan bulan tentative
+6. `src/pages/EventDetail.tsx` — tampilkan bulan tentative
+7. `src/data/events.ts` — helper format bulan
 

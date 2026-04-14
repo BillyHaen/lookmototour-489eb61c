@@ -11,10 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { formatPrice, formatDate, formatTentativeMonth, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS } from '@/data/events';
-import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users, Heart } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import AdminEventParticipants from './AdminEventParticipants';
+import AdminEventInterests from './AdminEventInterests';
 import EventImageUpload from '@/components/EventImageUpload';
 
 interface EventForm {

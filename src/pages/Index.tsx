@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield, Map, Users, Star } from 'lucide-react';
+import { ArrowRight, Shield, Map, Users, Star, CalendarDays } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
 import EventCard from '@/components/EventCard';
 import TestimonialSection from '@/components/TestimonialSection';
 import { useEvents } from '@/hooks/useEvents';
+import { useBlogPosts } from '@/hooks/useBlog';
 import { Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
 
 const FEATURES = [
   { icon: Map, title: 'Rute Terbaik', desc: 'Rute touring yang sudah disurvey dan aman untuk semua level rider.' },
@@ -18,7 +20,9 @@ const FEATURES = [
 
 export default function Index() {
   const { data: events, isLoading } = useEvents();
+  const { data: blogPosts, isLoading: blogLoading } = useBlogPosts();
   const upcomingEvents = (events || []).filter((e) => e.status === 'upcoming').slice(0, 3);
+  const latestPosts = (blogPosts || []).slice(0, 3);
 
   return (
     <div className="min-h-screen">
@@ -70,6 +74,53 @@ export default function Index() {
           <div className="sm:hidden mt-6 text-center">
             <Button variant="outline" className="gap-2" asChild>
               <Link to="/events">Lihat Semua Event <ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Blog Posts */}
+      <section className="py-20 bg-background">
+        <div className="container">
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <h2 className="font-heading font-bold text-3xl md:text-4xl mb-2">Blog Terbaru</h2>
+              <p className="text-muted-foreground">Tips touring, berita komunitas, dan cerita inspiratif.</p>
+            </div>
+            <Button variant="outline" className="hidden sm:flex gap-2" asChild>
+              <Link to="/blog">Lihat Semua <ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+          </div>
+          {blogLoading ? (
+            <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
+          ) : latestPosts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {latestPosts.map(post => (
+                <Link key={post.id} to={`/blog/${post.slug || post.id}`} className="group">
+                  <div className="rounded-xl overflow-hidden border border-border bg-card shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1">
+                    {post.image_url && (
+                      <div className="aspect-video overflow-hidden">
+                        <img src={post.image_url} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      </div>
+                    )}
+                    <div className="p-5">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+                        <CalendarDays className="h-3 w-3" />
+                        {post.published_at ? format(new Date(post.published_at), 'dd MMM yyyy') : format(new Date(post.created_at), 'dd MMM yyyy')}
+                      </div>
+                      <h3 className="font-heading font-semibold text-lg mb-1 group-hover:text-primary transition-colors line-clamp-2">{post.title}</h3>
+                      {post.excerpt && <p className="text-sm text-muted-foreground line-clamp-2">{post.excerpt}</p>}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">Belum ada artikel.</p>
+          )}
+          <div className="sm:hidden mt-6 text-center">
+            <Button variant="outline" className="gap-2" asChild>
+              <Link to="/blog">Lihat Semua Artikel <ArrowRight className="h-4 w-4" /></Link>
             </Button>
           </div>
         </div>

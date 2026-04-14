@@ -12,6 +12,8 @@ import UserAvatar from '@/components/UserAvatar';
 const NAV_ITEMS = [
   { label: 'Beranda', path: '/' },
   { label: 'Event', path: '/events' },
+  { label: 'Blog', path: '/blog' },
+  { label: 'Jurnal Trip', path: '/jurnal' },
   { label: 'Toko', path: '/shop' },
   { label: 'Kalender', path: '/calendar' },
   { label: 'Tentang', path: '/about' },

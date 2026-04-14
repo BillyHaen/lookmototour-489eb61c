@@ -200,7 +200,10 @@ export default function AdminDashboard() {
       Tanggal_Daftar: new Date(r.created_at).toLocaleDateString('id-ID'),
     }));
 
-    if (!rows.length) return;
+    if (!rows.length) {
+      toast({ title: 'Tidak ada data untuk di-export', variant: 'destructive' });
+      return;
+    }
     const headers = Object.keys(rows[0]);
     const csv = [
       headers.join(','),
@@ -213,8 +216,13 @@ export default function AdminDashboard() {
     a.href = url;
     const dateStr = effectiveRange?.from ? `_${format(effectiveRange.from, 'yyyyMMdd')}-${effectiveRange.to ? format(effectiveRange.to, 'yyyyMMdd') : 'now'}` : '';
     a.download = `laporan-registrasi${dateStr}.csv`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 100);
   }, [chartData, rawData, effectiveRange]);
 
   // --- Export PDF (summary report) ---

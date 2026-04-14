@@ -17,9 +17,9 @@ Pengalaman interaktif bergaya Netflix di mana user menjawab 4 pertanyaan cepat (
 [Loading animation "Matching trips..."]
        ↓
 [Hasil: Netflix-style rows]
-  → "🎯 Perfect Match" (skor tinggi)
-  → "🔥 Worth Trying" (skor sedang)
-  → "💡 Something Different" (wildcard)
+  → "🎯 Paling cocok!" (skor tinggi)
+  → "🔥 Layak dicoba!" (skor sedang)
+  → "💡 Berani terima tantangan baru?" (wildcard)
 ```
 
 ### Implementasi

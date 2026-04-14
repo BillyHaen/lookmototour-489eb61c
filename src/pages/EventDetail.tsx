@@ -307,41 +307,49 @@ export default function EventDetail() {
 
             <div className="space-y-4">
               <div className="p-6 rounded-xl bg-card shadow-card border border-border space-y-4 sticky top-24">
-              <div>
-                  <p className="text-sm text-muted-foreground text-center mb-3">Biaya Pendaftaran</p>
-                  <div className="grid grid-cols-3 gap-2 text-center">
-                    {(event as any).price_sharing > 0 && (
-                      <div className="p-2 rounded-lg bg-muted">
-                        <p className="text-[10px] text-muted-foreground uppercase font-medium">Sharing</p>
-                        <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_sharing)}</p>
-                      </div>
-                    )}
-                    {((event as any).price_single > 0 || event.price > 0) && (
-                      <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
-                        <p className="text-[10px] text-muted-foreground uppercase font-medium">Single</p>
-                        <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_single || event.price)}</p>
-                      </div>
-                    )}
-                    {(event as any).price_couple > 0 && (
-                      <div className="p-2 rounded-lg bg-muted">
-                        <p className="text-[10px] text-muted-foreground uppercase font-medium">Couple</p>
-                        <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_couple)}</p>
-                      </div>
-                    )}
+                {isTentative ? (
+                  <div className="text-center py-4">
+                    <p className="text-muted-foreground text-sm">Biaya perjalanan akan diupdate!</p>
                   </div>
-                  {(event as any).price_sharing === 0 && (event as any).price_couple === 0 && (event as any).price_single === 0 && event.price === 0 && (
-                    <p className="font-heading font-bold text-3xl text-primary text-center">GRATIS</p>
-                  )}
-                </div>
+                ) : (
+                  <>
+                    <div>
+                      <p className="text-sm text-muted-foreground text-center mb-3">Biaya Pendaftaran</p>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        {(event as any).price_sharing > 0 && (
+                          <div className="p-2 rounded-lg bg-muted">
+                            <p className="text-[10px] text-muted-foreground uppercase font-medium">Sharing</p>
+                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_sharing)}</p>
+                          </div>
+                        )}
+                        {((event as any).price_single > 0 || event.price > 0) && (
+                          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                            <p className="text-[10px] text-muted-foreground uppercase font-medium">Single</p>
+                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_single || event.price)}</p>
+                          </div>
+                        )}
+                        {(event as any).price_couple > 0 && (
+                          <div className="p-2 rounded-lg bg-muted">
+                            <p className="text-[10px] text-muted-foreground uppercase font-medium">Couple</p>
+                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_couple)}</p>
+                          </div>
+                        )}
+                      </div>
+                      {(event as any).price_sharing === 0 && (event as any).price_couple === 0 && (event as any).price_single === 0 && event.price === 0 && (
+                        <p className="font-heading font-bold text-3xl text-primary text-center">GRATIS</p>
+                      )}
+                    </div>
 
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-muted-foreground">Kuota</span>
-                    <span className="font-medium">{event.current_participants}/{event.max_participants}</span>
-                  </div>
-                  <Progress value={fillPercent} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">{spotsLeft > 0 ? `${spotsLeft} slot tersisa` : 'Kuota penuh'}</p>
-                </div>
+                    <div>
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-muted-foreground">Kuota</span>
+                        <span className="font-medium">{event.current_participants}/{event.max_participants}</span>
+                      </div>
+                      <Progress value={fillPercent} className="h-2" />
+                      <p className="text-xs text-muted-foreground mt-1">{spotsLeft > 0 ? `${spotsLeft} slot tersisa` : 'Kuota penuh'}</p>
+                    </div>
+                  </>
+                )}
 
                 <EventRegistrationForm event={event} />
 

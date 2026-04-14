@@ -58,6 +58,63 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     enabled: !!user,
   });
 
+  // Check if user already expressed interest (tentative events)
+  const { data: existingInterest } = useQuery({
+    queryKey: ['my-interest', event.id, user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('event_interests')
+        .select('*')
+        .eq('event_id', event.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user && isTentative,
+  });
+
+  const { data: userProfile } = useQuery({
+    queryKey: ['my-profile-interest', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from('profiles').select('name, phone').eq('user_id', user.id).maybeSingle();
+      return data;
+    },
+    enabled: !!user && isTentative,
+  });
+
+  const interestMutation = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('Login diperlukan');
+      const { error } = await supabase.from('event_interests').insert({
+        event_id: event.id, user_id: user.id,
+        name: userProfile?.name || '', phone: userProfile?.phone || '',
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['my-interest', event.id, user?.id] });
+      toast({ title: 'Minat tercatat! 🎉', description: 'Kami akan menghubungi kamu saat tanggal sudah fix.' });
+    },
+    onError: (e: Error) => {
+      if (e.message.includes('duplicate') || e.message.includes('23505')) {
+        toast({ title: 'Sudah tercatat', description: 'Kamu sudah menyatakan minat untuk trip ini.' });
+      } else {
+        toast({ title: 'Gagal', description: e.message, variant: 'destructive' });
+      }
+    },
+  });
+
+  const handleInterest = () => {
+    if (!user) {
+      toast({ title: 'Login diperlukan', description: 'Silakan login terlebih dahulu.', variant: 'destructive' });
+      navigate('/login');
+      return;
+    }
+    interestMutation.mutate();
+  };
+
   const paymentLabel = (status: string) => {
     if (status === 'lunas') return 'Lunas';
     if (status === 'batal') return 'Batal';

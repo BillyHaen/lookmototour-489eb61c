@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { formatPrice, formatDate, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS } from '@/data/events';
+import { formatPrice, formatDate, formatTentativeMonth, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS } from '@/data/events';
 import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';

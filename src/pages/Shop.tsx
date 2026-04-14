@@ -19,6 +19,11 @@ export default function Shop() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("semua");
 
+  useSeoMeta({
+    title: 'Shop - Aksesoris & Merchandise | LookMotoTour',
+    description: 'Belanja aksesoris, apparel, sparepart, dan merchandise touring motor di LookMotoTour Shop.',
+  });
+
   const { data: products, isLoading } = useQuery({
     queryKey: ["shop-products"],
     queryFn: async () => {

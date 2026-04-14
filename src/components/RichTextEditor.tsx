@@ -3,8 +3,9 @@ import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import TextAlign from '@tiptap/extension-text-align';
 import Placeholder from '@tiptap/extension-placeholder';
-import { useEffect } from 'react';
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading2, Heading3, Undo, Redo, Minus } from 'lucide-react';
+import Link from '@tiptap/extension-link';
+import { useCallback, useEffect } from 'react';
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, List, ListOrdered, AlignLeft, AlignCenter, AlignRight, Heading2, Heading3, Undo, Redo, Minus, Link as LinkIcon, Unlink } from 'lucide-react';
 import { Toggle } from '@/components/ui/toggle';
 import { Separator } from '@/components/ui/separator';
 
@@ -24,6 +25,10 @@ export default function RichTextEditor({ value, onChange, placeholder = 'Tulis s
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Placeholder.configure({ placeholder }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: 'text-primary underline cursor-pointer' },
+      }),
     ],
     content: value || '',
     onUpdate: ({ editor }) => {

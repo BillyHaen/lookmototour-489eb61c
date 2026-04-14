@@ -6,7 +6,7 @@ import { Search, SlidersHorizontal, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventCard from '@/components/EventCard';
-import { EVENT_CATEGORIES, EventCategory } from '@/data/events';
+import { EVENT_CATEGORIES, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES } from '@/data/events';
 import { useEvents } from '@/hooks/useEvents';
 
 const STATUS_FILTERS = [
@@ -16,10 +16,21 @@ const STATUS_FILTERS = [
   { value: 'completed', label: 'Selesai' },
 ];
 
+const DIFFICULTY_FILTERS = [
+  { value: 'all', label: 'Semua Tingkat' },
+  { value: 'mudah', label: '🟢 Mudah' },
+  { value: 'sedang', label: '🟡 Sedang' },
+  { value: 'sulit', label: '🔴 Sulit' },
+];
+
 export default function Events() {
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<EventCategory | 'all'>('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [difficultyFilter, setDifficultyFilter] = useState('all');
+  const [riderLevelFilter, setRiderLevelFilter] = useState('all');
+  const [motorTypeFilter, setMotorTypeFilter] = useState('all');
+  const [touringStyleFilter, setTouringStyleFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'date' | 'price'>('date');
   const { data: events, isLoading } = useEvents();
 
@@ -31,9 +42,13 @@ export default function Events() {
     }
     if (categoryFilter !== 'all') result = result.filter((e) => e.category === categoryFilter);
     if (statusFilter !== 'all') result = result.filter((e) => e.status === statusFilter);
+    if (difficultyFilter !== 'all') result = result.filter((e) => e.difficulty === difficultyFilter);
+    if (riderLevelFilter !== 'all') result = result.filter((e) => (e as any).rider_level === riderLevelFilter || (e as any).rider_level === 'all');
+    if (motorTypeFilter !== 'all') result = result.filter((e) => ((e as any).motor_types || []).includes(motorTypeFilter));
+    if (touringStyleFilter !== 'all') result = result.filter((e) => (e as any).touring_style === touringStyleFilter);
     result.sort((a, b) => sortBy === 'date' ? new Date(a.date).getTime() - new Date(b.date).getTime() : a.price - b.price);
     return result;
-  }, [events, search, categoryFilter, statusFilter, sortBy]);
+  }, [events, search, categoryFilter, statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter, sortBy]);
 
   return (
     <div className="min-h-screen">
@@ -79,6 +94,48 @@ export default function Events() {
                 </Badge>
               ))}
             </div>
+
+            {/* Smart Touring Filters */}
+            <div className="flex flex-wrap gap-2">
+              {DIFFICULTY_FILTERS.map((d) => (
+                <Badge key={d.value} variant={difficultyFilter === d.value ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setDifficultyFilter(d.value)}>
+                  {d.label}
+                </Badge>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={riderLevelFilter === 'all' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setRiderLevelFilter('all')}>
+                👥 Semua Level
+              </Badge>
+              {Object.entries(RIDER_LEVELS).filter(([k]) => k !== 'all').map(([key, val]) => (
+                <Badge key={key} variant={riderLevelFilter === key ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setRiderLevelFilter(key)}>
+                  {val.icon} {val.label}
+                </Badge>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={motorTypeFilter === 'all' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setMotorTypeFilter('all')}>
+                🏍️ Semua Motor
+              </Badge>
+              {Object.entries(MOTOR_TYPES).map(([key, val]) => (
+                <Badge key={key} variant={motorTypeFilter === key ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setMotorTypeFilter(key)}>
+                  {val.icon} {val.label}
+                </Badge>
+              ))}
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Badge variant={touringStyleFilter === 'all' ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setTouringStyleFilter('all')}>
+                🗺️ Semua Style
+              </Badge>
+              {Object.entries(TOURING_STYLES).map(([key, val]) => (
+                <Badge key={key} variant={touringStyleFilter === key ? 'default' : 'outline'} className="cursor-pointer" onClick={() => setTouringStyleFilter(key)}>
+                  {val.icon} {val.label}
+                </Badge>
+              ))}
+            </div>
           </div>
 
           {isLoading ? (
@@ -86,7 +143,7 @@ export default function Events() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-muted-foreground text-lg">Tidak ada event yang ditemukan.</p>
-              <Button variant="outline" className="mt-4" onClick={() => { setSearch(''); setCategoryFilter('all'); setStatusFilter('all'); }}>
+              <Button variant="outline" className="mt-4" onClick={() => { setSearch(''); setCategoryFilter('all'); setStatusFilter('all'); setDifficultyFilter('all'); setRiderLevelFilter('all'); setMotorTypeFilter('all'); setTouringStyleFilter('all'); }}>
                 Reset Filter
               </Button>
             </div>

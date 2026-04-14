@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, MapPin, Users, Gauge } from 'lucide-react';
-import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory } from '@/data/events';
+import { CalendarDays, MapPin, Users, Gauge, Clock, Zap } from 'lucide-react';
+import { EVENT_CATEGORIES, formatPrice, formatDate, EventCategory, FATIGUE_LABELS } from '@/data/events';
 import type { DbEvent } from '@/hooks/useEvents';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
@@ -63,6 +63,31 @@ export default function EventCard({ event }: { event: DbEvent }) {
               </span>
             </span>
           </div>
+          {/* Riding hours & Fatigue */}
+          {((event as any).riding_hours_per_day > 0 || (event as any).fatigue_level > 1) && (
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {(event as any).riding_hours_per_day > 0 && (
+                <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{(event as any).riding_hours_per_day} jam/hari</span>
+              )}
+              {(event as any).fatigue_level > 1 && (
+                <span className="flex items-center gap-1">
+                  <Zap className="h-3.5 w-3.5" />
+                  <span className="flex items-center gap-1">
+                    <span className="w-16 h-1.5 rounded-full bg-secondary overflow-hidden">
+                      <span
+                        className="block h-full rounded-full"
+                        style={{
+                          width: `${((event as any).fatigue_level / 5) * 100}%`,
+                          backgroundColor: (event as any).fatigue_level <= 2 ? 'hsl(var(--primary))' : (event as any).fatigue_level <= 3 ? 'hsl(40 100% 50%)' : 'hsl(var(--destructive))',
+                        }}
+                      />
+                    </span>
+                    <span className="text-[10px]">{FATIGUE_LABELS[(event as any).fatigue_level] || ''}</span>
+                  </span>
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex items-center justify-between pt-2 border-t border-border">
             <span className="font-heading font-bold text-lg text-primary">
               {(event as any).price_single > 0 ? `Mulai ${formatPrice(Math.min(...[((event as any).price_sharing || Infinity), ((event as any).price_single || Infinity), ((event as any).price_couple || Infinity)].filter(p => p > 0 && p !== Infinity)))}` : formatPrice(event.price)}

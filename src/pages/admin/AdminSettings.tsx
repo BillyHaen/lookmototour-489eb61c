@@ -9,6 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Save, Plus, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AdminHeroSettings from '@/components/admin/AdminHeroSettings';
+
+interface HeroImage { url: string; alt: string; }
+interface HeroStat { icon: string; label: string; value: string; }
+interface HeroSettings { images: HeroImage[]; stats: HeroStat[]; }
 
 interface FooterSettings {
   description: string;

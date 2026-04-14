@@ -13,9 +13,9 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/events';
-import { Loader2, CheckCircle2 } from 'lucide-react';
+import { Loader2, CheckCircle2, Heart } from 'lucide-react';
 import type { DbEvent } from '@/hooks/useEvents';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const schema = z.object({
   name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),
@@ -39,6 +39,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const isTentative = !!(event as any).tentative_month;
   const isFull = event.current_participants >= event.max_participants || (event as any).force_full;
 
   // Check if user already registered

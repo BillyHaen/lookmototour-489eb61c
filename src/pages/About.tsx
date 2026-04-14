@@ -55,6 +55,11 @@ export default function About() {
 
   const s = about || defaults;
 
+  useSeoMeta({
+    title: 'Tentang Kami - LookMotoTour',
+    description: 'Kenali LookMotoTour, komunitas touring motor terpercaya di Indonesia. Visi, misi, dan nilai-nilai kami.',
+  });
+
   return (
     <div className="min-h-screen">
       <Navbar />

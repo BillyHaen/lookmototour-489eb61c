@@ -8,6 +8,7 @@ import { useIsAdmin } from '@/hooks/useAdmin';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import UserAvatar from '@/components/UserAvatar';
+import NotificationBell from '@/components/NotificationBell';
 
 const NAV_ITEMS = [
   { label: 'Beranda', path: '/' },
@@ -60,6 +61,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           {user ? (
             <>
+              <NotificationBell />
               {isAdmin && (
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/admin" className="gap-2"><Shield className="h-4 w-4" /> Admin</Link>
@@ -87,9 +89,12 @@ export default function Navbar() {
           )}
         </div>
 
-        <button className="md:hidden p-2" onClick={() => setOpen(!open)} aria-label="Toggle menu">
-          {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          {user && <NotificationBell />}
+          <button className="p-2" onClick={() => setOpen(!open)} aria-label="Toggle menu">
+            {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {open && (

@@ -124,7 +124,13 @@ export default function AdminEvents() {
       };
 
       let eventId = editId;
+      // Check if we're confirming a tentative date (was tentative, now not)
+      let wasConfirmed = false;
       if (editId) {
+        // Check if event was tentative before
+        const { data: oldEvent } = await supabase.from('events').select('tentative_month, slug').eq('id', editId).single();
+        wasConfirmed = !!(oldEvent?.tentative_month) && !form.tentative_month;
+
         const { error } = await supabase.from('events').update(payload).eq('id', editId);
         if (error) throw error;
       } else {
@@ -135,7 +141,6 @@ export default function AdminEvents() {
 
       // Save itineraries
       if (eventId) {
-        // Delete old ones first
         await supabase.from('event_itineraries' as any).delete().eq('event_id', eventId);
         if (itineraries.length > 0) {
           const rows = itineraries.map(it => ({
@@ -148,8 +153,19 @@ export default function AdminEvents() {
           await (supabase.from('event_itineraries' as any) as any).insert(rows);
         }
       }
+
+      // Notify interested users if date was confirmed
+      if (wasConfirmed && eventId) {
+        try {
+          await supabase.functions.invoke('notify-interested-users', {
+            body: { event_id: eventId, event_title: form.title, event_slug: slug },
+          });
+        } catch (e) {
+          console.error('Failed to notify interested users:', e);
+        }
+      }
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin-events'] });
       toast({ title: editId ? 'Event diperbarui ✅' : 'Event ditambahkan ✅' });
       setOpen(false);

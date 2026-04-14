@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -8,6 +9,7 @@ import Footer from '@/components/Footer';
 import EventCard from '@/components/EventCard';
 import { EVENT_CATEGORIES, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES } from '@/data/events';
 import { useEvents } from '@/hooks/useEvents';
+import { supabase } from '@/integrations/supabase/client';
 
 const STATUS_FILTERS = [
   { value: 'all', label: 'Semua' },
@@ -33,6 +35,17 @@ export default function Events() {
   const [touringStyleFilter, setTouringStyleFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'date' | 'price'>('date');
   const { data: events, isLoading } = useEvents();
+
+  const { data: interestCounts } = useQuery({
+    queryKey: ['event-interest-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_event_interest_counts');
+      if (error) return {};
+      const map: Record<string, number> = {};
+      (data as any[])?.forEach((r: any) => { map[r.event_id] = Number(r.interest_count); });
+      return map;
+    },
+  });
 
   const filtered = useMemo(() => {
     let result = [...(events || [])];
@@ -152,7 +165,7 @@ export default function Events() {
               <p className="text-sm text-muted-foreground mb-4">{filtered.length} event ditemukan</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filtered.map((event) => (
-                  <EventCard key={event.id} event={event} />
+                  <EventCard key={event.id} event={event} interestCount={interestCounts?.[event.id]} />
                 ))}
               </div>
             </>

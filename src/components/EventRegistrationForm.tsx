@@ -196,6 +196,28 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     toast({ title: 'Pendaftaran berhasil! 🎉', description: `Kamu sudah terdaftar untuk ${event.title}` });
   };
 
+  // Tentative event → show interest button
+  if (isTentative) {
+    if (existingInterest) {
+      return (
+        <Button size="lg" className="w-full text-base font-semibold" disabled>
+          ✅ Anda Sudah Menyatakan Minat
+        </Button>
+      );
+    }
+    return (
+      <Button
+        size="lg"
+        className="w-full text-base font-semibold gap-2"
+        onClick={handleInterest}
+        disabled={interestMutation.isPending}
+      >
+        {interestMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className="h-5 w-5" />}
+        🙋 Saya Minat Trip Ini!
+      </Button>
+    );
+  }
+
   if (existingReg) {
     return (
       <div className="w-full text-center space-y-2">

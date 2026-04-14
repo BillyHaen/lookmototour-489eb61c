@@ -1,75 +1,37 @@
-## Fitur: AI Trip Match — "Find Your Perfect Ride"
 
-### Konsep
 
-Pengalaman interaktif bergaya Netflix di mana user menjawab 4 pertanyaan cepat (swipeable cards), lalu mendapat rekomendasi touring yang dipersonalisasi menggunakan Lovable AI. Hasilnya ditampilkan dalam layout carousel "Netflix-style" dengan kategori seperti "Perfect Match", "Worth Trying", dll.
+## Perubahan Tone Warna Website Sesuai Logo
 
-### Alur User
+### Analisis Logo
+Logo LookMotoTour menggunakan warna **dark navy blue** (sekitar `hsl(215, 50%, 20%)`) dengan elemen putih. Saat ini website menggunakan **orange** (`hsl(25, 95%, 53%)`) sebagai primary — tidak sesuai dengan identitas logo.
 
-```text
-[Tombol "🎯 Find My Ride" di halaman Events]
-       ↓
-[Step 1] Pengalaman riding → Pemula / Menengah / Expert
-[Step 2] Budget range → < 500rb / 500rb-1.5jt / 1.5jt-3jt / 3jt+
-[Step 3] Gaya touring → Santai & Coffee / Gaspol Adventure / Luxury / Spiritual
-[Step 4] Prefer view → 🏖️ Pantai / 🏔️ Gunung / 🏙️ Kota / 🌾 Pedesaan
-       ↓
-[Loading animation "Matching trips..."]
-       ↓
-[Hasil: Netflix-style rows]
-  → "🎯 Paling cocok!" (skor tinggi)
-  → "🔥 Layak dicoba!" (skor sedang)
-  → "💡 Berani terima tantangan baru?" (wildcard)
-```
+### Palet Warna Baru
 
-### Implementasi
+Mengubah skema warna agar serasi dengan logo navy blue, tetap mempertahankan kesan profesional dan mudah dibaca:
 
-**1. Edge Function `ai-trip-match`** — Menerima jawaban kuisioner + daftar event, kirim ke Lovable AI (gemini-3-flash-preview) untuk scoring & categorization. AI mengembalikan structured output berupa event IDs dengan skor dan alasan rekomendasi.
+| Token | Lama | Baru | Keterangan |
+|-------|------|------|------------|
+| `--primary` | Orange `25 95% 53%` | Navy Blue `215 70% 35%` | Warna utama sesuai logo |
+| `--accent` | Teal `160 60% 40%` | Sky Blue `200 80% 55%` | Aksen cerah pelengkap navy |
+| `--ring` | Orange | Navy Blue | Fokus/ring mengikuti primary |
+| `--gradient-primary` | Orange gradient | Navy → Sky Blue gradient | Gradient serasi |
+| Sidebar primary | Orange | Navy Blue | Konsisten |
 
-**2. Halaman baru `/trip-match`** — Full-screen quiz experience:
+### Perubahan yang Dilakukan
 
-- 4 step wizard dengan animasi slide
-- Setiap step = 1 pertanyaan dengan pilihan visual (card/button besar dengan icon)
-- Progress bar di atas
-- Setelah submit → loading state dengan animasi
-- Hasil dalam layout horizontal scroll per kategori (Netflix-style)
+**1. `src/index.css`** — Update CSS variables:
+- Light mode: primary → navy blue, accent → sky blue, ring → navy
+- Dark mode: primary & accent disesuaikan (sedikit lebih cerah untuk kontras)
+- Gradient-primary → navy ke sky blue
+- Sidebar colors mengikuti primary baru
 
-**3. Komponen baru:**
+**2. `src/components/HeroSection.tsx`** — Ganti hardcoded `hsl(25 95% 53%)` di stat icons ke warna primary baru
 
-- `src/pages/TripMatch.tsx` — Halaman utama quiz + hasil
-- `src/components/TripMatchQuiz.tsx` — Komponen wizard 4 langkah
-- `src/components/TripMatchResults.tsx` — Netflix-style carousel hasil
+**3. Tidak perlu mengubah komponen lain** karena semua sudah menggunakan token `text-primary`, `bg-primary`, dll. yang akan otomatis mengikuti CSS variable baru.
 
-**4. Integrasi:**
+### Prinsip Estetika
+- Navy blue = profesional, trustworthy, maskulin — cocok untuk komunitas touring motor
+- Sky blue accent = memberikan kontras yang cukup tanpa terlalu mencolok
+- Foreground/background tetap sama agar readability tidak terganggu
+- Dark mode tetap terjaga dengan primary yang sedikit lebih cerah
 
-- Tambah route `/trip-match` di App.tsx
-- Tambah tombol CTA "🎯 Find My Ride" di halaman Events (di atas filter)
-- Opsional: CTA kecil di homepage
-
-### File yang Dibuat/Diubah
-
-| File                                        | Aksi                              |
-| ------------------------------------------- | --------------------------------- |
-| `supabase/functions/ai-trip-match/index.ts` | Baru — Edge function AI matching  |
-| `src/pages/TripMatch.tsx`                   | Baru — Halaman quiz + hasil       |
-| `src/components/TripMatchQuiz.tsx`          | Baru — Wizard kuisioner           |
-| `src/components/TripMatchResults.tsx`       | Baru — Netflix-style carousel     |
-| `src/App.tsx`                               | Edit — Tambah route `/trip-match` |
-| `src/pages/Events.tsx`                      | Edit — Tambah CTA button          |
-
-### Detail Teknis
-
-**Edge Function** mengirim prompt ke AI dengan konteks semua event aktif (title, category, location, price, difficulty, touring_style, rider_level, motor_types) + jawaban user. AI mengembalikan structured output via tool calling:
-
-```json
-{
-  "categories": [
-    { "label": "Paling Cocok!", "emoji": "🎯", "event_ids": ["id1", "id2"] },
-    { "label": "Layak Dicoba!", "emoji": "🔥", "event_ids": ["id3"] },
-    { "label": "Coba Tantangan Baru!", "emoji": "💡", "event_ids": ["id4"] }
-  ],
-  "reasons": { "id1": "Cocok untuk pemula dengan budget pas...", ... }
-}
-```
-
-**Netflix-style UI**: Setiap kategori = 1 row horizontal scrollable dengan snap scroll, card event lebih besar dari biasa + alasan rekomendasi AI di bawahnya.

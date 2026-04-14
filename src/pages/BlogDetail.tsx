@@ -151,8 +151,7 @@ export default function BlogDetail() {
               contentId={post.id}
               title={post.title}
               description={post.excerpt || post.content?.replace(/<[^>]*>/g, '').slice(0, 160)}
-              imageUrl={post.image_url}
-              url={window.location.href}
+              slug={post.slug || post.id}
             />
           </div>
           <RichTextContent content={post.content} className="mb-12" />

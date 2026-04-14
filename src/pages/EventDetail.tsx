@@ -298,8 +298,7 @@ export default function EventDetail() {
                     contentId={event.id}
                     title={event.title}
                     description={event.description?.replace(/<[^>]*>/g, '').slice(0, 160)}
-                    imageUrl={event.image_url}
-                    url={window.location.href}
+                    slug={event.slug || event.id}
                   />
                 </div>
               </div>

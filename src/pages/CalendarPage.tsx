@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { EVENT_CATEGORIES, formatPrice, EventCategory } from '@/data/events';
 import { useEvents, DbEvent } from '@/hooks/useEvents';
-import { getHolidaysForMonth } from '@/data/indonesianHolidays';
+import { getHolidaysForMonth, HolidayInfo } from '@/data/indonesianHolidays';
 
 const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
 const DAYS = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
@@ -45,7 +45,7 @@ export default function CalendarPage() {
   const next = () => { if (month === 11) { setMonth(0); setYear(year + 1); } else setMonth(month + 1); };
 
   const selectedEvents = selectedDate ? eventsByDate[selectedDate] || [] : [];
-  const selectedHolidays = selectedDate ? (holidays[selectedDate] || []) : [];
+  const selectedHolidays: HolidayInfo[] = selectedDate ? (holidays[selectedDate] || []) : [];
 
   return (
     <div className="min-h-screen">
@@ -86,29 +86,30 @@ export default function CalendarPage() {
                     const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
                     const isSelected = selectedDate === dateStr;
                     const isSunday = new Date(year, month, day).getDay() === 0;
+                    const hasLibur = dayHolidays.some(h => h.type === 'libur');
+                    const hasCuti = dayHolidays.some(h => h.type === 'cuti');
                     const isHoliday = dayHolidays.length > 0;
 
                     return (
                       <button key={day} onClick={() => setSelectedDate(dateStr)}
                         className={`aspect-square border-b border-r border-border p-1 text-left transition-colors hover:bg-muted relative ${
                           isSelected ? 'bg-primary/10 ring-2 ring-primary ring-inset' : ''
-                        } ${isHoliday ? 'bg-destructive/5' : ''} ${isToday ? 'font-bold' : ''}`}>
+                        } ${hasLibur ? 'bg-destructive/5' : hasCuti ? 'bg-orange-500/5' : ''} ${isToday ? 'font-bold' : ''}`}>
                         <span className={`text-xs md:text-sm ${
                           isToday
                             ? 'bg-primary text-primary-foreground w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center'
-                            : (isHoliday || isSunday) ? 'text-destructive font-semibold' : ''
+                            : hasLibur || isSunday ? 'text-destructive font-semibold' : hasCuti ? 'text-orange-500 font-semibold' : ''
                         }`}>
                           {day}
                         </span>
                         {isHoliday && (
-                          <span className="hidden md:block text-[9px] leading-tight text-destructive truncate mt-0.5">
-                            {dayHolidays[0]}
+                          <span className={`hidden md:block text-[9px] leading-tight truncate mt-0.5 ${hasLibur ? 'text-destructive' : 'text-orange-500'}`}>
+                            {dayHolidays[0].name}
                           </span>
                         )}
                         <div className="absolute bottom-1 left-1 right-1 flex gap-0.5 justify-center">
-                          {isHoliday && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-destructive" />
-                          )}
+                          {hasLibur && <span className="w-1.5 h-1.5 rounded-full bg-destructive" />}
+                          {hasCuti && !hasLibur && <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />}
                           {dayEvents.slice(0, 2).map((e) => (
                             <span key={e.id} className={`w-1.5 h-1.5 rounded-full ${
                               e.status === 'upcoming' ? 'bg-accent' : e.status === 'ongoing' ? 'bg-primary' : 'bg-muted-foreground'
@@ -123,6 +124,7 @@ export default function CalendarPage() {
 
               <div className="flex flex-wrap gap-4 mt-4 text-xs text-muted-foreground">
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-destructive" /> Hari Libur</span>
+                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-500" /> Cuti Bersama</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent" /> Akan Datang</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-primary" /> Berlangsung</span>
                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-muted-foreground" /> Selesai</span>
@@ -137,11 +139,13 @@ export default function CalendarPage() {
                   {selectedHolidays.length > 0 && (
                     <div className="mb-4 space-y-2">
                       {selectedHolidays.map((h, i) => (
-                        <div key={i} className="flex items-center gap-3 p-3 rounded-lg bg-destructive/10 border border-destructive/20">
-                          <span className="text-lg">🇮🇩</span>
+                        <div key={i} className={`flex items-center gap-3 p-3 rounded-lg border ${
+                          h.type === 'libur' ? 'bg-destructive/10 border-destructive/20' : 'bg-orange-500/10 border-orange-500/20'
+                        }`}>
+                          <span className="text-lg">{h.type === 'libur' ? '🇮🇩' : '🏖️'}</span>
                           <div>
-                            <p className="font-semibold text-sm text-destructive">{h}</p>
-                            <p className="text-xs text-muted-foreground">Hari Libur Nasional</p>
+                            <p className={`font-semibold text-sm ${h.type === 'libur' ? 'text-destructive' : 'text-orange-600'}`}>{h.name}</p>
+                            <p className="text-xs text-muted-foreground">{h.type === 'libur' ? 'Hari Libur Nasional' : 'Cuti Bersama Pemerintah'}</p>
                           </div>
                         </div>
                       ))}

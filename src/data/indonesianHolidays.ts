@@ -73,23 +73,77 @@ const variableHolidays: Record<number, { month: number; day: number; name: strin
   ],
 };
 
-export function getHolidaysForMonth(year: number, month: number): Record<string, string[]> {
-  const result: Record<string, string[]> = {};
+// Cuti bersama pemerintah per tahun
+const cutiBersama: Record<number, { month: number; day: number; name: string }[]> = {
+  2024: [
+    { month: 1, day: 9, name: 'Cuti Bersama Isra Miraj' },
+    { month: 2, day: 12, name: 'Cuti Bersama Nyepi' },
+    { month: 3, day: 8, name: 'Cuti Bersama Idul Fitri' },
+    { month: 3, day: 9, name: 'Cuti Bersama Idul Fitri' },
+    { month: 3, day: 12, name: 'Cuti Bersama Idul Fitri' },
+    { month: 4, day: 10, name: 'Cuti Bersama Kenaikan Isa Al Masih' },
+    { month: 4, day: 24, name: 'Cuti Bersama Waisak' },
+    { month: 5, day: 18, name: 'Cuti Bersama Idul Adha' },
+    { month: 11, day: 26, name: 'Cuti Bersama Natal' },
+  ],
+  2025: [
+    { month: 0, day: 28, name: 'Cuti Bersama Isra Miraj' },
+    { month: 0, day: 30, name: 'Cuti Bersama Imlek' },
+    { month: 2, day: 28, name: 'Cuti Bersama Idul Fitri' },
+    { month: 3, day: 1, name: 'Cuti Bersama Idul Fitri' },
+    { month: 3, day: 2, name: 'Cuti Bersama Idul Fitri' },
+    { month: 3, day: 3, name: 'Cuti Bersama Idul Fitri' },
+    { month: 3, day: 4, name: 'Cuti Bersama Idul Fitri' },
+    { month: 4, day: 30, name: 'Cuti Bersama Kenaikan Isa Al Masih' },
+    { month: 11, day: 26, name: 'Cuti Bersama Natal' },
+  ],
+  2026: [
+    { month: 2, day: 18, name: 'Cuti Bersama Idul Fitri' },
+    { month: 2, day: 19, name: 'Cuti Bersama Idul Fitri' },
+    { month: 2, day: 22, name: 'Cuti Bersama Idul Fitri' },
+    { month: 2, day: 23, name: 'Cuti Bersama Idul Fitri' },
+    { month: 4, day: 15, name: 'Cuti Bersama Kenaikan Isa Al Masih' },
+    { month: 4, day: 28, name: 'Cuti Bersama Idul Adha' },
+    { month: 7, day: 18, name: 'Cuti Bersama Kemerdekaan RI' },
+    { month: 11, day: 24, name: 'Cuti Bersama Natal' },
+  ],
+  2027: [
+    { month: 0, day: 7, name: 'Cuti Bersama Imlek' },
+    { month: 2, day: 8, name: 'Cuti Bersama Idul Fitri' },
+    { month: 2, day: 11, name: 'Cuti Bersama Idul Fitri' },
+    { month: 2, day: 12, name: 'Cuti Bersama Idul Fitri' },
+    { month: 3, day: 9, name: 'Cuti Bersama Nyepi' },
+    { month: 4, day: 7, name: 'Cuti Bersama Kenaikan Isa Al Masih' },
+    { month: 4, day: 17, name: 'Cuti Bersama Idul Adha' },
+    { month: 11, day: 24, name: 'Cuti Bersama Natal' },
+  ],
+};
 
-  const addHoliday = (m: number, d: number, name: string) => {
+export type HolidayType = 'libur' | 'cuti';
+
+export interface HolidayInfo {
+  name: string;
+  type: HolidayType;
+}
+
+export function getHolidaysForMonth(year: number, month: number): Record<string, HolidayInfo[]> {
+  const result: Record<string, HolidayInfo[]> = {};
+
+  const add = (m: number, d: number, name: string, type: HolidayType) => {
     if (m !== month) return;
     const key = `${year}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     if (!result[key]) result[key] = [];
-    if (!result[key].includes(name)) result[key].push(name);
+    if (!result[key].some(h => h.name === name)) result[key].push({ name, type });
   };
 
-  fixedHolidays.forEach((h) => addHoliday(h.month, h.day, h.name));
-  (variableHolidays[year] || []).forEach((h) => addHoliday(h.month, h.day, h.name));
+  fixedHolidays.forEach((h) => add(h.month, h.day, h.name, 'libur'));
+  (variableHolidays[year] || []).forEach((h) => add(h.month, h.day, h.name, 'libur'));
+  (cutiBersama[year] || []).forEach((h) => add(h.month, h.day, h.name, 'cuti'));
 
   return result;
 }
 
-export function getHolidayForDate(year: number, month: number, day: number): string[] {
+export function getHolidayForDate(year: number, month: number, day: number): HolidayInfo[] {
   const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const holidays = getHolidaysForMonth(year, month);
   return holidays[key] || [];

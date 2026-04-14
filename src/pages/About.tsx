@@ -39,7 +39,7 @@ interface FooterSettings {
 }
 
 const defaults: AboutSettings = {
-  description: "LookMotoTour adalah komunitas touring motor yang berbasis di Indonesia.",
+  description: "LookMotoTour adalah  #1 Moto Touring Organizer Indonesia.",
   visi: "",
   misi: "Menjadi platform touring motor terdepan di Indonesia.",
   values: [],

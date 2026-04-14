@@ -129,7 +129,6 @@ export default function AdminSettings() {
                 <label className="text-sm font-medium mb-1 block">Deskripsi</label>
                 <RichTextEditor value={footer.form.description} onChange={(v) => footer.setForm({ ...footer.form, description: v })} placeholder="Deskripsi footer..." />
               </div>
-              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium mb-1 block">URL Instagram</label>

@@ -97,6 +97,12 @@ export default function BlogDetail() {
   const { data: comments } = useBlogComments(post?.id || '');
   const [commentText, setCommentText] = useState('');
 
+  useSeoMeta({
+    title: post ? `${post.title} - Blog` : 'Blog',
+    description: post?.excerpt || post?.content?.replace(/<[^>]*>/g, '').slice(0, 160),
+    image: post?.image_url,
+    url: window.location.href,
+  });
   const commentMutation = useMutation({
     mutationFn: async () => {
       const { error } = await supabase.from('blog_comments').insert({

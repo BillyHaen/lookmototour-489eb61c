@@ -42,7 +42,12 @@ export default function EventDetail() {
     staleTime: 5 * 60 * 1000,
   });
 
-  if (isLoading) {
+  useSeoMeta({
+    title: event ? `${event.title} - Event` : 'Event',
+    description: event?.description?.replace(/<[^>]*>/g, '').slice(0, 160),
+    image: event?.image_url,
+    url: window.location.href,
+  });
     return (
       <div className="min-h-screen">
         <Navbar />

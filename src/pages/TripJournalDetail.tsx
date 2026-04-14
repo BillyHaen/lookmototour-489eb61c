@@ -54,6 +54,11 @@ export default function TripJournalDetail() {
   const { data: images } = useTripJournalImages(journal?.id || '');
   const { data: participants } = useTripJournalParticipants(journal?.id || '');
 
+  useSeoMeta({
+    title: journal ? `${journal.title} - Jurnal Trip` : 'Jurnal Trip',
+    description: journal?.content?.replace(/<[^>]*>/g, '').slice(0, 160),
+    url: window.location.href,
+  });
   if (isLoading) return (
     <div className="min-h-screen"><Navbar /><div className="flex justify-center items-center pt-32"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></div>
   );

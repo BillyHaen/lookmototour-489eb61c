@@ -161,7 +161,7 @@ export default function HeroSection() {
                 className="text-center p-4 rounded-xl backdrop-blur-sm"
                 style={{ backgroundColor: "hsla(0 0% 100% / 0.1)", border: "1px solid hsla(0 0% 100% / 0.15)" }}
               >
-                <IconComp className="h-5 w-5 mx-auto mb-1" style={{ color: "hsl(25 95% 53%)" }} />
+                <IconComp className="h-5 w-5 mx-auto mb-1" style={{ color: "hsl(200 80% 55%)" }} />
                 <div className="font-heading font-bold text-xl" style={{ color: "hsl(0 0% 100%)" }}>
                   {stat.value}
                 </div>

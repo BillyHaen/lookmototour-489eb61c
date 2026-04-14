@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from '@/components/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -250,7 +250,10 @@ export default function AdminEvents() {
           </DialogHeader>
           <div className="space-y-4">
             <Input placeholder="Judul Event" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-            <Textarea placeholder="Deskripsi" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <div>
+              <label className="text-sm font-medium mb-1 block">Deskripsi Event</label>
+              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Deskripsi event..." />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -315,7 +318,7 @@ export default function AdminEvents() {
               <label htmlFor="insurance" className="text-sm font-medium">Asuransi Tersedia</label>
             </div>
             {form.insurance_enabled && (
-              <Textarea placeholder="Deskripsi asuransi (jenis, cakupan, dll)" value={form.insurance_description} onChange={(e) => setForm({ ...form, insurance_description: e.target.value })} rows={2} />
+              <RichTextEditor value={form.insurance_description} onChange={(v) => setForm({ ...form, insurance_description: v })} placeholder="Deskripsi asuransi (jenis, cakupan, dll)" minHeight="80px" />
             )}
 
             {/* Towing */}
@@ -325,7 +328,7 @@ export default function AdminEvents() {
             </div>
             {form.towing_enabled && (
               <div className="space-y-3">
-                <Textarea placeholder="Deskripsi towing (jenis layanan, rute, dll)" value={form.towing_description} onChange={(e) => setForm({ ...form, towing_description: e.target.value })} rows={2} />
+                <RichTextEditor value={form.towing_description} onChange={(v) => setForm({ ...form, towing_description: v })} placeholder="Deskripsi towing (jenis layanan, rute, dll)" minHeight="80px" />
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="text-xs text-muted-foreground">Harga Towing Pergi</label>
@@ -369,7 +372,7 @@ export default function AdminEvents() {
                       <Input type="date" value={it.date} onChange={(e) => updateItinerary(i, 'date', e.target.value)} placeholder="Tanggal" />
                       <Input value={it.title} onChange={(e) => updateItinerary(i, 'title', e.target.value)} placeholder="Judul hari ini" />
                     </div>
-                    <Textarea value={it.description} onChange={(e) => updateItinerary(i, 'description', e.target.value)} placeholder="Deskripsi kegiatan hari ini...&#10;Contoh:&#10;06:00 : Morning Regroup&#10;07:00 : Breakfast" rows={5} />
+                    <RichTextEditor value={it.description} onChange={(v) => updateItinerary(i, 'description', v)} placeholder="Deskripsi kegiatan hari ini..." minHeight="100px" />
                   </div>
                 ))}
                 {!itineraries.length && <p className="text-sm text-muted-foreground text-center py-2">Belum ada itinerary.</p>}

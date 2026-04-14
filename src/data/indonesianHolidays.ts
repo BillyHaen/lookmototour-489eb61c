@@ -143,7 +143,7 @@ export function getHolidaysForMonth(year: number, month: number): Record<string,
   return result;
 }
 
-export function getHolidayForDate(year: number, month: number, day: number): string[] {
+export function getHolidayForDate(year: number, month: number, day: number): HolidayInfo[] {
   const key = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
   const holidays = getHolidaysForMonth(year, month);
   return holidays[key] || [];

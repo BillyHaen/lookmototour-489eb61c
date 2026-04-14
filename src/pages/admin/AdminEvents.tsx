@@ -17,6 +17,7 @@ import EventImageUpload from '@/components/EventImageUpload';
 
 interface EventForm {
   title: string;
+  slug: string;
   description: string;
   category: string;
   date: string;
@@ -42,8 +43,17 @@ interface EventForm {
   towing_pulang_price: number;
 }
 
+function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 const emptyForm: EventForm = {
-  title: '', description: '', category: 'touring', date: '', end_date: '',
+  title: '', slug: '', description: '', category: 'touring', date: '', end_date: '',
   location: '', price_sharing: 0, price_single: 0, price_couple: 0, max_participants: 30, image_url: '', status: 'upcoming',
   difficulty: 'sedang', distance: '', highlights: '', requirements: '',
   includes: '', excludes: '',
@@ -73,8 +83,9 @@ export default function AdminEvents() {
   const saveMutation = useMutation({
     mutationFn: async (statusOverride?: string) => {
       const finalStatus = statusOverride || form.status;
+      const slug = form.slug || generateSlug(form.title);
       const payload = {
-        title: form.title, description: form.description, category: form.category,
+        title: form.title, slug, description: form.description, category: form.category,
         date: form.date, end_date: form.end_date || null, location: form.location,
         price: form.price_single, price_sharing: form.price_sharing, price_single: form.price_single, price_couple: form.price_couple,
         max_participants: form.max_participants, image_url: form.image_url,
@@ -154,7 +165,7 @@ export default function AdminEvents() {
   const openEdit = async (event: any) => {
     setEditId(event.id);
     setForm({
-      title: event.title, description: event.description, category: event.category,
+      title: event.title, slug: (event as any).slug || '', description: event.description, category: event.category,
       date: event.date?.slice(0, 16) || '', end_date: event.end_date?.slice(0, 16) || '',
       location: event.location, price_sharing: event.price_sharing || 0, price_single: event.price_single || event.price || 0, price_couple: event.price_couple || 0, max_participants: event.max_participants,
       image_url: event.image_url || '', status: event.status, difficulty: event.difficulty,
@@ -249,7 +260,19 @@ export default function AdminEvents() {
             <DialogTitle>{editId ? 'Edit Event' : 'Tambah Event'}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="Judul Event" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            <Input placeholder="Judul Event" value={form.title} onChange={(e) => {
+              const newTitle = e.target.value;
+              const autoSlug = !editId || form.slug === generateSlug(form.title);
+              setForm({ ...form, title: newTitle, ...(autoSlug ? { slug: generateSlug(newTitle) } : {}) });
+            }} />
+            <div>
+              <label className="text-sm font-medium mb-1 block">Slug URL</label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground whitespace-nowrap">/events/</span>
+                <Input placeholder="slug-url-event" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') })} />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Otomatis dari judul. Bisa diedit manual.</p>
+            </div>
             <div>
               <label className="text-sm font-medium mb-1 block">Deskripsi Event</label>
               <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Deskripsi event..." />

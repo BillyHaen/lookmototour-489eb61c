@@ -26,7 +26,7 @@ export default function EventCard({ event }: { event: DbEvent }) {
   const isFull = spotsLeft <= 0 || forceFull;
 
   return (
-    <Link to={`/events/${event.id}`}>
+    <Link to={`/events/${(event as any).slug || event.id}`}>
       <Card className="overflow-hidden group hover:shadow-elevated transition-all duration-300 border-border h-full">
         <div className="relative aspect-[16/10] overflow-hidden">
           <img

@@ -16,18 +16,18 @@ import { toast } from '@/hooks/use-toast';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 export default function EventDetail() {
-  const { id } = useParams();
-  const { data: event, isLoading } = useEvent(id);
+  const { id: slug } = useParams();
+  const { data: event, isLoading } = useEvent(slug);
 
   const { data: itineraries } = useQuery({
-    queryKey: ['event-itineraries', id],
+    queryKey: ['event-itineraries', event?.id],
     queryFn: async () => {
       const { data, error } = await (supabase.from('event_itineraries' as any) as any)
-        .select('*').eq('event_id', id!).order('day_number');
+        .select('*').eq('event_id', event!.id).order('day_number');
       if (error) return [];
       return data as any[];
     },
-    enabled: !!id,
+    enabled: !!event?.id,
   });
 
   const { data: footerSettings } = useQuery({

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import RichTextContent from '@/components/RichTextContent';
 import Footer from "@/components/Footer";
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";

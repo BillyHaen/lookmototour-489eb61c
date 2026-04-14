@@ -1,13 +1,15 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield, Map, Users, Star } from 'lucide-react';
+import { ArrowRight, Shield, Map, Users, Star, CalendarDays } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
 import EventCard from '@/components/EventCard';
 import TestimonialSection from '@/components/TestimonialSection';
 import { useEvents } from '@/hooks/useEvents';
+import { useBlogPosts } from '@/hooks/useBlog';
 import { Loader2 } from 'lucide-react';
+import { format } from 'date-fns';
 
 const FEATURES = [
   { icon: Map, title: 'Rute Terbaik', desc: 'Rute touring yang sudah disurvey dan aman untuk semua level rider.' },
@@ -18,7 +20,9 @@ const FEATURES = [
 
 export default function Index() {
   const { data: events, isLoading } = useEvents();
+  const { data: blogPosts, isLoading: blogLoading } = useBlogPosts();
   const upcomingEvents = (events || []).filter((e) => e.status === 'upcoming').slice(0, 3);
+  const latestPosts = (blogPosts || []).slice(0, 3);
 
   return (
     <div className="min-h-screen">

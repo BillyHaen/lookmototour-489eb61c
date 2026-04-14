@@ -390,6 +390,33 @@ export type Database = {
         }
         Relationships: []
       }
+      share_counts: {
+        Row: {
+          content_id: string
+          content_type: string
+          count: number
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          content_id: string
+          content_type: string
+          count?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          content_id?: string
+          content_type?: string
+          count?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       site_settings: {
         Row: {
           created_at: string
@@ -629,6 +656,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_share_count: {
+        Args: { _content_id: string; _content_type: string }
+        Returns: number
       }
     }
     Enums: {

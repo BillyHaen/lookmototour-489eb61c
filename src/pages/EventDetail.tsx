@@ -1,7 +1,9 @@
 import { useParams, Link } from 'react-router-dom';
 import RichTextContent from '@/components/RichTextContent';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck } from 'lucide-react';
+import ShareButton from '@/components/ShareButton';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -38,6 +40,13 @@ export default function EventDetail() {
       return data.value as any;
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  useSeoMeta({
+    title: event ? `${event.title} - Event` : 'Event',
+    description: event?.description?.replace(/<[^>]*>/g, '').slice(0, 160),
+    image: event?.image_url,
+    url: window.location.href,
   });
 
   if (isLoading) {
@@ -284,16 +293,14 @@ export default function EventDetail() {
                       <MessageCircle className="h-4 w-4" /> WhatsApp
                     </a>
                   </Button>
-                  <Button variant="outline" size="sm" className="flex-1 gap-1" onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({ title: event.title, url: window.location.href }).catch(() => {});
-                    } else {
-                      navigator.clipboard.writeText(window.location.href);
-                      toast({ title: 'Link disalin! 📋', description: 'Link event berhasil disalin ke clipboard.' });
-                    }
-                  }}>
-                    <Share2 className="h-4 w-4" /> Bagikan
-                  </Button>
+                  <ShareButton
+                    contentType="event"
+                    contentId={event.id}
+                    title={event.title}
+                    description={event.description?.replace(/<[^>]*>/g, '').slice(0, 160)}
+                    imageUrl={event.image_url}
+                    url={window.location.href}
+                  />
                 </div>
               </div>
             </div>

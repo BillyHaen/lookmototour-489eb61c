@@ -225,6 +225,7 @@ export type Database = {
           distance: string | null
           end_date: string | null
           excludes: string[] | null
+          fatigue_level: number
           force_full: boolean
           highlights: string[] | null
           id: string
@@ -234,14 +235,18 @@ export type Database = {
           insurance_enabled: boolean
           location: string
           max_participants: number
+          motor_types: string[]
           price: number
           price_couple: number
           price_sharing: number
           price_single: number
           requirements: string[] | null
+          rider_level: string
+          riding_hours_per_day: number
           slug: string
           status: string
           title: string
+          touring_style: string
           towing_description: string | null
           towing_enabled: boolean
           towing_pergi_price: number
@@ -259,6 +264,7 @@ export type Database = {
           distance?: string | null
           end_date?: string | null
           excludes?: string[] | null
+          fatigue_level?: number
           force_full?: boolean
           highlights?: string[] | null
           id?: string
@@ -268,14 +274,18 @@ export type Database = {
           insurance_enabled?: boolean
           location?: string
           max_participants?: number
+          motor_types?: string[]
           price?: number
           price_couple?: number
           price_sharing?: number
           price_single?: number
           requirements?: string[] | null
+          rider_level?: string
+          riding_hours_per_day?: number
           slug?: string
           status?: string
           title: string
+          touring_style?: string
           towing_description?: string | null
           towing_enabled?: boolean
           towing_pergi_price?: number
@@ -293,6 +303,7 @@ export type Database = {
           distance?: string | null
           end_date?: string | null
           excludes?: string[] | null
+          fatigue_level?: number
           force_full?: boolean
           highlights?: string[] | null
           id?: string
@@ -302,14 +313,18 @@ export type Database = {
           insurance_enabled?: boolean
           location?: string
           max_participants?: number
+          motor_types?: string[]
           price?: number
           price_couple?: number
           price_sharing?: number
           price_single?: number
           requirements?: string[] | null
+          rider_level?: string
+          riding_hours_per_day?: number
           slug?: string
           status?: string
           title?: string
+          touring_style?: string
           towing_description?: string | null
           towing_enabled?: boolean
           towing_pergi_price?: number

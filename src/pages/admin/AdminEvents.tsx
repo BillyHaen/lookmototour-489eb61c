@@ -50,6 +50,7 @@ interface EventForm {
   touring_style: string;
   riding_hours_per_day: number;
   fatigue_level: number;
+  tentative_month: string;
 }
 
 function generateSlug(title: string): string {
@@ -69,6 +70,7 @@ const emptyForm: EventForm = {
   insurance_enabled: false, insurance_description: '',
   towing_enabled: false, towing_description: '', towing_pergi_price: 0, towing_pulang_price: 0,
   rider_level: 'all', motor_types: [], touring_style: 'adventure', riding_hours_per_day: 0, fatigue_level: 1,
+  tentative_month: '',
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }
@@ -80,6 +82,7 @@ export default function AdminEvents() {
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [participantsEvent, setParticipantsEvent] = useState<{ id: string; title: string } | null>(null);
+  const [interestsEvent, setInterestsEvent] = useState<{ id: string; title: string } | null>(null);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],

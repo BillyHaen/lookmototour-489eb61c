@@ -7,6 +7,7 @@ import RichTextContent from '@/components/RichTextContent';
 import UserAvatar from '@/components/UserAvatar';
 import UserBadge from '@/components/UserBadge';
 import { Loader2, CalendarDays, Users } from 'lucide-react';
+import ShareButton from '@/components/ShareButton';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -69,7 +70,16 @@ export default function TripJournalDetail() {
             <CalendarDays className="h-4 w-4" />
             {journal.published_at ? format(new Date(journal.published_at), 'dd MMMM yyyy') : format(new Date(journal.created_at), 'dd MMMM yyyy')}
           </div>
-          <h1 className="font-heading font-bold text-3xl md:text-4xl mb-8">{journal.title}</h1>
+          <h1 className="font-heading font-bold text-3xl md:text-4xl mb-4">{journal.title}</h1>
+          <div className="mb-8">
+            <ShareButton
+              contentType="trip_journal"
+              contentId={journal.id}
+              title={journal.title}
+              description={journal.content?.replace(/<[^>]*>/g, '').slice(0, 160)}
+              url={window.location.href}
+            />
+          </div>
 
           {/* Image Gallery */}
           <ImageGallery images={images || []} />

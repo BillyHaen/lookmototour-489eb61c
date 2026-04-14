@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import RichTextContent from '@/components/RichTextContent';
 import UserAvatar from '@/components/UserAvatar';
 import { Loader2, CalendarDays, MessageCircle } from 'lucide-react';
+import ShareButton from '@/components/ShareButton';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -136,7 +137,17 @@ export default function BlogDetail() {
             <CalendarDays className="h-4 w-4" />
             {post.published_at ? format(new Date(post.published_at), 'dd MMMM yyyy') : format(new Date(post.created_at), 'dd MMMM yyyy')}
           </div>
-          <h1 className="font-heading font-bold text-3xl md:text-4xl mb-6">{post.title}</h1>
+          <h1 className="font-heading font-bold text-3xl md:text-4xl mb-4">{post.title}</h1>
+          <div className="mb-6">
+            <ShareButton
+              contentType="blog_post"
+              contentId={post.id}
+              title={post.title}
+              description={post.excerpt || post.content?.replace(/<[^>]*>/g, '').slice(0, 160)}
+              imageUrl={post.image_url}
+              url={window.location.href}
+            />
+          </div>
           <RichTextContent content={post.content} className="mb-12" />
 
           {/* Comments section */}

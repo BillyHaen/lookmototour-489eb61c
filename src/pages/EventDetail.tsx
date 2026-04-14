@@ -34,6 +34,17 @@ export default function EventDetail() {
     enabled: !!event?.id,
   });
 
+  const { data: interestCount } = useQuery({
+    queryKey: ['event-interest-count', event?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_event_interest_counts');
+      if (error) return 0;
+      const found = (data as any[])?.find((r: any) => r.event_id === event!.id);
+      return found ? Number(found.interest_count) : 0;
+    },
+    enabled: !!event?.id && !!(event as any)?.tentative_month,
+  });
+
   const { data: footerSettings } = useQuery({
     queryKey: ['site-settings', 'footer'],
     queryFn: async () => {
@@ -352,7 +363,7 @@ export default function EventDetail() {
                   </>
                 )}
 
-                {isTentative && <InterestedUsers eventId={event.id} />}
+                {isTentative && <InterestedUsers eventId={event.id} interestCount={interestCount || 0} />}
 
                 <EventRegistrationForm event={event} />
 

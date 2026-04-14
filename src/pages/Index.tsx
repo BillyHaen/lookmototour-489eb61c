@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Shield, Map, Users, Star, CalendarDays } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import HeroSection from '@/components/HeroSection';
@@ -10,6 +11,7 @@ import { useEvents } from '@/hooks/useEvents';
 import { useBlogPosts } from '@/hooks/useBlog';
 import { Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 const FEATURES = [
   { icon: Map, title: 'Rute Terbaik', desc: 'Rute touring yang sudah disurvey dan aman untuk semua level rider.' },
@@ -21,6 +23,16 @@ const FEATURES = [
 export default function Index() {
   const { data: events, isLoading } = useEvents();
   const { data: blogPosts, isLoading: blogLoading } = useBlogPosts();
+  const { data: interestCounts } = useQuery({
+    queryKey: ['event-interest-counts'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_event_interest_counts');
+      if (error) return {};
+      const map: Record<string, number> = {};
+      (data as any[])?.forEach((r: any) => { map[r.event_id] = Number(r.interest_count); });
+      return map;
+    },
+  });
   const upcomingEvents = (events || []).filter((e) => e.status === 'upcoming').slice(0, 3);
   const latestPosts = (blogPosts || []).slice(0, 3);
 
@@ -67,7 +79,7 @@ export default function Index() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {upcomingEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <EventCard key={event.id} event={event} interestCount={interestCounts?.[event.id]} />
               ))}
             </div>
           )}

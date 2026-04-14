@@ -23,7 +23,17 @@ export function useSeoMeta({ title, description, image, url }: SeoMetaProps) {
     };
 
     setMeta('og:title', title);
-    if (description) setMeta('og:description', description);
+    if (description) {
+      setMeta('og:description', description);
+      // Also set standard meta description
+      let descEl = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+      if (!descEl) {
+        descEl = document.createElement('meta');
+        descEl.setAttribute('name', 'description');
+        document.head.appendChild(descEl);
+      }
+      descEl.setAttribute('content', description);
+    }
     if (image) setMeta('og:image', image);
     if (url) setMeta('og:url', url);
     setMeta('og:type', 'article');

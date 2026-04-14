@@ -48,6 +48,8 @@ export default function EventDetail() {
     image: event?.image_url,
     url: window.location.href,
   });
+
+  if (isLoading) {
     return (
       <div className="min-h-screen">
         <Navbar />

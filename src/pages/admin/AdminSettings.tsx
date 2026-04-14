@@ -95,8 +95,9 @@ function useSiteSettings<T>(key: string, defaultValue: T) {
 export default function AdminSettings() {
   const footer = useSiteSettings<FooterSettings>('footer', defaultFooter);
   const about = useSiteSettings<AboutSettings>('about', defaultAbout);
+  const hero = useSiteSettings<HeroSettings>('hero', defaultHero);
 
-  const isLoading = footer.isLoading || about.isLoading;
+  const isLoading = footer.isLoading || about.isLoading || hero.isLoading;
 
   if (isLoading) {
     return (

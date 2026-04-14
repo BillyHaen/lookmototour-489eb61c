@@ -94,7 +94,7 @@ export default function CalendarPage() {
                       <button key={day} onClick={() => setSelectedDate(dateStr)}
                         className={`aspect-square border-b border-r border-border p-1 text-left transition-colors hover:bg-muted relative ${
                           isSelected ? 'bg-primary/10 ring-2 ring-primary ring-inset' : ''
-                        } ${isHoliday ? 'bg-destructive/5' : ''} ${isToday ? 'font-bold' : ''}`}>
+                        } ${hasLibur ? 'bg-destructive/5' : hasCuti ? 'bg-orange-500/5' : ''} ${isToday ? 'font-bold' : ''}`}>
                         <span className={`text-xs md:text-sm ${
                           isToday
                             ? 'bg-primary text-primary-foreground w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center'
@@ -103,8 +103,10 @@ export default function CalendarPage() {
                           {day}
                         </span>
                         {isHoliday && (
-                          <span className="hidden md:block text-[9px] leading-tight text-destructive truncate mt-0.5">
-                            {dayHolidays[0]}
+                          <span className={`hidden md:block text-[9px] leading-tight truncate mt-0.5 ${hasLibur ? 'text-destructive' : 'text-orange-500'}`}>
+                            {dayHolidays[0].name}
+                          </span>
+                        )}
                           </span>
                         )}
                         <div className="absolute bottom-1 left-1 right-1 flex gap-0.5 justify-center">

@@ -119,7 +119,7 @@ export default function HeroSection() {
             className="font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl leading-tight mb-6"
             style={{ color: "hsl(0 0% 100%)" }}
           >
-            Jelajahi Indonesia dan Dunia
+            Jelajahi Indonesia & Dunia
             <br />
             <span className="text-gradient">di Atas Motor</span>
           </h1>

@@ -1,24 +1,51 @@
 import { useRef } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar, Users, MapPin, Map, Star, Shield, Zap, Award, Globe, Compass, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  Users,
+  MapPin,
+  Map,
+  Star,
+  Shield,
+  Zap,
+  Award,
+  Globe,
+  Compass,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useHeroSettings } from "@/hooks/useHeroSettings";
 import heroBgFallback from "@/assets/hero-bg.jpg";
 
 const ICON_MAP: Record<string, React.ElementType> = {
-  Users, MapPin, Calendar, Map, Star, Shield, Zap, Award, Globe, Compass,
+  Users,
+  MapPin,
+  Calendar,
+  Map,
+  Star,
+  Shield,
+  Zap,
+  Award,
+  Globe,
+  Compass,
 };
 
 export default function HeroSection() {
   const { data: hero } = useHeroSettings();
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const images = hero?.images?.length ? hero.images : [{ url: heroBgFallback, alt: "Motorcycle touring di pegunungan Indonesia" }];
-  const stats = hero?.stats?.length ? hero.stats : [
-    { icon: "Users", label: "Riders", value: "500+" },
-    { icon: "MapPin", label: "Rute", value: "50+" },
-    { icon: "Calendar", label: "Event/tahun", value: "12+" },
-  ];
+  const images = hero?.images?.length
+    ? hero.images
+    : [{ url: heroBgFallback, alt: "Motorcycle touring di pegunungan Indonesia" }];
+  const stats = hero?.stats?.length
+    ? hero.stats
+    : [
+        { icon: "Users", label: "Riders", value: "500+" },
+        { icon: "MapPin", label: "Rute", value: "50+" },
+        { icon: "Calendar", label: "Event/tahun", value: "12+" },
+      ];
   const isMulti = images.length > 1;
 
   const scroll = (dir: number) => {
@@ -86,18 +113,18 @@ export default function HeroSection() {
       <div className="container relative z-10 py-20 md:py-32">
         <div className="max-w-2xl animate-fade-in-up">
           <span className="inline-block px-4 py-1.5 rounded-full bg-primary/20 text-primary-foreground text-sm font-medium mb-6 backdrop-blur-sm border border-primary/30">
-            🏍️ #1 Moto Tour Community
+            🏍️ #1 Moto Touring Organizer Indonesia
           </span>
           <h1
             className="font-heading font-extrabold text-4xl md:text-6xl lg:text-7xl leading-tight mb-6"
             style={{ color: "hsl(0 0% 100%)" }}
           >
-            Jelajahi Indonesia
+            Jelajahi Indonesia dan Dunia
             <br />
             <span className="text-gradient">di Atas Motor</span>
           </h1>
           <p className="text-lg md:text-xl mb-8 max-w-lg" style={{ color: "hsl(0 0% 85%)" }}>
-            Bergabung bersama komunitas touring motor terbesar. Event seru, rute menantang, dan pengalaman tak
+            Bergabung bersama platform touring motor terbesar. Event seru, rute menantang, dan pengalaman tak
             terlupakan.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">

@@ -202,6 +202,7 @@ export default function AdminEvents() {
       touring_style: event.touring_style || 'adventure',
       riding_hours_per_day: event.riding_hours_per_day || 0,
       fatigue_level: event.fatigue_level || 1,
+      tentative_month: event.tentative_month || '',
     });
     // Load itineraries
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');

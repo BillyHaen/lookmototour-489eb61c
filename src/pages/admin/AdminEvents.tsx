@@ -382,6 +382,79 @@ export default function AdminEvents() {
                 </div>
               </div>
             )}
+
+            {/* Smart Touring Finder Fields */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">🔎 Smart Touring Finder</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Rider Level</label>
+                    <Select value={form.rider_level} onValueChange={(v) => setForm({ ...form, rider_level: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(RIDER_LEVELS).map(([key, val]) => (
+                          <SelectItem key={key} value={key}>{val.icon} {val.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Style Touring</label>
+                    <Select value={form.touring_style} onValueChange={(v) => setForm({ ...form, touring_style: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(TOURING_STYLES).map(([key, val]) => (
+                          <SelectItem key={key} value={key}>{val.icon} {val.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium mb-2 block">Tipe Motor yang Cocok</label>
+                  <div className="flex flex-wrap gap-3">
+                    {Object.entries(MOTOR_TYPES).map(([key, val]) => (
+                      <label key={key} className="flex items-center gap-2 text-sm">
+                        <Checkbox
+                          checked={form.motor_types.includes(key)}
+                          onCheckedChange={(checked) => {
+                            setForm({
+                              ...form,
+                              motor_types: checked
+                                ? [...form.motor_types, key]
+                                : form.motor_types.filter(t => t !== key),
+                            });
+                          }}
+                        />
+                        {val.icon} {val.label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Jam Riding / Hari</label>
+                    <Input type="number" step="0.5" min="0" max="24" placeholder="0" value={form.riding_hours_per_day} onChange={(e) => setForm({ ...form, riding_hours_per_day: Number(e.target.value) })} />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1 block">Tingkat Capek: {FATIGUE_LABELS[form.fatigue_level]}</label>
+                    <Slider
+                      min={1} max={5} step={1}
+                      value={[form.fatigue_level]}
+                      onValueChange={(v) => setForm({ ...form, fatigue_level: v[0] })}
+                      className="mt-3"
+                    />
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                      <span>Ringan</span><span>Berat</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>

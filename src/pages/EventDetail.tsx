@@ -119,12 +119,12 @@ export default function EventDetail() {
                 <RichTextContent content={event.description} className="text-muted-foreground" />
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className={`grid grid-cols-2 ${isTentative ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
                 {[
-                  { icon: CalendarDays, label: 'Tanggal', value: (event as any).tentative_month ? `${formatTentativeMonth((event as any).tentative_month)} (Tentative)` : formatDate(event.date) },
+                  { icon: CalendarDays, label: 'Tanggal', value: isTentative ? `${formatTentativeMonth((event as any).tentative_month)} (Tentative)` : formatDate(event.date) },
                   { icon: MapPin, label: 'Lokasi', value: event.location },
                   { icon: Gauge, label: 'Jarak', value: event.distance || '-' },
-                  { icon: Clock, label: 'Durasi', value: event.end_date ? `${Math.ceil((new Date(event.end_date).getTime() - new Date(event.date).getTime()) / 86400000)} hari` : '1 hari' },
+                  ...(!isTentative ? [{ icon: Clock, label: 'Durasi', value: event.end_date ? `${Math.ceil((new Date(event.end_date).getTime() - new Date(event.date).getTime()) / 86400000)} hari` : '1 hari' }] : []),
                 ].map((info) => (
                   <div key={info.label} className="p-4 rounded-xl bg-card shadow-card border border-border">
                     <info.icon className="h-5 w-5 text-primary mb-2" />

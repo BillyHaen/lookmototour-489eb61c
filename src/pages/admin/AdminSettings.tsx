@@ -130,11 +130,16 @@ export default function AdminSettings() {
         <h1 className="font-heading font-bold text-2xl">Pengaturan Situs</h1>
       </div>
 
-      <Tabs defaultValue="footer" className="max-w-2xl">
+      <Tabs defaultValue="hero" className="max-w-2xl">
         <TabsList>
+          <TabsTrigger value="hero">Hero Banner</TabsTrigger>
           <TabsTrigger value="footer">Footer</TabsTrigger>
           <TabsTrigger value="about">Halaman About</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="hero">
+          <AdminHeroSettings form={hero.form} setForm={hero.setForm} saveMutation={hero.saveMutation} />
+        </TabsContent>
 
         <TabsContent value="footer">
           <Card>

@@ -65,6 +65,7 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/trip-journals" element={<AdminTripJournals />} />
+            <Route path="/trip-match" element={<TripMatch />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

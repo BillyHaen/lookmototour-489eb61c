@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, Loader2, X, ChevronDown } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2, X, ChevronDown, Sparkles } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
@@ -86,7 +87,14 @@ export default function Events() {
         <div className="container">
           <div className="mb-8">
             <h1 className="font-heading font-bold text-3xl md:text-4xl mb-2">Semua Event</h1>
-            <p className="text-muted-foreground">Temukan event touring, adventure, dan workshop yang sesuai untukmu.</p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <p className="text-muted-foreground">Temukan event touring, adventure, dan workshop yang sesuai untukmu.</p>
+              <Link to="/trip-match">
+                <Button className="gap-2 whitespace-nowrap">
+                  <Sparkles className="h-4 w-4" /> Find My Ride
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {/* Compact Filter Bar */}

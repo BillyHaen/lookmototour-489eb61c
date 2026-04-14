@@ -28,6 +28,7 @@ import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminTripJournals from "./pages/admin/AdminTripJournals";
+import TripMatch from "./pages/TripMatch";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -64,6 +65,7 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/trip-journals" element={<AdminTripJournals />} />
+            <Route path="/trip-match" element={<TripMatch />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

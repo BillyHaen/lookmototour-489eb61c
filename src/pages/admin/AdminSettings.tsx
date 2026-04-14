@@ -9,6 +9,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Save, Plus, Trash2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import AdminHeroSettings from '@/components/admin/AdminHeroSettings';
+
+interface HeroImage { url: string; alt: string; }
+interface HeroStat { icon: string; label: string; value: string; }
+interface HeroSettings { images: HeroImage[]; stats: HeroStat[]; }
 
 interface FooterSettings {
   description: string;
@@ -40,6 +45,15 @@ const defaultFooter: FooterSettings = {
 
 const defaultAbout: AboutSettings = {
   description: '', visi: '', misi: '', values: [],
+};
+
+const defaultHero: HeroSettings = {
+  images: [],
+  stats: [
+    { icon: 'Users', label: 'Riders', value: '500+' },
+    { icon: 'MapPin', label: 'Rute', value: '50+' },
+    { icon: 'Calendar', label: 'Event/tahun', value: '12+' },
+  ],
 };
 
 const ICON_OPTIONS = ['Heart', 'Shield', 'Map', 'Users', 'Star', 'Zap', 'Target', 'Award', 'Globe', 'Compass'];
@@ -81,8 +95,9 @@ function useSiteSettings<T>(key: string, defaultValue: T) {
 export default function AdminSettings() {
   const footer = useSiteSettings<FooterSettings>('footer', defaultFooter);
   const about = useSiteSettings<AboutSettings>('about', defaultAbout);
+  const hero = useSiteSettings<HeroSettings>('hero', defaultHero);
 
-  const isLoading = footer.isLoading || about.isLoading;
+  const isLoading = footer.isLoading || about.isLoading || hero.isLoading;
 
   if (isLoading) {
     return (
@@ -115,11 +130,16 @@ export default function AdminSettings() {
         <h1 className="font-heading font-bold text-2xl">Pengaturan Situs</h1>
       </div>
 
-      <Tabs defaultValue="footer" className="max-w-2xl">
+      <Tabs defaultValue="hero" className="max-w-2xl">
         <TabsList>
+          <TabsTrigger value="hero">Hero Banner</TabsTrigger>
           <TabsTrigger value="footer">Footer</TabsTrigger>
           <TabsTrigger value="about">Halaman About</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="hero">
+          <AdminHeroSettings form={hero.form} setForm={hero.setForm} saveMutation={hero.saveMutation} />
+        </TabsContent>
 
         <TabsContent value="footer">
           <Card>

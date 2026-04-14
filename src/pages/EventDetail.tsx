@@ -363,7 +363,7 @@ export default function EventDetail() {
                   </>
                 )}
 
-                {isTentative && <InterestedUsers eventId={event.id} />}
+                {isTentative && <InterestedUsers eventId={event.id} interestCount={interestCount || 0} />}
 
                 <EventRegistrationForm event={event} />
 

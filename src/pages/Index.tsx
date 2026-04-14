@@ -62,6 +62,28 @@ export default function Index() {
         </div>
       </section>
 
+      {/* AI Trip Match CTA */}
+      <section className="py-12 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
+        <div className="container">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div className="flex flex-col md:flex-row items-center gap-3">
+              <div className="h-12 w-12 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                <Sparkles className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-heading font-bold text-lg">Bingung pilih touring?</h3>
+                <p className="text-sm text-muted-foreground">Jawab 4 pertanyaan, AI kami carikan trip terbaik untukmu!</p>
+              </div>
+            </div>
+            <Button asChild className="gap-2 whitespace-nowrap">
+              <Link to="/trip-match">
+                <Sparkles className="h-4 w-4" /> Find My Ride
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Upcoming Events */}
       <section className="py-20 bg-muted/50">
         <div className="container">

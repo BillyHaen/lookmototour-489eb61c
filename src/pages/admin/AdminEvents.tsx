@@ -10,8 +10,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { formatPrice, formatDate } from '@/data/events';
+import { formatPrice, formatDate, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS } from '@/data/events';
 import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
 import AdminEventParticipants from './AdminEventParticipants';
 import EventImageUpload from '@/components/EventImageUpload';
 
@@ -41,6 +43,11 @@ interface EventForm {
   towing_description: string;
   towing_pergi_price: number;
   towing_pulang_price: number;
+  rider_level: string;
+  motor_types: string[];
+  touring_style: string;
+  riding_hours_per_day: number;
+  fatigue_level: number;
 }
 
 function generateSlug(title: string): string {
@@ -59,6 +66,7 @@ const emptyForm: EventForm = {
   includes: '', excludes: '',
   insurance_enabled: false, insurance_description: '',
   towing_enabled: false, towing_description: '', towing_pergi_price: 0, towing_pulang_price: 0,
+  rider_level: 'all', motor_types: [], touring_style: 'adventure', riding_hours_per_day: 0, fatigue_level: 1,
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }

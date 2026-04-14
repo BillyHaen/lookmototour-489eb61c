@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Shield, Map, Users, Star, CalendarDays } from 'lucide-react';
+import { ArrowRight, Shield, Map, Users, Star, CalendarDays, Sparkles } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';

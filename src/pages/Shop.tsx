@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
+import RichTextContent from '@/components/RichTextContent';
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -100,7 +101,7 @@ export default function Shop() {
                         {p.category}
                       </Badge>
                       <h3 className="font-heading font-semibold text-lg">{p.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
+                      <RichTextContent content={p.description} className="text-sm text-muted-foreground line-clamp-2" />
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="font-bold text-xl text-primary">{formatPrice(p.price)}</p>

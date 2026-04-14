@@ -1,4 +1,5 @@
 import { useParams, Link } from 'react-router-dom';
+import RichTextContent from '@/components/RichTextContent';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, Share2, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -97,7 +98,7 @@ export default function EventDetail() {
                   <Badge variant="outline" className="capitalize">{event.difficulty}</Badge>
                 </div>
                 <h1 className="font-heading font-bold text-2xl md:text-4xl mb-2">{event.title}</h1>
-                <p className="text-muted-foreground">{event.description}</p>
+                <RichTextContent content={event.description} className="text-muted-foreground" />
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -181,7 +182,7 @@ export default function EventDetail() {
                     <ShieldCheck className="h-6 w-6 text-primary shrink-0 mt-0.5" />
                     <div>
                       <p className="font-heading font-semibold">Asuransi Tersedia</p>
-                      <p className="text-sm text-muted-foreground">{(event as any).insurance_description || 'Event ini menyediakan asuransi untuk peserta.'}</p>
+                      <RichTextContent content={(event as any).insurance_description || 'Event ini menyediakan asuransi untuk peserta.'} className="text-sm text-muted-foreground" />
                     </div>
                   </CardContent>
                 </Card>
@@ -194,7 +195,7 @@ export default function EventDetail() {
                     <Truck className="h-6 w-6 text-accent shrink-0 mt-0.5" />
                     <div>
                       <p className="font-heading font-semibold">Towing Motor Tersedia</p>
-                      <p className="text-sm text-muted-foreground">{(event as any).towing_description || 'Event ini menyediakan layanan towing motor untuk peserta.'}</p>
+                      <RichTextContent content={(event as any).towing_description || 'Event ini menyediakan layanan towing motor untuk peserta.'} className="text-sm text-muted-foreground" />
                       <div className="flex gap-4 mt-2">
                         {(event as any).towing_pergi_price > 0 && (
                           <span className="text-sm font-medium">Pergi: <span className="text-primary">{formatPrice((event as any).towing_pergi_price)}</span></span>
@@ -227,7 +228,7 @@ export default function EventDetail() {
                               {it.date && <Badge variant="outline" className="text-xs">{formatDate(it.date)}</Badge>}
                             </div>
                             <p className="font-medium">{it.title}</p>
-                            <p className="text-sm text-muted-foreground whitespace-pre-line">{it.description}</p>
+                            <RichTextContent content={it.description} className="text-sm text-muted-foreground" />
                           </div>
                         </div>
                       ))}

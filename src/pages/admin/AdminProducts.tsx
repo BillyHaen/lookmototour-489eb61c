@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from '@/components/RichTextEditor';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -111,7 +111,10 @@ export default function AdminProducts() {
           <DialogHeader><DialogTitle>{editId ? 'Edit Produk' : 'Tambah Produk'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <Input placeholder="Nama Produk" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-            <Textarea placeholder="Deskripsi" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <div>
+              <label className="text-sm font-medium mb-1 block">Deskripsi</label>
+              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Deskripsi produk..." />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <Input type="number" placeholder="Harga" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
               <Input type="number" placeholder="Stok" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />

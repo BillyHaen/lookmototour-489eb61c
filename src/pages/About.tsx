@@ -1,4 +1,5 @@
 import { Shield, Map, Users, Heart, Star, Zap, Target, Award, Globe, Compass, LucideIcon } from 'lucide-react';
+import RichTextContent from '@/components/RichTextContent';
 import logo from '@/assets/logo.png';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -63,7 +64,7 @@ export default function About() {
           </h1>
 
           <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-            <p className="text-lg text-muted-foreground">{s.description}</p>
+            <RichTextContent content={s.description} className="text-lg text-muted-foreground" />
 
             {s.values.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 not-prose">
@@ -82,15 +83,13 @@ export default function About() {
 
             {s.visi && (
               <>
-                <h2 className="font-heading font-bold text-2xl mt-8">Visi Kami</h2>
-                <p className="text-muted-foreground">{s.visi}</p>
+                <RichTextContent content={s.visi} className="text-muted-foreground" />
               </>
             )}
 
             {s.misi && (
               <>
-                <h2 className="font-heading font-bold text-2xl">Misi Kami</h2>
-                <p className="text-muted-foreground">{s.misi}</p>
+                <RichTextContent content={s.misi} className="text-muted-foreground" />
               </>
             )}
 

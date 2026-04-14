@@ -4,7 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import RichTextEditor from '@/components/RichTextEditor';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Save, Plus, Trash2 } from 'lucide-react';
@@ -127,7 +127,7 @@ export default function AdminSettings() {
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">Deskripsi</label>
-                <Textarea value={footer.form.description} onChange={(e) => footer.setForm({ ...footer.form, description: e.target.value })} rows={3} />
+                <RichTextEditor value={footer.form.description} onChange={(v) => footer.setForm({ ...footer.form, description: v })} placeholder="Deskripsi footer..." />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -172,15 +172,15 @@ export default function AdminSettings() {
             <CardContent className="space-y-4">
               <div>
                 <label className="text-sm font-medium mb-1 block">Deskripsi</label>
-                <Textarea value={about.form.description} onChange={(e) => about.setForm({ ...about.form, description: e.target.value })} rows={3} />
+                <RichTextEditor value={about.form.description} onChange={(v) => about.setForm({ ...about.form, description: v })} placeholder="Deskripsi tentang kami..." />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Visi</label>
-                <Textarea value={about.form.visi} onChange={(e) => about.setForm({ ...about.form, visi: e.target.value })} rows={2} />
+                <RichTextEditor value={about.form.visi} onChange={(v) => about.setForm({ ...about.form, visi: v })} placeholder="Visi organisasi..." minHeight="80px" />
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Misi</label>
-                <Textarea value={about.form.misi} onChange={(e) => about.setForm({ ...about.form, misi: e.target.value })} rows={2} />
+                <RichTextEditor value={about.form.misi} onChange={(v) => about.setForm({ ...about.form, misi: v })} placeholder="Misi organisasi..." minHeight="80px" />
               </div>
 
               <div className="space-y-3">

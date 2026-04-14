@@ -28,6 +28,7 @@ import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminTripJournals from "./pages/admin/AdminTripJournals";
+import TripMatch from "./pages/TripMatch";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

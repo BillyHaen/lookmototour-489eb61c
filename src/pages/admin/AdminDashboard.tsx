@@ -12,6 +12,7 @@ import {
   PieChart, Pie, Cell, Legend, AreaChart, Area,
 } from 'recharts';
 import { formatPrice } from '@/data/events';
+import { toast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -320,11 +321,23 @@ ${chartData.perEvent.filter(e => e.total > 0 || e.peminat > 0).map(e => `
 ${chartData.regs.map(r => `<tr><td>${r.name}</td><td>${eventMap.get(r.event_id) || '-'}</td><td>${r.registration_type}</td><td>${r.payment_status}</td><td>${new Date(r.created_at).toLocaleDateString('id-ID')}</td></tr>`).join('')}
 </tbody></table>
 
-<script>window.onload = () => window.print();</script>
 </body></html>`;
 
-    const w = window.open('', '_blank');
-    if (w) { w.document.write(html); w.document.close(); }
+    // Use blob URL instead of window.open to avoid popup blocker
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    const dateStr = effectiveRange?.from ? `_${format(effectiveRange.from, 'yyyyMMdd')}-${effectiveRange.to ? format(effectiveRange.to, 'yyyyMMdd') : 'now'}` : '';
+    a.download = `laporan-marketing${dateStr}.html`;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
+    }, 100);
+    toast({ title: 'Laporan berhasil di-download', description: 'Buka file HTML lalu Print > Save as PDF di browser Anda.' });
   }, [chartData, rawData, effectiveRange]);
 
   const summaryCards = [

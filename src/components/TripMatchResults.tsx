@@ -1,12 +1,12 @@
-import { useRef } from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { ChevronLeft, ChevronRight, RotateCcw, MapPin, CalendarDays, Sparkles, ArrowRight } from 'lucide-react';
-import { formatPrice, formatDate, formatTentativeMonth, EVENT_CATEGORIES, EventCategory } from '@/data/events';
-import type { DbEvent } from '@/hooks/useEvents';
-import eventPlaceholder from '@/assets/event-placeholder.jpg';
+import { useRef } from "react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, ChevronRight, RotateCcw, MapPin, CalendarDays, Sparkles, ArrowRight } from "lucide-react";
+import { formatPrice, formatDate, formatTentativeMonth, EVENT_CATEGORIES, EventCategory } from "@/data/events";
+import type { DbEvent } from "@/hooks/useEvents";
+import eventPlaceholder from "@/assets/event-placeholder.jpg";
 
 interface Category {
   label: string;
@@ -37,7 +37,9 @@ function MatchCard({ event, reason, interestCount }: { event: DbEvent; reason?: 
             loading="lazy"
           />
           <div className="absolute top-2 left-2 flex gap-1.5 flex-wrap">
-            <Badge className="text-[10px] px-2 py-0.5">{cat.icon} {cat.label}</Badge>
+            <Badge className="text-[10px] px-2 py-0.5">
+              {cat.icon} {cat.label}
+            </Badge>
           </div>
         </div>
         <CardContent className="p-4 space-y-2">
@@ -53,7 +55,7 @@ function MatchCard({ event, reason, interestCount }: { event: DbEvent; reason?: 
             </span>
           </div>
           <div className="text-xs font-semibold text-primary">
-            {isTentative ? 'Mau gass dong!' : `Mulai ${formatPrice(event.price_sharing || event.price)}`}
+            {isTentative ? "Mau gass dong!" : `Mulai ${formatPrice(event.price_sharing || event.price)}`}
           </div>
           {reason && (
             <p className="text-[11px] text-muted-foreground italic leading-snug border-t border-border pt-2 mt-2">
@@ -66,21 +68,24 @@ function MatchCard({ event, reason, interestCount }: { event: DbEvent; reason?: 
   );
 }
 
-function ScrollRow({ category, events, reasons, interestCounts }: {
+function ScrollRow({
+  category,
+  events,
+  reasons,
+  interestCounts,
+}: {
   category: Category;
   events: DbEvent[];
   reasons: Record<string, string>;
   interestCounts: Record<string, number>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const matched = category.event_ids
-    .map((id) => events.find((e) => e.id === id))
-    .filter(Boolean) as DbEvent[];
+  const matched = category.event_ids.map((id) => events.find((e) => e.id === id)).filter(Boolean) as DbEvent[];
 
   if (matched.length === 0) return null;
 
   const scroll = (dir: number) => {
-    scrollRef.current?.scrollBy({ left: dir * 260, behavior: 'smooth' });
+    scrollRef.current?.scrollBy({ left: dir * 260, behavior: "smooth" });
   };
 
   return (
@@ -100,15 +105,14 @@ function ScrollRow({ category, events, reasons, interestCounts }: {
         <div
           ref={scrollRef}
           className="flex gap-3 md:gap-4 overflow-x-auto pb-2 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', WebkitOverflowScrolling: 'touch' } as any}
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none", WebkitOverflowScrolling: "touch" } as any}
         >
           {matched.map((event) => (
-            <div key={event.id} className="min-w-[220px] max-w-[220px] md:min-w-[260px] md:max-w-[260px] snap-start flex-shrink-0">
-              <MatchCard
-                event={event}
-                reason={reasons[event.id]}
-                interestCount={interestCounts[event.id] ?? 0}
-              />
+            <div
+              key={event.id}
+              className="min-w-[220px] max-w-[220px] md:min-w-[260px] md:max-w-[260px] snap-start flex-shrink-0"
+            >
+              <MatchCard event={event} reason={reasons[event.id]} interestCount={interestCounts[event.id] ?? 0} />
             </div>
           ))}
         </div>
@@ -136,12 +140,8 @@ export default function TripMatchResults({ categories, reasons, events, interest
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-semibold text-xs mb-2">
             <Sparkles className="h-3 w-3" /> AI Recommendations
           </div>
-          <h2 className="font-heading text-2xl md:text-3xl font-bold">
-            Recommended Rides for You
-          </h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Berdasarkan preferensi touring kamu
-          </p>
+          <h2 className="font-heading text-2xl md:text-3xl font-bold">Rekomendasi yang cocok buat loe!</h2>
+          <p className="text-muted-foreground text-sm mt-1">Berdasarkan preferensi touring loe</p>
         </div>
         <Button variant="outline" size="sm" onClick={onReset} className="gap-2">
           <RotateCcw className="h-3.5 w-3.5" /> Ulang Quiz
@@ -164,7 +164,9 @@ export default function TripMatchResults({ categories, reasons, events, interest
           <div className="text-center pt-4 pb-8">
             <p className="text-sm text-muted-foreground mb-3">Mau lihat semua event?</p>
             <Button variant="outline" asChild className="gap-2">
-              <Link to="/events">Jelajahi Semua Event <ArrowRight className="h-4 w-4" /></Link>
+              <Link to="/events">
+                Jelajahi Semua Event <ArrowRight className="h-4 w-4" />
+              </Link>
             </Button>
           </div>
         </>

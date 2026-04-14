@@ -7,6 +7,7 @@ import RichTextContent from '@/components/RichTextContent';
 import UserAvatar from '@/components/UserAvatar';
 import { Loader2, CalendarDays, MessageCircle } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

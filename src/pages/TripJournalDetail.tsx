@@ -8,6 +8,7 @@ import UserAvatar from '@/components/UserAvatar';
 import UserBadge from '@/components/UserBadge';
 import { Loader2, CalendarDays, Users } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { format } from 'date-fns';
 import { useState } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';

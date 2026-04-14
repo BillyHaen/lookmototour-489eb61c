@@ -3,6 +3,7 @@ import RichTextContent from '@/components/RichTextContent';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
+import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';

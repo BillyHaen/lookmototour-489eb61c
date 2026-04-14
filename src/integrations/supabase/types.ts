@@ -152,6 +152,7 @@ export type Database = {
           price_sharing: number
           price_single: number
           requirements: string[] | null
+          slug: string
           status: string
           title: string
           towing_description: string | null
@@ -185,6 +186,7 @@ export type Database = {
           price_sharing?: number
           price_single?: number
           requirements?: string[] | null
+          slug?: string
           status?: string
           title: string
           towing_description?: string | null
@@ -218,6 +220,7 @@ export type Database = {
           price_sharing?: number
           price_single?: number
           requirements?: string[] | null
+          slug?: string
           status?: string
           title?: string
           towing_description?: string | null

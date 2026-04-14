@@ -20,20 +20,23 @@ export function useEvents() {
   });
 }
 
-export function useEvent(id: string | undefined) {
+export function useEvent(slug: string | undefined) {
   return useQuery({
-    queryKey: ['event', id],
+    queryKey: ['event', slug],
     queryFn: async () => {
-      if (!id) return null;
+      if (!slug) return null;
+      // Try slug first, fall back to id for backwards compatibility
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+      const column = isUuid ? 'id' : 'slug';
       const { data, error } = await supabase
         .from('events')
         .select('*')
-        .eq('id', id)
+        .eq(column, slug)
         .is('deleted_at', null)
         .single();
       if (error) throw error;
       return data as DbEvent;
     },
-    enabled: !!id,
+    enabled: !!slug,
   });
 }

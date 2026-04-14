@@ -16,8 +16,8 @@ import { toast } from '@/hooks/use-toast';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 export default function EventDetail() {
-  const { id } = useParams();
-  const { data: event, isLoading } = useEvent(id);
+  const { id: slug } = useParams();
+  const { data: event, isLoading } = useEvent(slug);
 
   const { data: itineraries } = useQuery({
     queryKey: ['event-itineraries', id],

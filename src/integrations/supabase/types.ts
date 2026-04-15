@@ -859,6 +859,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_user_stats: {
+        Args: never
+        Returns: {
+          total_km: number
+          total_payments: number
+          total_trips: number
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

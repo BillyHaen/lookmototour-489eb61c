@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import RichTextContent from '@/components/RichTextContent';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck, Shield } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
 import EventRecommendations from '@/components/EventRecommendations';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
@@ -13,7 +13,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
 import InterestedUsers from '@/components/InterestedUsers';
-import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle } from '@/data/events';
+import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle, calculateSafetyScore, SAFETY_LEVEL_LABELS, ROAD_CONDITION_LABELS } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';

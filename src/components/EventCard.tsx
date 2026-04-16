@@ -24,6 +24,12 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
   const forceFull = (event as any).force_full || false;
   const spotsLeft = forceFull ? 0 : event.max_participants - event.current_participants;
   const isFull = spotsLeft <= 0 || forceFull;
+  const safety = calculateSafetyScore({
+    road_condition: (event as any).road_condition,
+    difficulty: event.difficulty,
+    fatigue_level: (event as any).fatigue_level,
+    distance: event.distance,
+  });
 
   return (
     <Link to={`/events/${(event as any).slug || event.id}`}>
@@ -41,6 +47,16 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
             <Badge className={status.className}>{status.label}</Badge>
             <Badge variant="secondary">{cat.icon} {cat.label}</Badge>
             {(event as any).tentative_month && <Badge variant="outline" className="bg-background/80">📅 Tentative</Badge>}
+          </div>
+          <div className="absolute top-3 right-3">
+            <div
+              className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold shadow-md"
+              style={{ backgroundColor: safety.color, color: '#fff' }}
+              title={`Safety Score: ${safety.score}`}
+            >
+              <Shield className="h-3.5 w-3.5" />
+              {safety.score}
+            </div>
           </div>
           {isFull && (
             <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">

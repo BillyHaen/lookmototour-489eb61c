@@ -63,6 +63,85 @@ export const FATIGUE_LABELS: Record<number, string> = {
   5: 'Sangat Berat',
 };
 
+export const ROAD_CONDITION_LABELS: Record<number, string> = {
+  1: 'Aspal Mulus',
+  2: 'Aspal Biasa',
+  3: 'Aspal Rusak Ringan',
+  4: 'Off-road',
+  5: 'Extreme Trail',
+};
+
+export type SafetyLevel = 'aman' | 'waspada' | 'hardcore';
+
+export interface SafetyScoreResult {
+  score: number;
+  level: SafetyLevel;
+  color: string;
+  breakdown: {
+    roadCondition: number;
+    difficulty: number;
+    fatigue: number;
+    distance: number;
+  };
+  tips: string[];
+}
+
+export function calculateSafetyScore(event: {
+  road_condition?: number;
+  difficulty: string;
+  fatigue_level?: number;
+  distance?: string | null;
+}): SafetyScoreResult {
+  const road = event.road_condition ?? 3;
+  const difficultyMap: Record<string, number> = { mudah: 1, sedang: 2, sulit: 3 };
+  const diff = difficultyMap[event.difficulty] ?? 2;
+  const fatigue = event.fatigue_level ?? 1;
+
+  // Parse distance
+  const distNum = parseFloat((event.distance || '0').replace(/[^0-9.]/g, '')) || 0;
+  const distPenalty = distNum < 100 ? 0 : distNum <= 300 ? 1 : distNum <= 500 ? 2 : 3;
+
+  // Weighted penalties (max penalty = 3 + 2.5 + 2.5 + 2 = 10)
+  const penalty =
+    (road / 5) * 3 +
+    (diff / 3) * 2.5 +
+    (fatigue / 5) * 2.5 +
+    (distPenalty / 3) * 2;
+
+  const raw = Math.max(1, Math.min(10, 10 - penalty));
+  const score = Math.round(raw * 10) / 10;
+
+  const level: SafetyLevel = score >= 7 ? 'aman' : score >= 4 ? 'waspada' : 'hardcore';
+  const color = score >= 7 ? 'hsl(142 71% 45%)' : score >= 4 ? 'hsl(40 100% 50%)' : 'hsl(0 84% 60%)';
+
+  const tips: string[] = [];
+  if (road >= 4) tips.push('Pastikan ban off-road dan ground clearance memadai');
+  if (road >= 3) tips.push('Perhatikan kondisi jalan, kurangi kecepatan di area rusak');
+  if (fatigue >= 4) tips.push('Sediakan waktu istirahat yang cukup, bawa perbekalan ekstra');
+  if (distNum > 300) tips.push('Jarak jauh — cek kondisi motor sebelum berangkat');
+  if (diff >= 3) tips.push('Hanya untuk rider berpengalaman');
+  if (score >= 7) tips.push('Cocok untuk semua level rider');
+
+  return {
+    score,
+    level,
+    color,
+    breakdown: {
+      roadCondition: road,
+      difficulty: diff,
+      fatigue,
+      distance: distPenalty,
+    },
+    tips,
+  };
+}
+
+export const SAFETY_LEVEL_LABELS: Record<SafetyLevel, { label: string; icon: string }> = {
+  aman: { label: 'Aman', icon: '✅' },
+  waspada: { label: 'Waspada', icon: '⚠️' },
+  hardcore: { label: 'Hardcore', icon: '🔴' },
+};
+
 export type RiderLevel = keyof typeof RIDER_LEVELS;
 export type MotorType = keyof typeof MOTOR_TYPES;
 export type TouringStyle = keyof typeof TOURING_STYLES;

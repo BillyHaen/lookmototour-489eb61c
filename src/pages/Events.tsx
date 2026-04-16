@@ -4,14 +4,14 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, Loader2, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2, X, ChevronDown, Sparkles, Shield } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventCard from '@/components/EventCard';
-import { EVENT_CATEGORIES, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES } from '@/data/events';
+import { EVENT_CATEGORIES, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, calculateSafetyScore, SAFETY_LEVEL_LABELS, SafetyLevel } from '@/data/events';
 import { useEvents } from '@/hooks/useEvents';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { supabase } from '@/integrations/supabase/client';
@@ -38,6 +38,7 @@ export default function Events() {
   const [riderLevelFilter, setRiderLevelFilter] = useState('all');
   const [motorTypeFilter, setMotorTypeFilter] = useState('all');
   const [touringStyleFilter, setTouringStyleFilter] = useState('all');
+  const [safetyFilter, setSafetyFilter] = useState<SafetyLevel | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'price'>('date');
   const { data: events, isLoading } = useEvents();
 
@@ -57,7 +58,7 @@ export default function Events() {
     },
   });
 
-  const activeFilterCount = [statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter]
+  const activeFilterCount = [statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter, safetyFilter]
     .filter((f) => f !== 'all').length;
 
   const clearAllFilters = () => {
@@ -68,6 +69,7 @@ export default function Events() {
     setRiderLevelFilter('all');
     setMotorTypeFilter('all');
     setTouringStyleFilter('all');
+    setSafetyFilter('all');
   };
 
   const filtered = useMemo(() => {
@@ -82,9 +84,15 @@ export default function Events() {
     if (riderLevelFilter !== 'all') result = result.filter((e) => (e as any).rider_level === riderLevelFilter || (e as any).rider_level === 'all');
     if (motorTypeFilter !== 'all') result = result.filter((e) => ((e as any).motor_types || []).includes(motorTypeFilter));
     if (touringStyleFilter !== 'all') result = result.filter((e) => (e as any).touring_style === touringStyleFilter);
+    if (safetyFilter !== 'all') {
+      result = result.filter((e) => {
+        const s = calculateSafetyScore({ road_condition: (e as any).road_condition, difficulty: e.difficulty, fatigue_level: (e as any).fatigue_level, distance: e.distance });
+        return s.level === safetyFilter;
+      });
+    }
     result.sort((a, b) => sortBy === 'date' ? new Date(a.date).getTime() - new Date(b.date).getTime() : a.price - b.price);
     return result;
-  }, [events, search, categoryFilter, statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter, sortBy]);
+  }, [events, search, categoryFilter, statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter, safetyFilter, sortBy]);
 
   return (
     <div className="min-h-screen">
@@ -136,13 +144,25 @@ export default function Events() {
                   <div className="flex items-center justify-between">
                     <p className="font-heading font-semibold text-sm">Filter Lanjutan</p>
                     {activeFilterCount > 0 && (
-                      <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => { setStatusFilter('all'); setDifficultyFilter('all'); setRiderLevelFilter('all'); setMotorTypeFilter('all'); setTouringStyleFilter('all'); }}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => { setStatusFilter('all'); setDifficultyFilter('all'); setRiderLevelFilter('all'); setMotorTypeFilter('all'); setTouringStyleFilter('all'); setSafetyFilter('all'); }}>
                         Reset
                       </Button>
                     )}
                   </div>
                   <Separator />
                   <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">🛡️ Safety Level</label>
+                      <Select value={safetyFilter} onValueChange={(v) => setSafetyFilter(v as SafetyLevel | 'all')}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Level</SelectItem>
+                          {Object.entries(SAFETY_LEVEL_LABELS).map(([key, val]) => (
+                            <SelectItem key={key} value={key}>{val.icon} {val.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div>
                       <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Status</label>
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -250,6 +270,11 @@ export default function Events() {
                 {touringStyleFilter !== 'all' && (
                   <Badge variant="secondary" className="gap-1 text-xs cursor-pointer" onClick={() => setTouringStyleFilter('all')}>
                     {TOURING_STYLES[touringStyleFilter as keyof typeof TOURING_STYLES]?.label} <X className="h-3 w-3" />
+                  </Badge>
+                )}
+                {safetyFilter !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 text-xs cursor-pointer" onClick={() => setSafetyFilter('all')}>
+                    🛡️ {SAFETY_LEVEL_LABELS[safetyFilter]?.label} <X className="h-3 w-3" />
                   </Badge>
                 )}
                 <Button variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground px-2" onClick={clearAllFilters}>

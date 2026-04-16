@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
-import { formatPrice, formatDate, formatTentativeMonth, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS } from '@/data/events';
-import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users, Heart } from 'lucide-react';
+import { formatPrice, formatDate, formatTentativeMonth, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, ROAD_CONDITION_LABELS, calculateSafetyScore, SAFETY_LEVEL_LABELS } from '@/data/events';
+import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users, Heart, Shield } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
@@ -51,6 +51,7 @@ interface EventForm {
   riding_hours_per_day: number;
   fatigue_level: number;
   tentative_month: string;
+  road_condition: number;
 }
 
 function generateSlug(title: string): string {
@@ -70,7 +71,7 @@ const emptyForm: EventForm = {
   insurance_enabled: false, insurance_description: '',
   towing_enabled: false, towing_description: '', towing_pergi_price: 0, towing_pulang_price: 0,
   rider_level: 'all', motor_types: [], touring_style: 'adventure', riding_hours_per_day: 0, fatigue_level: 1,
-  tentative_month: '',
+  tentative_month: '', road_condition: 3,
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }
@@ -121,6 +122,7 @@ export default function AdminEvents() {
         riding_hours_per_day: form.riding_hours_per_day,
         fatigue_level: form.fatigue_level,
         tentative_month: form.tentative_month || null,
+        road_condition: form.road_condition,
       };
 
       let eventId = editId;
@@ -222,6 +224,7 @@ export default function AdminEvents() {
       riding_hours_per_day: event.riding_hours_per_day || 0,
       fatigue_level: event.fatigue_level || 1,
       tentative_month: event.tentative_month || '',
+      road_condition: event.road_condition ?? 3,
     });
     // Load itineraries
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
@@ -509,6 +512,39 @@ export default function AdminEvents() {
                     </div>
                   </div>
                 </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Kondisi Jalan: {ROAD_CONDITION_LABELS[form.road_condition]}</label>
+                  <Slider
+                    min={1} max={5} step={1}
+                    value={[form.road_condition]}
+                    onValueChange={(v) => setForm({ ...form, road_condition: v[0] })}
+                    className="mt-3"
+                  />
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                    <span>Aspal Mulus</span><span>Extreme Trail</span>
+                  </div>
+                </div>
+                {/* Safety Score Preview */}
+                {(() => {
+                  const safety = calculateSafetyScore({
+                    road_condition: form.road_condition,
+                    difficulty: form.difficulty,
+                    fatigue_level: form.fatigue_level,
+                    distance: form.distance,
+                  });
+                  const levelInfo = SAFETY_LEVEL_LABELS[safety.level];
+                  return (
+                    <div className="p-3 rounded-lg border-2 flex items-center justify-between" style={{ borderColor: safety.color + '40' }}>
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-5 w-5" style={{ color: safety.color }} />
+                        <span className="text-sm font-medium">Safety Score Preview</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1 rounded-md font-bold text-sm" style={{ backgroundColor: safety.color, color: '#fff' }}>
+                        {safety.score} / 10 — {levelInfo.icon} {levelInfo.label}
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 

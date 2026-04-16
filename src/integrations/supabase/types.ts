@@ -365,6 +365,7 @@ export type Database = {
           requirements: string[] | null
           rider_level: string
           riding_hours_per_day: number
+          road_condition: number
           slug: string
           status: string
           tentative_month: string | null
@@ -405,6 +406,7 @@ export type Database = {
           requirements?: string[] | null
           rider_level?: string
           riding_hours_per_day?: number
+          road_condition?: number
           slug?: string
           status?: string
           tentative_month?: string | null
@@ -445,6 +447,7 @@ export type Database = {
           requirements?: string[] | null
           rider_level?: string
           riding_hours_per_day?: number
+          road_condition?: number
           slug?: string
           status?: string
           tentative_month?: string | null

@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, MapPin, Users, Gauge, Clock, Zap, Heart } from 'lucide-react';
-import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, FATIGUE_LABELS } from '@/data/events';
+import { CalendarDays, MapPin, Users, Gauge, Clock, Zap, Heart, Shield } from 'lucide-react';
+import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, FATIGUE_LABELS, calculateSafetyScore } from '@/data/events';
 import type { DbEvent } from '@/hooks/useEvents';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 

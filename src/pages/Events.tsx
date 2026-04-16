@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Search, SlidersHorizontal, Loader2, X, ChevronDown, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, Loader2, X, ChevronDown, Sparkles, Shield } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
@@ -38,6 +38,7 @@ export default function Events() {
   const [riderLevelFilter, setRiderLevelFilter] = useState('all');
   const [motorTypeFilter, setMotorTypeFilter] = useState('all');
   const [touringStyleFilter, setTouringStyleFilter] = useState('all');
+  const [safetyFilter, setSafetyFilter] = useState<SafetyLevel | 'all'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'price'>('date');
   const { data: events, isLoading } = useEvents();
 
@@ -57,7 +58,7 @@ export default function Events() {
     },
   });
 
-  const activeFilterCount = [statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter]
+  const activeFilterCount = [statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter, safetyFilter]
     .filter((f) => f !== 'all').length;
 
   const clearAllFilters = () => {
@@ -68,6 +69,7 @@ export default function Events() {
     setRiderLevelFilter('all');
     setMotorTypeFilter('all');
     setTouringStyleFilter('all');
+    setSafetyFilter('all');
   };
 
   const filtered = useMemo(() => {
@@ -82,9 +84,15 @@ export default function Events() {
     if (riderLevelFilter !== 'all') result = result.filter((e) => (e as any).rider_level === riderLevelFilter || (e as any).rider_level === 'all');
     if (motorTypeFilter !== 'all') result = result.filter((e) => ((e as any).motor_types || []).includes(motorTypeFilter));
     if (touringStyleFilter !== 'all') result = result.filter((e) => (e as any).touring_style === touringStyleFilter);
+    if (safetyFilter !== 'all') {
+      result = result.filter((e) => {
+        const s = calculateSafetyScore({ road_condition: (e as any).road_condition, difficulty: e.difficulty, fatigue_level: (e as any).fatigue_level, distance: e.distance });
+        return s.level === safetyFilter;
+      });
+    }
     result.sort((a, b) => sortBy === 'date' ? new Date(a.date).getTime() - new Date(b.date).getTime() : a.price - b.price);
     return result;
-  }, [events, search, categoryFilter, statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter, sortBy]);
+  }, [events, search, categoryFilter, statusFilter, difficultyFilter, riderLevelFilter, motorTypeFilter, touringStyleFilter, safetyFilter, sortBy]);
 
   return (
     <div className="min-h-screen">

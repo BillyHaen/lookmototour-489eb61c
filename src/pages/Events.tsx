@@ -272,6 +272,11 @@ export default function Events() {
                     {TOURING_STYLES[touringStyleFilter as keyof typeof TOURING_STYLES]?.label} <X className="h-3 w-3" />
                   </Badge>
                 )}
+                {safetyFilter !== 'all' && (
+                  <Badge variant="secondary" className="gap-1 text-xs cursor-pointer" onClick={() => setSafetyFilter('all')}>
+                    🛡️ {SAFETY_LEVEL_LABELS[safetyFilter]?.label} <X className="h-3 w-3" />
+                  </Badge>
+                )}
                 <Button variant="ghost" size="sm" className="h-6 text-xs text-muted-foreground px-2" onClick={clearAllFilters}>
                   Hapus semua
                 </Button>

@@ -122,6 +122,7 @@ export default function AdminEvents() {
         riding_hours_per_day: form.riding_hours_per_day,
         fatigue_level: form.fatigue_level,
         tentative_month: form.tentative_month || null,
+        road_condition: form.road_condition,
       };
 
       let eventId = editId;
@@ -511,6 +512,39 @@ export default function AdminEvents() {
                     </div>
                   </div>
                 </div>
+                <div>
+                  <label className="text-sm font-medium mb-1 block">Kondisi Jalan: {ROAD_CONDITION_LABELS[form.road_condition]}</label>
+                  <Slider
+                    min={1} max={5} step={1}
+                    value={[form.road_condition]}
+                    onValueChange={(v) => setForm({ ...form, road_condition: v[0] })}
+                    className="mt-3"
+                  />
+                  <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                    <span>Aspal Mulus</span><span>Extreme Trail</span>
+                  </div>
+                </div>
+                {/* Safety Score Preview */}
+                {(() => {
+                  const safety = calculateSafetyScore({
+                    road_condition: form.road_condition,
+                    difficulty: form.difficulty,
+                    fatigue_level: form.fatigue_level,
+                    distance: form.distance,
+                  });
+                  const levelInfo = SAFETY_LEVEL_LABELS[safety.level];
+                  return (
+                    <div className="p-3 rounded-lg border-2 flex items-center justify-between" style={{ borderColor: safety.color + '40' }}>
+                      <div className="flex items-center gap-2">
+                        <Shield className="h-5 w-5" style={{ color: safety.color }} />
+                        <span className="text-sm font-medium">Safety Score Preview</span>
+                      </div>
+                      <div className="flex items-center gap-2 px-2.5 py-1 rounded-md font-bold text-sm" style={{ backgroundColor: safety.color, color: '#fff' }}>
+                        {safety.score} / 10 — {levelInfo.icon} {levelInfo.label}
+                      </div>
+                    </div>
+                  );
+                })()}
               </CardContent>
             </Card>
 

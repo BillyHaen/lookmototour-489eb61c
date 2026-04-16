@@ -11,7 +11,7 @@ import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventCard from '@/components/EventCard';
-import { EVENT_CATEGORIES, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES } from '@/data/events';
+import { EVENT_CATEGORIES, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, calculateSafetyScore, SAFETY_LEVEL_LABELS, SafetyLevel } from '@/data/events';
 import { useEvents } from '@/hooks/useEvents';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { supabase } from '@/integrations/supabase/client';

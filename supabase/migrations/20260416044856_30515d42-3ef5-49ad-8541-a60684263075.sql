@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN road_condition INTEGER NOT NULL DEFAULT 3;

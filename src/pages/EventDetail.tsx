@@ -195,6 +195,83 @@ export default function EventDetail() {
                 </Card>
               )}
 
+              {/* 🛡️ Safety Score Panel */}
+              {(() => {
+                const safety = calculateSafetyScore({
+                  road_condition: (event as any).road_condition,
+                  difficulty: event.difficulty,
+                  fatigue_level: (event as any).fatigue_level,
+                  distance: event.distance,
+                });
+                const levelInfo = SAFETY_LEVEL_LABELS[safety.level];
+                const breakdownItems = [
+                  { label: 'Kondisi Jalan', value: safety.breakdown.roadCondition, max: 5, detail: ROAD_CONDITION_LABELS[safety.breakdown.roadCondition] },
+                  { label: 'Medan', value: safety.breakdown.difficulty, max: 3, detail: event.difficulty.charAt(0).toUpperCase() + event.difficulty.slice(1) },
+                  { label: 'Tingkat Capek', value: safety.breakdown.fatigue, max: 5, detail: FATIGUE_LABELS[safety.breakdown.fatigue] },
+                  { label: 'Jarak Tempuh', value: safety.breakdown.distance, max: 3, detail: event.distance || '-' },
+                ];
+                return (
+                  <Card className="border-2" style={{ borderColor: safety.color + '40' }}>
+                    <CardContent className="pt-6 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-heading font-semibold text-lg flex items-center gap-2">
+                          <Shield className="h-5 w-5" style={{ color: safety.color }} /> Safety Score
+                        </h3>
+                        <div
+                          className="flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-sm"
+                          style={{ backgroundColor: safety.color, color: '#fff' }}
+                        >
+                          <Shield className="h-4 w-4" />
+                          {safety.score} / 10
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 h-3 rounded-full bg-secondary overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{ width: `${(safety.score / 10) * 100}%`, backgroundColor: safety.color }}
+                          />
+                        </div>
+                        <span className="text-sm font-semibold" style={{ color: safety.color }}>
+                          {levelInfo.icon} {levelInfo.label}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        {breakdownItems.map((item) => (
+                          <div key={item.label} className="p-3 rounded-lg bg-muted">
+                            <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
+                                <div
+                                  className="h-full rounded-full"
+                                  style={{
+                                    width: `${(item.value / item.max) * 100}%`,
+                                    backgroundColor: item.value / item.max > 0.66 ? 'hsl(0 84% 60%)' : item.value / item.max > 0.33 ? 'hsl(40 100% 50%)' : 'hsl(142 71% 45%)',
+                                  }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium whitespace-nowrap">{item.detail}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {safety.tips.length > 0 && (
+                        <div className="space-y-1.5 pt-2 border-t border-border">
+                          {safety.tips.slice(0, 3).map((tip, i) => (
+                            <p key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                              <span>💡</span> {tip}
+                            </p>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })()}
+
               <div>
                 <h2 className="font-heading font-semibold text-xl mb-3">Highlight Event</h2>
                 <div className="grid grid-cols-2 gap-2">

@@ -144,7 +144,7 @@ export default function Events() {
                   <div className="flex items-center justify-between">
                     <p className="font-heading font-semibold text-sm">Filter Lanjutan</p>
                     {activeFilterCount > 0 && (
-                      <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => { setStatusFilter('all'); setDifficultyFilter('all'); setRiderLevelFilter('all'); setMotorTypeFilter('all'); setTouringStyleFilter('all'); }}>
+                      <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={() => { setStatusFilter('all'); setDifficultyFilter('all'); setRiderLevelFilter('all'); setMotorTypeFilter('all'); setTouringStyleFilter('all'); setSafetyFilter('all'); }}>
                         Reset
                       </Button>
                     )}
@@ -152,6 +152,17 @@ export default function Events() {
                   <Separator />
                   <div className="space-y-3">
                     <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">🛡️ Safety Level</label>
+                      <Select value={safetyFilter} onValueChange={(v) => setSafetyFilter(v as SafetyLevel | 'all')}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Semua Level</SelectItem>
+                          {Object.entries(SAFETY_LEVEL_LABELS).map(([key, val]) => (
+                            <SelectItem key={key} value={key}>{val.icon} {val.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                       <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Status</label>
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>

@@ -51,6 +51,7 @@ interface EventForm {
   riding_hours_per_day: number;
   fatigue_level: number;
   tentative_month: string;
+  road_condition: number;
 }
 
 function generateSlug(title: string): string {
@@ -70,7 +71,7 @@ const emptyForm: EventForm = {
   insurance_enabled: false, insurance_description: '',
   towing_enabled: false, towing_description: '', towing_pergi_price: 0, towing_pulang_price: 0,
   rider_level: 'all', motor_types: [], touring_style: 'adventure', riding_hours_per_day: 0, fatigue_level: 1,
-  tentative_month: '',
+  tentative_month: '', road_condition: 3,
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }

@@ -25,6 +25,7 @@ import eventPlaceholder from '@/assets/event-placeholder.jpg';
 export default function EventDetail() {
   const { id: slug } = useParams();
   const { data: event, isLoading } = useEvent(slug);
+  const { user } = useAuth();
 
   const { data: itineraries } = useQuery({
     queryKey: ['event-itineraries', event?.id],

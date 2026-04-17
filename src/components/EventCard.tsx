@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, MapPin, Users, Gauge, Clock, Zap, Heart, Shield } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, Zap, Heart, Shield, Map as MapIcon } from 'lucide-react';
 import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, FATIGUE_LABELS, calculateSafetyScore } from '@/data/events';
 import type { DbEvent } from '@/hooks/useEvents';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
@@ -48,7 +48,7 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
             <Badge variant="secondary">{cat.icon} {cat.label}</Badge>
             {(event as any).tentative_month && <Badge variant="outline" className="bg-background/80">📅 Tentative</Badge>}
           </div>
-          <div className="absolute top-3 right-3">
+          <div className="absolute top-3 right-3 flex flex-col gap-1.5 items-end">
             <div
               className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold shadow-md"
               style={{ backgroundColor: safety.color, color: '#fff' }}
@@ -57,6 +57,14 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
               <Shield className="h-3.5 w-3.5" />
               {safety.score}
             </div>
+            {(event as any).route_data?.polyline?.length > 0 && (
+              <div
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium shadow-md bg-background/90 text-foreground"
+                title="Route preview tersedia"
+              >
+                <MapIcon className="h-3 w-3" /> Route
+              </div>
+            )}
           </div>
           {isFull && (
             <div className="absolute inset-0 bg-foreground/50 flex items-center justify-center">

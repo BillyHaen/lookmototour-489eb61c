@@ -13,6 +13,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import EventRegistrationForm from '@/components/EventRegistrationForm';
 import InterestedUsers from '@/components/InterestedUsers';
+import RoutePreview from '@/components/RoutePreview';
 import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle, calculateSafetyScore, SAFETY_LEVEL_LABELS, ROAD_CONDITION_LABELS } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
 import { supabase } from '@/integrations/supabase/client';
@@ -364,6 +365,9 @@ export default function EventDetail() {
                   </CardContent>
                 </Card>
               )}
+
+              {/* 🗺️ Route Preview */}
+              <RoutePreview routeData={(event as any).route_data} />
 
               {/* Itinerary */}
               {itineraries && itineraries.length > 0 && (

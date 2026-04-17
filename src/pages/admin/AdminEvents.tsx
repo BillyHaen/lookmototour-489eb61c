@@ -18,6 +18,8 @@ import { Switch } from '@/components/ui/switch';
 import AdminEventParticipants from './AdminEventParticipants';
 import AdminEventInterests from './AdminEventInterests';
 import EventImageUpload from '@/components/EventImageUpload';
+import RouteEditor from '@/components/admin/RouteEditor';
+import type { RouteData } from '@/lib/gpxParser';
 
 interface EventForm {
   title: string;
@@ -84,6 +86,7 @@ export default function AdminEvents() {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [participantsEvent, setParticipantsEvent] = useState<{ id: string; title: string } | null>(null);
   const [interestsEvent, setInterestsEvent] = useState<{ id: string; title: string } | null>(null);
+  const [routeData, setRouteData] = useState<RouteData | null>(null);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -123,7 +126,8 @@ export default function AdminEvents() {
         fatigue_level: form.fatigue_level,
         tentative_month: form.tentative_month || null,
         road_condition: form.road_condition,
-      };
+        route_data: routeData,
+      } as any;
 
       let eventId = editId;
       // Check if we're confirming a tentative date (was tentative, now not)
@@ -199,7 +203,7 @@ export default function AdminEvents() {
     onError: (e: Error) => toast({ title: 'Gagal menghapus', description: e.message, variant: 'destructive' }),
   });
 
-  const openCreate = () => { setEditId(null); setForm(emptyForm); setItineraries([]); setOpen(true); };
+  const openCreate = () => { setEditId(null); setForm(emptyForm); setItineraries([]); setRouteData(null); setOpen(true); };
 
   const openEdit = async (event: any) => {
     setEditId(event.id);
@@ -226,6 +230,7 @@ export default function AdminEvents() {
       tentative_month: event.tentative_month || '',
       road_condition: event.road_condition ?? 3,
     });
+    setRouteData((event as any).route_data || null);
     // Load itineraries
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
     setItineraries((data || []).map((it: any) => ({
@@ -557,6 +562,18 @@ export default function AdminEvents() {
                 <SelectItem value="completed">Selesai</SelectItem>
               </SelectContent>
             </Select>
+
+            {/* 🗺️ Route Editor */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  🗺️ Rute Touring (GPX + Waypoint)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <RouteEditor value={routeData} onChange={setRouteData} />
+              </CardContent>
+            </Card>
 
             {/* Itinerary Section */}
             <Card>

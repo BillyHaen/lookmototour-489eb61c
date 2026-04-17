@@ -366,6 +366,7 @@ export type Database = {
           rider_level: string
           riding_hours_per_day: number
           road_condition: number
+          route_data: Json | null
           slug: string
           status: string
           tentative_month: string | null
@@ -407,6 +408,7 @@ export type Database = {
           rider_level?: string
           riding_hours_per_day?: number
           road_condition?: number
+          route_data?: Json | null
           slug?: string
           status?: string
           tentative_month?: string | null
@@ -448,6 +450,7 @@ export type Database = {
           rider_level?: string
           riding_hours_per_day?: number
           road_condition?: number
+          route_data?: Json | null
           slug?: string
           status?: string
           tentative_month?: string | null

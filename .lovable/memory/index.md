@@ -32,5 +32,6 @@ Use the custom LookMotoTour logo for branding, no generic icons.
 - [Event Filtering](mem://features/event-filtering) — Minimalist mobile filter layout
 - [AI Trip Match](mem://features/ai-trip-match) — 4-step questionnaire and AI recommendation edge function
 - [Marketing Analytics](mem://features/marketing-intelligence) — Admin dashboard charts and export capabilities
+- [Live Tracking](mem://features/live-tracking) — Fase 1 Google Maps share link + per-recipient access token URL
 - [Route Preview](mem://features/route-preview) — Leaflet map, GPX upload, waypoints, elevation chart in event detail
 - [Safety Score](mem://features/safety-score) — Auto-calculated safety score from road_condition, difficulty, fatigue, distance

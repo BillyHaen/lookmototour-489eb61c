@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogOut, Shield, ShoppingBag } from 'lucide-react';
+import { Menu, X, User, LogOut, Shield, ShoppingBag, Navigation } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import UserAvatar from '@/components/UserAvatar';
 import NotificationBell from '@/components/NotificationBell';
+import { useActiveTrackingCount } from '@/hooks/useTrackingSession';
 
 const NAV_ITEMS = [
   { label: 'Beranda', path: '/' },
@@ -25,6 +26,7 @@ export default function Navbar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
+  const { data: hasActiveTracking } = useActiveTrackingCount();
 
   const { data: profile } = useQuery({
     queryKey: ['profile', user?.id],
@@ -61,6 +63,14 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-2">
           {user ? (
             <>
+              {hasActiveTracking && (
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/tracking/manage" className="gap-1.5" title="Tracking Aktif">
+                    <Navigation className="h-4 w-4 text-primary" />
+                    <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                  </Link>
+                </Button>
+              )}
               <NotificationBell />
               {isAdmin && (
                 <Button variant="ghost" size="sm" asChild>
@@ -90,6 +100,11 @@ export default function Navbar() {
         </div>
 
         <div className="md:hidden flex items-center gap-1">
+          {user && hasActiveTracking && (
+            <Link to="/tracking/manage" className="p-2" title="Tracking Aktif">
+              <Navigation className="h-5 w-5 text-primary" />
+            </Link>
+          )}
           {user && <NotificationBell />}
           <button className="p-2" onClick={() => setOpen(!open)} aria-label="Toggle menu">
             {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}

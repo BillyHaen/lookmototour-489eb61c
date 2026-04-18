@@ -17,15 +17,17 @@ import RoutePreview from '@/components/RoutePreview';
 import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle, calculateSafetyScore, SAFETY_LEVEL_LABELS, ROAD_CONDITION_LABELS } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
-import { Lock } from 'lucide-react';
+import { Lock, Navigation } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useIsConfirmedParticipant } from '@/hooks/useTrackingSession';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 export default function EventDetail() {
   const { id: slug } = useParams();
   const { data: event, isLoading } = useEvent(slug);
   const { user } = useAuth();
+  const { data: isConfirmedParticipant } = useIsConfirmedParticipant(event?.id);
 
   const { data: itineraries } = useQuery({
     queryKey: ['event-itineraries', event?.id],
@@ -496,6 +498,30 @@ export default function EventDetail() {
                 {isTentative && <InterestedUsers eventId={event.id} interestCount={interestCount || 0} />}
 
                 <EventRegistrationForm event={event} />
+
+                {/* Live Tracking CTA — peserta confirmed, window aktif */}
+                {(() => {
+                  if (!isConfirmedParticipant) return null;
+                  const now = new Date();
+                  const start = new Date(event.date);
+                  const end = event.end_date ? new Date(event.end_date) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
+                  // Window: 1 hari sebelum start sampai end_date + 1 hari
+                  const windowStart = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+                  const windowEnd = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+                  if (now < windowStart || now > windowEnd) return null;
+                  return (
+                    <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Navigation className="h-5 w-5 text-primary" />
+                        <p className="font-heading font-semibold text-sm">Live Tracking Touring</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Share lokasi real-time ke keluarga selama touring.</p>
+                      <Button size="sm" className="w-full" asChild>
+                        <Link to={`/tracking/start/${event.id}`}>📍 Mulai Tracking</Link>
+                      </Button>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>

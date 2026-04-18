@@ -15,8 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck } from 'lucide-react';
+import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck, Navigation } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { formatDate, formatPrice } from '@/data/events';
+import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
@@ -70,6 +72,8 @@ export default function Profile() {
 
   const confirmedCount = (registrations || []).filter(r => r.status === 'confirmed').length;
   const badges = BADGES.filter(b => confirmedCount >= b.min);
+  const { data: trackingSessions = [] } = useMyTrackingSessions();
+  const activeSessions = (trackingSessions as any[]).filter(s => s.status === 'active' && new Date(s.expires_at) > new Date());
 
   // Completed events for testimonial
   const completedEvents = (registrations || []).filter(r => {
@@ -189,6 +193,30 @@ export default function Profile() {
                   </Button>
                 </form>
               </Form>
+            </CardContent>
+          </Card>
+
+          {/* Live Tracking Sessions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Navigation className="h-5 w-5 text-primary" /> Live Tracking
+                {activeSessions.length > 0 && <Badge variant="default" className="ml-auto">{activeSessions.length} aktif</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {trackingSessions.length === 0 ? (
+                <p className="text-muted-foreground text-sm py-2">Belum ada sesi tracking. Mulai dari halaman event saat hari keberangkatan.</p>
+              ) : (
+                <div className="space-y-2">
+                  {activeSessions.length > 0 && (
+                    <p className="text-sm text-muted-foreground">{activeSessions.length} sesi sedang aktif berbagi lokasi.</p>
+                  )}
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/tracking/manage">Kelola Sesi Tracking</Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -17,15 +17,17 @@ import RoutePreview from '@/components/RoutePreview';
 import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, RiderLevel, MotorType, TouringStyle, calculateSafetyScore, SAFETY_LEVEL_LABELS, ROAD_CONDITION_LABELS } from '@/data/events';
 import { useEvent } from '@/hooks/useEvents';
 import { useAuth } from '@/hooks/useAuth';
-import { Lock } from 'lucide-react';
+import { Lock, Navigation } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
+import { useIsConfirmedParticipant } from '@/hooks/useTrackingSession';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 export default function EventDetail() {
   const { id: slug } = useParams();
   const { data: event, isLoading } = useEvent(slug);
   const { user } = useAuth();
+  const { data: isConfirmedParticipant } = useIsConfirmedParticipant(event?.id);
 
   const { data: itineraries } = useQuery({
     queryKey: ['event-itineraries', event?.id],

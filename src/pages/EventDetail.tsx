@@ -499,6 +499,30 @@ export default function EventDetail() {
 
                 <EventRegistrationForm event={event} />
 
+                {/* Live Tracking CTA — peserta confirmed, window aktif */}
+                {(() => {
+                  if (!isConfirmedParticipant) return null;
+                  const now = new Date();
+                  const start = new Date(event.date);
+                  const end = event.end_date ? new Date(event.end_date) : new Date(start.getTime() + 24 * 60 * 60 * 1000);
+                  // Window: 1 hari sebelum start sampai end_date + 1 hari
+                  const windowStart = new Date(start.getTime() - 24 * 60 * 60 * 1000);
+                  const windowEnd = new Date(end.getTime() + 24 * 60 * 60 * 1000);
+                  if (now < windowStart || now > windowEnd) return null;
+                  return (
+                    <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Navigation className="h-5 w-5 text-primary" />
+                        <p className="font-heading font-semibold text-sm">Live Tracking Touring</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">Share lokasi real-time ke keluarga selama touring.</p>
+                      <Button size="sm" className="w-full" asChild>
+                        <Link to={`/tracking/start/${event.id}`}>📍 Mulai Tracking</Link>
+                      </Button>
+                    </div>
+                  );
+                })()}
+
                 <div className="flex gap-2">
                   <Button variant="outline" size="sm" className="flex-1 gap-1" asChild>
                     <a href={waLink} target="_blank" rel="noreferrer">

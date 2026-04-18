@@ -29,6 +29,9 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminTripJournals from "./pages/admin/AdminTripJournals";
 import TripMatch from "./pages/TripMatch";
+import TrackingStart from "./pages/TrackingStart";
+import TrackingManage from "./pages/TrackingManage";
+import TrackPublic from "./pages/TrackPublic";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +69,9 @@ const App = () => (
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/trip-journals" element={<AdminTripJournals />} />
             <Route path="/trip-match" element={<TripMatch />} />
+            <Route path="/tracking/start/:eventId" element={<TrackingStart />} />
+            <Route path="/tracking/manage" element={<TrackingManage />} />
+            <Route path="/track/:token" element={<TrackPublic />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

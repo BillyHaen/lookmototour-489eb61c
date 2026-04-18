@@ -689,6 +689,94 @@ export type Database = {
           },
         ]
       }
+      tracking_recipients: {
+        Row: {
+          access_token: string
+          created_at: string
+          id: string
+          last_accessed_at: string | null
+          name: string
+          phone: string
+          session_id: string
+        }
+        Insert: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          name?: string
+          phone?: string
+          session_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          id?: string
+          last_accessed_at?: string | null
+          name?: string
+          phone?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_recipients_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "tracking_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracking_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          event_id: string
+          expires_at: string
+          google_maps_url: string
+          id: string
+          notes: string | null
+          started_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          event_id: string
+          expires_at: string
+          google_maps_url?: string
+          id?: string
+          notes?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          event_id?: string
+          expires_at?: string
+          google_maps_url?: string
+          id?: string
+          notes?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracking_sessions_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       trip_journal_images: {
         Row: {
           caption: string | null
@@ -865,6 +953,25 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_tracking_by_token: {
+        Args: { _token: string }
+        Returns: {
+          ended_at: string
+          event_date: string
+          event_end_date: string
+          event_location: string
+          event_title: string
+          expires_at: string
+          google_maps_url: string
+          notes: string
+          participant_name: string
+          participant_phone: string
+          recipient_name: string
+          session_id: string
+          started_at: string
+          status: string
+        }[]
+      }
       get_user_stats: {
         Args: never
         Returns: {
@@ -885,6 +992,10 @@ export type Database = {
         Args: { _content_id: string; _content_type: string }
         Returns: number
       }
+      is_confirmed_participant: {
+        Args: { _event_id: string; _user_id: string }
+        Returns: boolean
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -902,6 +1013,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      user_has_active_tracking: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

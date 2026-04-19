@@ -21,8 +21,10 @@ function getPagePath(contentType: string, slug: string): string {
   }
 }
 
+const SHARE_BASE = 'https://s.lookmototour.com';
+
 function getShareUrl(contentType: string, slug: string): string {
-  return `${window.location.origin}${getPagePath(contentType, slug)}`;
+  return `${SHARE_BASE}/s/${contentType}/${encodeURIComponent(slug)}`;
 }
 
 export default function ShareButton({ contentType, contentId, title, description, slug }: ShareButtonProps) {

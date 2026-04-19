@@ -34,7 +34,7 @@ export default function ShareButton({ contentType, contentId, title, description
   }, [contentType, contentId]);
 
   const handleShare = async () => {
-    const shareUrl = getPageUrl(contentType, slug || contentId);
+    const shareUrl = getShareUrl(contentType, slug || contentId);
 
     try {
       if (navigator.share) {

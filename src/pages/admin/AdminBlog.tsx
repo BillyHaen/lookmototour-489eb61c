@@ -262,7 +262,11 @@ export default function AdminBlog() {
           {filteredPosts.map((p: any) => (
             <Card key={p.id}>
               <CardContent className="p-4 flex items-center gap-4 flex-wrap">
-                {p.image_url && <img src={p.image_url} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0" />}
+                {(() => {
+                  const g = Array.isArray((p as any).gallery) ? (p as any).gallery : [];
+                  const cover = p.image_url || g[0]?.image_url;
+                  return cover ? <img src={cover} alt="" className="w-16 h-16 rounded-lg object-cover flex-shrink-0" /> : null;
+                })()}
                 <div className="flex-1 min-w-0">
                   <div className="font-medium truncate">{p.title}</div>
                   <div className="text-xs text-muted-foreground">

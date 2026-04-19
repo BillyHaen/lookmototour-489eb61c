@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      blog_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       blog_comments: {
         Row: {
           content: string
@@ -59,15 +80,77 @@ export type Database = {
           },
         ]
       }
+      blog_post_categories: {
+        Row: {
+          category_id: string
+          post_id: string
+        }
+        Insert: {
+          category_id: string
+          post_id: string
+        }
+        Update: {
+          category_id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_categories_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_post_tags: {
+        Row: {
+          post_id: string
+          tag_id: string
+        }
+        Insert: {
+          post_id: string
+          tag_id: string
+        }
+        Update: {
+          post_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_tags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "blog_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           author_id: string
           content: string
           created_at: string
           excerpt: string
+          gallery: Json
           id: string
           image_url: string | null
           published_at: string | null
+          scheduled_at: string | null
           slug: string
           status: string
           title: string
@@ -78,9 +161,11 @@ export type Database = {
           content?: string
           created_at?: string
           excerpt?: string
+          gallery?: Json
           id?: string
           image_url?: string | null
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title: string
@@ -91,13 +176,36 @@ export type Database = {
           content?: string
           created_at?: string
           excerpt?: string
+          gallery?: Json
           id?: string
           image_url?: string | null
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
         }
         Relationships: []
       }
@@ -461,6 +569,42 @@ export type Database = {
           towing_pergi_price?: number
           towing_pulang_price?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      media_library: {
+        Row: {
+          bucket: string
+          created_at: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          uploaded_by: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          uploaded_by: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string
         }
         Relationships: []
       }
@@ -849,6 +993,7 @@ export type Database = {
           event_id: string | null
           id: string
           published_at: string | null
+          scheduled_at: string | null
           slug: string
           status: string
           title: string
@@ -861,6 +1006,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title: string
@@ -873,6 +1019,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title?: string

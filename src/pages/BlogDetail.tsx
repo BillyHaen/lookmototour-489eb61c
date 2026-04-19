@@ -1,9 +1,11 @@
-import { useParams } from 'react-router-dom';
-import { useBlogPost, useBlogComments } from '@/hooks/useBlog';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
+import { useBlogPost, useBlogComments, usePostTaxonomy } from '@/hooks/useBlog';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import RichTextContent from '@/components/RichTextContent';
+import GallerySlider from '@/components/GallerySlider';
 import UserAvatar from '@/components/UserAvatar';
 import { Loader2, CalendarDays, MessageCircle } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
@@ -13,9 +15,9 @@ import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/hooks/use-toast';
-import { Link } from 'react-router-dom';
 
 function CommentItem({ comment, allComments, postId }: { comment: any; allComments: any[]; postId: string }) {
   const { user } = useAuth();

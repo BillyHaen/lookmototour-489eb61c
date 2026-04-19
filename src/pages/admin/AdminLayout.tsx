@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useAdmin';
-import { Loader2, LayoutDashboard, CalendarDays, Users, ShoppingBag, MessageSquare, Settings, ArrowLeft, FileText, BookOpen, Menu, X } from 'lucide-react';
+import { Loader2, LayoutDashboard, CalendarDays, Users, ShoppingBag, MessageSquare, Settings, ArrowLeft, FileText, BookOpen, Menu, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ const ADMIN_NAV = [
   { label: 'Event', path: '/admin/events', icon: CalendarDays },
   { label: 'Blog', path: '/admin/blog', icon: FileText },
   { label: 'Jurnal Trip', path: '/admin/trip-journals', icon: BookOpen },
+  { label: 'Pustaka Media', path: '/admin/media', icon: ImageIcon },
   { label: 'User', path: '/admin/users', icon: Users },
   { label: 'Produk', path: '/admin/products', icon: ShoppingBag },
   { label: 'Testimoni', path: '/admin/testimonials', icon: MessageSquare },

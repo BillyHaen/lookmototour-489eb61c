@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, MapPin, Users, Gauge, Clock, Zap, Heart, Shield, Map as MapIcon } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, Zap, Heart, Shield, Map as MapIcon, Handshake } from 'lucide-react';
 import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, FATIGUE_LABELS, calculateSafetyScore } from '@/data/events';
 import type { DbEvent } from '@/hooks/useEvents';
+import { useTripSponsors } from '@/hooks/useSponsors';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 const STATUS_MAP = {

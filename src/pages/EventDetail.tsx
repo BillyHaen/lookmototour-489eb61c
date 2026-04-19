@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck, Shield } from 'lucide-react';
 import ShareButton from '@/components/ShareButton';
 import EventRecommendations from '@/components/EventRecommendations';
+import TripSponsors from '@/components/TripSponsors';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -540,6 +541,9 @@ export default function EventDetail() {
               </div>
             </div>
           </div>
+
+          {/* Trip Sponsors */}
+          <div className="mt-8"><TripSponsors eventId={event.id} /></div>
 
           {/* Rekomendasi Event */}
           <EventRecommendations currentEvent={event} />

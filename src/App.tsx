@@ -33,6 +33,9 @@ import TripMatch from "./pages/TripMatch";
 import TrackingStart from "./pages/TrackingStart";
 import TrackingManage from "./pages/TrackingManage";
 import TrackPublic from "./pages/TrackPublic";
+import SponsorDetail from "./pages/SponsorDetail";
+import SponsorDeals from "./pages/SponsorDeals";
+import AdminSponsors from "./pages/admin/AdminSponsors";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -74,6 +77,9 @@ const App = () => (
             <Route path="/tracking/start/:eventId" element={<TrackingStart />} />
             <Route path="/tracking/manage" element={<TrackingManage />} />
             <Route path="/track/:token" element={<TrackPublic />} />
+            <Route path="/sponsor/:slug" element={<SponsorDetail />} />
+            <Route path="/dashboard/sponsor-deals" element={<SponsorDeals />} />
+            <Route path="/admin/sponsors" element={<AdminSponsors />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

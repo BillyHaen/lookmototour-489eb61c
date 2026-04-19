@@ -131,6 +131,37 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
             </span>
             <span className="text-xs text-muted-foreground">{event.distance}</span>
           </div>
+          {sponsors && sponsors.length > 0 && (
+            <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+              <span className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground shrink-0">
+                <Handshake className="h-3 w-3" style={{ color: 'hsl(24 95% 53%)' }} />
+                <span className="hidden sm:inline">Sponsor</span>
+              </span>
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none flex-1 min-w-0">
+                {sponsors.slice(0, 4).map((s: any) => (
+                  <div
+                    key={s.id}
+                    title={s.name}
+                    className="h-7 sm:h-8 w-12 sm:w-14 shrink-0 rounded bg-muted/40 flex items-center justify-center overflow-hidden"
+                  >
+                    {s.logo_url ? (
+                      <img
+                        src={s.logo_url}
+                        alt={s.name}
+                        loading="lazy"
+                        className="max-h-6 sm:max-h-7 max-w-[44px] sm:max-w-[52px] object-contain grayscale group-hover:grayscale-0 transition-all"
+                      />
+                    ) : (
+                      <span className="text-[10px] font-bold text-muted-foreground truncate px-1">{s.name}</span>
+                    )}
+                  </div>
+                ))}
+                {sponsors.length > 4 && (
+                  <span className="text-[10px] text-muted-foreground shrink-0">+{sponsors.length - 4}</span>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>

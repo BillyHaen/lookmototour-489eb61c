@@ -7,6 +7,7 @@ import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
 import EventCard from "@/components/EventCard";
 import TestimonialSection from "@/components/TestimonialSection";
+import SupportedBy from "@/components/SupportedBy";
 import { useEvents } from "@/hooks/useEvents";
 import { useBlogPosts } from "@/hooks/useBlog";
 import { useSeoMeta } from "@/hooks/useSeoMeta";
@@ -197,6 +198,9 @@ export default function Index() {
 
       {/* Testimonials */}
       <TestimonialSection />
+
+      {/* Supported By */}
+      <SupportedBy />
 
       {/* CTA */}
       <section className="py-20 bg-gradient-dark text-center">

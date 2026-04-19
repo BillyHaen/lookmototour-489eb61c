@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck, Navigation } from 'lucide-react';
+import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck, Navigation, Gift } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDate, formatPrice } from '@/data/events';
 import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
@@ -307,6 +307,21 @@ export default function Profile() {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'hsl(24 95% 53% / 0.15)' }}>
+                  <Gift className="h-5 w-5" style={{ color: 'hsl(24 95% 53%)' }} />
+                </div>
+                <div>
+                  <h3 className="font-heading font-semibold">Sponsor Deals</h3>
+                  <p className="text-sm text-muted-foreground">Penawaran eksklusif dari sponsor untuk trip Anda</p>
+                </div>
+              </div>
+              <Button asChild><Link to="/dashboard/sponsor-deals">Lihat Penawaran</Link></Button>
             </CardContent>
           </Card>
         </div>

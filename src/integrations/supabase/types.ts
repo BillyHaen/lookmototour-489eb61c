@@ -761,6 +761,368 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_benefit_claims: {
+        Row: {
+          benefit_id: string
+          claim_code: string
+          created_at: string
+          event_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["sponsor_claim_status"]
+          user_id: string
+        }
+        Insert: {
+          benefit_id: string
+          claim_code: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["sponsor_claim_status"]
+          user_id: string
+        }
+        Update: {
+          benefit_id?: string
+          claim_code?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["sponsor_claim_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_benefit_claims_benefit_id_fkey"
+            columns: ["benefit_id"]
+            isOneToOne: false
+            referencedRelation: "sponsor_benefits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_benefit_claims_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_benefits: {
+        Row: {
+          applicable_trips: string[]
+          claimed_count: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          quota: number | null
+          sponsor_id: string
+          terms: string | null
+          title: string
+          type: Database["public"]["Enums"]["sponsor_benefit_type"]
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          applicable_trips?: string[]
+          claimed_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          quota?: number | null
+          sponsor_id: string
+          terms?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["sponsor_benefit_type"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          applicable_trips?: string[]
+          claimed_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          quota?: number | null
+          sponsor_id?: string
+          terms?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["sponsor_benefit_type"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_benefits_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_events: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          event_type: Database["public"]["Enums"]["sponsor_event_type"]
+          id: string
+          metadata: Json | null
+          revenue_amount: number
+          sponsor_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          event_type: Database["public"]["Enums"]["sponsor_event_type"]
+          id?: string
+          metadata?: Json | null
+          revenue_amount?: number
+          sponsor_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          event_type?: Database["public"]["Enums"]["sponsor_event_type"]
+          id?: string
+          metadata?: Json | null
+          revenue_amount?: number
+          sponsor_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_events_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_media: {
+        Row: {
+          created_at: string
+          id: string
+          sort_order: number
+          sponsor_id: string
+          title: string | null
+          type: Database["public"]["Enums"]["sponsor_media_type"]
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sort_order?: number
+          sponsor_id: string
+          title?: string | null
+          type?: Database["public"]["Enums"]["sponsor_media_type"]
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sort_order?: number
+          sponsor_id?: string
+          title?: string | null
+          type?: Database["public"]["Enums"]["sponsor_media_type"]
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_media_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_packages: {
+        Row: {
+          base_price: number
+          cost_per_click: number
+          cost_per_conversion: number
+          cost_per_lead: number
+          created_at: string
+          end_date: string | null
+          id: string
+          is_active: boolean
+          package_type: Database["public"]["Enums"]["sponsor_package_type"]
+          sponsor_id: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number
+          cost_per_click?: number
+          cost_per_conversion?: number
+          cost_per_lead?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          package_type?: Database["public"]["Enums"]["sponsor_package_type"]
+          sponsor_id: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          cost_per_click?: number
+          cost_per_conversion?: number
+          cost_per_lead?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          package_type?: Database["public"]["Enums"]["sponsor_package_type"]
+          sponsor_id?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_packages_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_performance_daily: {
+        Row: {
+          clicks: number
+          conversions: number
+          date: string
+          impressions: number
+          leads: number
+          revenue: number
+          sponsor_id: string
+        }
+        Insert: {
+          clicks?: number
+          conversions?: number
+          date: string
+          impressions?: number
+          leads?: number
+          revenue?: number
+          sponsor_id: string
+        }
+        Update: {
+          clicks?: number
+          conversions?: number
+          date?: string
+          impressions?: number
+          leads?: number
+          revenue?: number
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_performance_daily_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_trip_relations: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          priority: number
+          sponsor_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          priority?: number
+          sponsor_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          priority?: number
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_trip_relations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_trip_relations_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          category: Database["public"]["Enums"]["sponsor_category"]
+          created_at: string
+          description: string | null
+          hero_image_url: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          slug: string
+          status: Database["public"]["Enums"]["sponsor_status"]
+          tagline: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["sponsor_category"]
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          slug: string
+          status?: Database["public"]["Enums"]["sponsor_status"]
+          tagline?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["sponsor_category"]
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["sponsor_status"]
+          tagline?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -1061,6 +1423,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_sponsor_benefit: {
+        Args: { _benefit_id: string; _event_id?: string }
+        Returns: {
+          claim_code: string
+          claim_id: string
+        }[]
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
@@ -1098,6 +1467,24 @@ export type Database = {
           bio: string
           name: string
           user_id: string
+        }[]
+      }
+      get_sponsor_performance: {
+        Args: { _end?: string; _sponsor_id: string; _start?: string }
+        Returns: {
+          clicks: number
+          conversion_rate: number
+          conversions: number
+          date: string
+          estimated_payout: number
+          impressions: number
+          leads: number
+          revenue: number
+          total_clicks: number
+          total_conversions: number
+          total_impressions: number
+          total_leads: number
+          total_revenue: number
         }[]
       }
       get_tracking_by_token: {
@@ -1160,10 +1547,37 @@ export type Database = {
           read_ct: number
         }[]
       }
+      track_sponsor_event: {
+        Args: {
+          _event_id?: string
+          _event_type: Database["public"]["Enums"]["sponsor_event_type"]
+          _metadata?: Json
+          _revenue?: number
+          _sponsor_id: string
+        }
+        Returns: string
+      }
       user_has_active_tracking: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
+      sponsor_benefit_type:
+        | "discount"
+        | "free_item"
+        | "experience"
+        | "test_ride"
+      sponsor_category:
+        | "dealer"
+        | "gear"
+        | "accessories"
+        | "apparel"
+        | "service"
+        | "other"
+      sponsor_claim_status: "pending" | "claimed" | "used"
+      sponsor_event_type: "impression" | "click" | "lead" | "conversion"
+      sponsor_media_type: "banner" | "campaign" | "video"
+      sponsor_package_type: "bronze" | "silver" | "gold" | "custom"
+      sponsor_status: "active" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1292,6 +1706,25 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      sponsor_benefit_type: [
+        "discount",
+        "free_item",
+        "experience",
+        "test_ride",
+      ],
+      sponsor_category: [
+        "dealer",
+        "gear",
+        "accessories",
+        "apparel",
+        "service",
+        "other",
+      ],
+      sponsor_claim_status: ["pending", "claimed", "used"],
+      sponsor_event_type: ["impression", "click", "lead", "conversion"],
+      sponsor_media_type: ["banner", "campaign", "video"],
+      sponsor_package_type: ["bronze", "silver", "gold", "custom"],
+      sponsor_status: ["active", "inactive"],
     },
   },
 } as const

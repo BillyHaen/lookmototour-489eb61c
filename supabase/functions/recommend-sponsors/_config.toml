@@ -1,0 +1,2 @@
+[functions.recommend-sponsors]
+verify_jwt = false

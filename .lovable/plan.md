@@ -1,43 +1,43 @@
 
 
-## Fix Cloudflare Wrangler Deploy Failure
+## Problem
+Site is on Lovable hosting (not Cloudflare). The `og-prerender` Worker we built never runs for `lookmototour.com`. WhatsApp/FB hit the SPA's `index.html` and see only the global tags, so they show the LookMotoTour logo + generic title for every blog/event/journal link.
 
-### Root Cause
-Deploy pipeline runs `npx wrangler deploy` which auto-detects this as a Cloudflare Pages/Workers project (`og-prerender` Worker for SEO prerendering). Wrangler tries to inject the Cloudflare plugin into `vite.config.ts` but fails with:
+The Supabase `share-meta` edge function is fully working — verified it returns the correct title and post image when called directly. We just need crawlers to reach it.
 
-> Cannot modify Vite config: could not find a valid plugins array.
+## Fix: Use Share Redirect URLs (works on any host)
 
-This is because line 15 uses a runtime expression:
-```ts
-plugins: [react(), mode === "development" && componentTagger()].filter(Boolean)
+Change `ShareButton` to share a **share-meta URL** instead of the canonical page URL. The edge function:
+- Returns full OG HTML to crawlers (WhatsApp, FB, IG, Twitter, etc.) — they see correct image/title/description
+- Issues a `302` redirect to the real page for normal users (already implemented)
+
+So when a user clicks "Bagikan" on a blog post, the URL copied / sent to WhatsApp becomes:
+```
+https://efrwzkdfkfvedtdrxrfg.supabase.co/functions/v1/share-meta?type=blog_post&slug=<slug>&site=https://lookmototour.com
 ```
 
-Wrangler's static parser only recognizes a plain array literal like `plugins: [...]`. The `.filter(Boolean)` chain breaks detection.
+When pasted in WhatsApp/FB → crawler sees post-specific OG tags → preview shows the real image and post title. When clicked by a user → 302 redirects to `https://lookmototour.com/blog/<slug>`.
 
-### Fix (single, minimal change)
+## Changes (1 file)
 
-Refactor `vite.config.ts` so the `plugins` key holds a plain array literal — keep the same runtime behavior by inlining the conditional inside the array (Vite already ignores `false`/`null`/`undefined` plugin entries since v5, no `.filter` needed):
+**`src/components/ShareButton.tsx`** — replace `getPageUrl()` with a `getShareUrl()` that builds the edge-function URL with `type`, `slug`, and `site` params. Use this URL for both `navigator.share()` and clipboard copy. Keep the share-count RPC call unchanged.
 
 ```ts
-plugins: [
-  react(),
-  mode === "development" ? componentTagger() : null,
-],
+const SHARE_META = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/share-meta`;
+const shareUrl = `${SHARE_META}?type=${contentType}&slug=${encodeURIComponent(slug || contentId)}&site=${encodeURIComponent(window.location.origin)}`;
 ```
 
-Vite officially supports falsy entries in the plugins array, so this is functionally identical to today and removes the `.filter(Boolean)` that confuses Wrangler's AST parser.
+## Cleanup (optional, recommended)
+Since the Cloudflare Worker isn't being used by the live domain, the `og-prerender` Worker setup adds dependencies and a deploy step that always runs but does nothing useful. After confirming the share-redirect fix works, we can:
+- Remove `@cloudflare/vite-plugin`, `wrangler` from `package.json`
+- Delete `wrangler.jsonc`
+- Remove `cloudflare()` plugin from `vite.config.ts`
+- Remove the `deploy` script
 
-### Files to change
-| File | Change |
-|---|---|
-| `vite.config.ts` | Replace `plugins: [...].filter(Boolean)` with a plain array literal containing a ternary that returns `null` in production |
+I'll leave this for a follow-up after confirming the share fix works on real WhatsApp/FB.
 
-### What this does NOT touch
-- No package.json / dependency changes
-- No Wrangler config files added (Wrangler will create `wrangler.jsonc` itself once it can patch the vite config — that's the deploy step's job, not ours)
-- No changes to the existing `share-meta` edge function or SEO prerendering logic
-- No changes to React/Leaflet/Recharts code
-
-### Verification
-After deploy, `npx wrangler deploy` should succeed and the `og-prerender` Worker will serve OG meta tags to social crawlers (WhatsApp, FB, Twitter) for blog/journal/event share links — fixing the original "image when share blog post" issue.
+## Validation
+1. After deploy, click "Bagikan" on a blog post → paste link in WhatsApp → preview shows post image + post title.
+2. Same for an event and a trip journal.
+3. FB Sharing Debugger should also show post-specific OG data.
 

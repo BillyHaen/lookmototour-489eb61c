@@ -12,14 +12,9 @@ interface ShareButtonProps {
   slug?: string;
 }
 
-function getPageUrl(contentType: string, slug: string): string {
-  const base = window.location.origin;
-  switch (contentType) {
-    case 'blog_post': return `${base}/blog/${slug}`;
-    case 'trip_journal': return `${base}/jurnal/${slug}`;
-    case 'event': return `${base}/events/${slug}`;
-    default: return base;
-  }
+function getShareUrl(contentType: string, slug: string): string {
+  const base = import.meta.env.VITE_SUPABASE_URL;
+  return `${base}/functions/v1/share-meta?type=${contentType}&slug=${encodeURIComponent(slug)}&site=${encodeURIComponent(window.location.origin)}`;
 }
 
 export default function ShareButton({ contentType, contentId, title, description, slug }: ShareButtonProps) {

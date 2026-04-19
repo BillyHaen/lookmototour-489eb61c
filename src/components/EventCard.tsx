@@ -25,6 +25,7 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
   const forceFull = (event as any).force_full || false;
   const spotsLeft = forceFull ? 0 : event.max_participants - event.current_participants;
   const isFull = spotsLeft <= 0 || forceFull;
+  const { data: sponsors } = useTripSponsors(event.id);
   const safety = calculateSafetyScore({
     road_condition: (event as any).road_condition,
     difficulty: event.difficulty,

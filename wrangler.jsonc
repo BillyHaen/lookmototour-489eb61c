@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "vite-react-shadcn-ts",
+  "name": "og-prerender",
   "compatibility_date": "2026-04-19",
   "observability": {
     "enabled": true

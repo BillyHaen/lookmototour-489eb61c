@@ -22,6 +22,7 @@ import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
+import RecommendedSponsors from '@/components/RecommendedSponsors';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },
@@ -199,6 +200,9 @@ export default function Profile() {
               </Form>
             </CardContent>
           </Card>
+
+          {/* Personalized Sponsor Recommendations */}
+          <RecommendedSponsors limit={6} />
 
           {/* Live Tracking Sessions */}
           <Card>

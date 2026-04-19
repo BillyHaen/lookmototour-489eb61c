@@ -5,3 +5,5 @@ project_id = "efrwzkdfkfvedtdrxrfg"
     verify_jwt = false
   [functions.process-email-queue]
     verify_jwt = true
+  [functions.recommend-sponsors]
+    verify_jwt = false

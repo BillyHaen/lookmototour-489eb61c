@@ -8,9 +8,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Plus, Pencil, Trash2, Search, BarChart3 } from 'lucide-react';
+import { Loader2, Plus, Pencil, Trash2, Search, BarChart3, Sparkles } from 'lucide-react';
 import SponsorEditor from '@/components/admin/SponsorEditor';
 import SponsorPerformance from '@/components/admin/SponsorPerformance';
+import SponsorAIControlPanel from '@/components/admin/SponsorAIControlPanel';
 
 const CATEGORIES = ['dealer', 'gear', 'accessories', 'apparel', 'service', 'other'];
 
@@ -22,6 +23,7 @@ export default function AdminSponsors() {
   const [editing, setEditing] = useState<any | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [perfFor, setPerfFor] = useState<any | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const { data: sponsors, isLoading } = useQuery({
     queryKey: ['admin-sponsors'],
@@ -56,9 +58,14 @@ export default function AdminSponsors() {
     <AdminLayout>
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-heading font-bold text-2xl">Sponsor Management</h1>
-        <Button onClick={() => { setEditing(null); setEditorOpen(true); }}>
-          <Plus className="h-4 w-4 mr-1" /> Tambah Sponsor
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setAiOpen(true)}>
+            <Sparkles className="h-4 w-4 mr-1" /> AI Settings
+          </Button>
+          <Button onClick={() => { setEditing(null); setEditorOpen(true); }}>
+            <Plus className="h-4 w-4 mr-1" /> Tambah Sponsor
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 mb-6">
@@ -123,6 +130,7 @@ export default function AdminSponsors() {
 
       <SponsorEditor open={editorOpen} onOpenChange={setEditorOpen} sponsor={editing} />
       <SponsorPerformance sponsor={perfFor} onClose={() => setPerfFor(null)} />
+      <SponsorAIControlPanel open={aiOpen} onOpenChange={setAiOpen} />
     </AdminLayout>
   );
 }

@@ -761,6 +761,39 @@ export type Database = {
         }
         Relationships: []
       }
+      sponsor_ai_config: {
+        Row: {
+          id: number
+          updated_at: string
+          use_ai_rerank: boolean
+          weight_behavior: number
+          weight_performance: number
+          weight_priority: number
+          weight_relevance: number
+          weight_trip_context: number
+        }
+        Insert: {
+          id?: number
+          updated_at?: string
+          use_ai_rerank?: boolean
+          weight_behavior?: number
+          weight_performance?: number
+          weight_priority?: number
+          weight_relevance?: number
+          weight_trip_context?: number
+        }
+        Update: {
+          id?: number
+          updated_at?: string
+          use_ai_rerank?: boolean
+          weight_behavior?: number
+          weight_performance?: number
+          weight_priority?: number
+          weight_relevance?: number
+          weight_trip_context?: number
+        }
+        Relationships: []
+      }
       sponsor_benefit_claims: {
         Row: {
           benefit_id: string
@@ -855,6 +888,67 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "sponsor_benefits_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_blacklist: {
+        Row: {
+          created_at: string
+          id: string
+          segment: string
+          sponsor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          segment: string
+          sponsor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          segment?: string
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_blacklist_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_boosts: {
+        Row: {
+          boost_multiplier: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          sponsor_id: string
+        }
+        Insert: {
+          boost_multiplier?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          sponsor_id: string
+        }
+        Update: {
+          boost_multiplier?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_boosts_sponsor_id_fkey"
             columns: ["sponsor_id"]
             isOneToOne: false
             referencedRelation: "sponsors"
@@ -1071,6 +1165,38 @@ export type Database = {
           },
           {
             foreignKeyName: "sponsor_trip_relations_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_user_scores: {
+        Row: {
+          computed_at: string
+          reason: Json
+          score: number
+          sponsor_id: string
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string
+          reason?: Json
+          score?: number
+          sponsor_id: string
+          user_id: string
+        }
+        Update: {
+          computed_at?: string
+          reason?: Json
+          score?: number
+          sponsor_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_user_scores_sponsor_id_fkey"
             columns: ["sponsor_id"]
             isOneToOne: false
             referencedRelation: "sponsors"

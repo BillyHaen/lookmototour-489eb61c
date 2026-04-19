@@ -111,7 +111,7 @@ export default function Profile() {
     navigate('/');
   };
 
-  if (authLoading || profileLoading) {
+  if (authLoading || (user && profileLoading)) {
     return (
       <div className="min-h-screen">
         <Navbar />
@@ -121,6 +121,10 @@ export default function Profile() {
         <Footer />
       </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
 
   return (

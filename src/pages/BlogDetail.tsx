@@ -91,10 +91,14 @@ function CommentItem({ comment, allComments, postId }: { comment: any; allCommen
 
 export default function BlogDetail() {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
+  const { data: isAdmin } = useIsAdmin();
   const queryClient = useQueryClient();
-  const { data: post, isLoading } = useBlogPost(slug || '');
+  const previewMode = searchParams.get('preview') === '1' && !!isAdmin;
+  const { data: post, isLoading } = useBlogPost(slug || '', previewMode);
   const { data: comments } = useBlogComments(post?.id || '');
+  const { data: taxonomy } = usePostTaxonomy(post?.id || null);
   const [commentText, setCommentText] = useState('');
 
   useSeoMeta({
@@ -130,11 +134,18 @@ export default function BlogDetail() {
     <div className="min-h-screen"><Navbar /><div className="pt-32 text-center"><h1 className="text-2xl font-bold">Post tidak ditemukan</h1></div><Footer /></div>
   );
 
+  const gallery = Array.isArray((post as any).gallery) ? (post as any).gallery : [];
+
   return (
     <div className="min-h-screen">
       <Navbar />
       <main className="pt-24 pb-16">
         <article className="container max-w-3xl">
+          {previewMode && (
+            <div className="mb-4 px-4 py-2 rounded-md bg-secondary/50 text-sm border border-border">
+              👁️ Mode Preview — post ini belum dipublikasikan.
+            </div>
+          )}
           {post.image_url && (
             <div className="aspect-video rounded-xl overflow-hidden mb-8">
               <img src={post.image_url} alt={post.title} className="w-full h-full object-cover" />
@@ -145,6 +156,14 @@ export default function BlogDetail() {
             {post.published_at ? format(new Date(post.published_at), 'dd MMMM yyyy') : format(new Date(post.created_at), 'dd MMMM yyyy')}
           </div>
           <h1 className="font-heading font-bold text-3xl md:text-4xl mb-4">{post.title}</h1>
+
+          {(taxonomy?.categories?.length || taxonomy?.tags?.length) ? (
+            <div className="flex flex-wrap gap-2 mb-4">
+              {taxonomy?.categories?.map((c: any) => <Badge key={c.id} variant="secondary">{c.name}</Badge>)}
+              {taxonomy?.tags?.map((t: any) => <Badge key={t.id} variant="outline">#{t.name}</Badge>)}
+            </div>
+          ) : null}
+
           <div className="mb-6">
             <ShareButton
               contentType="blog_post"
@@ -154,6 +173,9 @@ export default function BlogDetail() {
               slug={post.slug || post.id}
             />
           </div>
+
+          {gallery.length > 0 && <GallerySlider images={gallery} className="mb-8" />}
+
           <RichTextContent content={post.content} className="mb-12" />
 
           {/* Comments section */}

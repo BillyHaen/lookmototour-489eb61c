@@ -148,8 +148,8 @@ export default function BlogDetail() {
               👁️ Mode Preview — post ini belum dipublikasikan.
             </div>
           )}
-          {post.image_url && (
-            <div className="aspect-video rounded-xl overflow-hidden mb-8">
+          {post.image_url && gallery.length === 0 && (
+            <div className="aspect-video rounded-xl overflow-hidden mb-8 bg-muted">
               <img src={post.image_url} alt={post.title} className="w-full h-full object-cover" />
             </div>
           )}

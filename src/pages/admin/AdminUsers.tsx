@@ -13,6 +13,7 @@ import { Loader2, Trash2, Search, Calendar } from 'lucide-react';
 import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
 import UserAvatar from '@/components/UserAvatar';
 import UserBadge, { getHighestBadge } from '@/components/UserBadge';
+import RiderOverridePanel from '@/components/admin/RiderOverridePanel';
 
 interface UserStats {
   user_id: string;
@@ -286,6 +287,9 @@ export default function AdminUsers() {
                       <p className="text-sm text-muted-foreground">Belum pernah ikut trip.</p>
                     )}
                   </div>
+
+                  {/* Admin Override Panel */}
+                  <RiderOverridePanel userId={selectedUser.user_id} />
 
                   <p className="text-xs text-muted-foreground">Bergabung: {new Date(selectedUser.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>

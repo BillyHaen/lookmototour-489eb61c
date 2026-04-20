@@ -45,7 +45,7 @@ export default function BikeFormDialog({ open, onOpenChange, userId, bike }: {
           <div><Label>Deskripsi</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Modifikasi, cerita, dll" rows={3} /></div>
           <div>
             <Label>Foto</Label>
-            <ImageUpload bucket="garage" folder={userId} currentUrl={form.photo_url} onUploaded={(url) => setForm({ ...form, photo_url: url })} />
+            <ImageUpload bucket="garage" value={form.photo_url} onChange={(url) => setForm({ ...form, photo_url: url })} label="" />
           </div>
         </div>
         <DialogFooter>

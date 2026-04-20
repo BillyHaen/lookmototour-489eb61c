@@ -49,7 +49,7 @@ export default function GearFormDialog({ open, onOpenChange, userId, gear }: {
           <div><Label>Nama / Model</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="X-Spirit III" /></div>
           <div>
             <Label>Foto</Label>
-            <ImageUpload bucket="garage" folder={userId} currentUrl={form.photo_url} onUploaded={(url) => setForm({ ...form, photo_url: url })} />
+            <ImageUpload bucket="garage" value={form.photo_url} onChange={(url) => setForm({ ...form, photo_url: url })} label="" />
           </div>
         </div>
         <DialogFooter>

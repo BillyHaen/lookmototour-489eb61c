@@ -100,7 +100,7 @@ export default function RiderProfile() {
     <div className="min-h-screen">
       <Navbar />
       <main className="pt-16 pb-20">
-        <RiderHeader rider={rider} />
+        <RiderHeader rider={rider} isOwner={isOwner} />
 
         <div className="container mt-6 space-y-6">
           {/* Stat bar */}

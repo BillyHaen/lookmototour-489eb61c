@@ -13,6 +13,7 @@ import { Loader2, Trash2, Search, Calendar } from 'lucide-react';
 import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
 import UserAvatar from '@/components/UserAvatar';
 import UserBadge, { getHighestBadge } from '@/components/UserBadge';
+import RiderOverridePanel from '@/components/admin/RiderOverridePanel';
 
 interface UserStats {
   user_id: string;

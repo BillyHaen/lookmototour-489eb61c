@@ -73,15 +73,38 @@ export default function AdminUsers() {
     enabled: !!selectedUser,
   });
 
+  const { data: vendors } = useQuery({
+    queryKey: ['admin-all-vendors-for-link'],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from('vendors') as any).select('id, name, owner_user_id').order('name');
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
   const setRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'user' }) => {
-      await supabase.from('user_roles').delete().eq('user_id', userId);
-      const { error } = await supabase.from('user_roles').insert({ user_id: userId, role });
+    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'user' | 'vendor' }) => {
+      const { error } = await supabase.rpc('admin_set_user_role' as any, { _user_id: userId, _role: role as any });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-role'] });
       toast({ title: 'Role diperbarui ✅' });
+    },
+    onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
+
+  const linkVendorMutation = useMutation({
+    mutationFn: async ({ vendorId, userId }: { vendorId: string; userId: string | null }) => {
+      const { error } = await supabase.rpc('admin_link_vendor_to_user' as any, { _vendor_id: vendorId, _user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-all-vendors-for-link'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['my-vendor'] });
+      toast({ title: 'Vendor link diperbarui ✅' });
     },
     onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });

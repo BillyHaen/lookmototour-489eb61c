@@ -245,19 +245,6 @@ export default function Profile() {
                       <FormMessage />
                     </FormItem>
                   )} />
-                  <FormField control={form.control} name="banner_url" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Banner Profil</FormLabel>
-                      <FormControl>
-                        <BannerUpload
-                          userId={user!.id}
-                          currentUrl={field.value}
-                          onUploaded={(url) => field.onChange(url)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
                   <Button type="submit" disabled={updateProfile.isPending}>
                     {updateProfile.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                     Simpan

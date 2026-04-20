@@ -140,8 +140,8 @@ export default function AdminEvents() {
         status: finalStatus, difficulty: form.difficulty, distance: form.distance,
         highlights: form.highlights.split(',').map(h => h.trim()).filter(Boolean),
         requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
-        includes: form.includes.split(',').map(i => i.trim()).filter(Boolean),
-        excludes: form.excludes.split(',').map(e => e.trim()).filter(Boolean),
+        includes: seoIncluded.length ? seoIncluded : form.includes.split(',').map(i => i.trim()).filter(Boolean),
+        excludes: seoExcluded.length ? seoExcluded : form.excludes.split(',').map(e => e.trim()).filter(Boolean),
         insurance_enabled: form.insurance_enabled,
         insurance_description: form.insurance_description,
         towing_enabled: form.towing_enabled,
@@ -156,6 +156,21 @@ export default function AdminEvents() {
         tentative_month: form.tentative_month || null,
         road_condition: form.road_condition,
         route_data: routeData,
+        // SEO landing fields
+        meta_title: form.meta_title || null,
+        meta_description: form.meta_description || null,
+        hero_subheadline: form.hero_subheadline || null,
+        cta_primary_label: form.cta_primary_label || null,
+        opening_hook: form.opening_hook || null,
+        why_join: form.why_join || null,
+        experience_section: form.experience_section || null,
+        about_destination: form.about_destination || null,
+        target_audience: form.target_audience || null,
+        trust_section: form.trust_section || null,
+        internal_link_blog_tag: form.internal_link_blog_tag || null,
+        itinerary: seoItinerary,
+        faq: seoFaq,
+        gallery: seoGallery,
       } as any;
 
       let eventId = editId;

@@ -15,10 +15,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck, Navigation, Gift } from 'lucide-react';
+import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck, Navigation, Gift, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDate, formatPrice } from '@/data/events';
 import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
+import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
@@ -74,6 +75,7 @@ export default function Profile() {
   const confirmedCount = (registrations || []).filter(r => r.status === 'confirmed').length;
   const badges = BADGES.filter(b => confirmedCount >= b.min);
   const { data: trackingSessions = [] } = useMyTrackingSessions();
+  const { data: myRentals = [] } = useMyRentals();
   const activeSessions = (trackingSessions as any[]).filter(s => s.status === 'active' && new Date(s.expires_at) > new Date());
 
   // Completed events for testimonial
@@ -227,6 +229,53 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+
+          {/* My Rentals */}
+          {myRentals.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" /> Sewa Gear Saya
+                  <Badge variant="secondary" className="ml-auto">{myRentals.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {myRentals.map((r: any) => {
+                    const statusLabel: Record<string, string> = {
+                      pending: 'Menunggu Konfirmasi', confirmed: 'Dikonfirmasi',
+                      picked_up: 'Sedang Disewa', returned: 'Dikembalikan', cancelled: 'Dibatalkan',
+                    };
+                    const statusVariant: any = {
+                      pending: 'outline', confirmed: 'secondary',
+                      picked_up: 'default', returned: 'default', cancelled: 'destructive',
+                    };
+                    return (
+                      <div key={r.id} className="p-3 rounded-lg border border-border flex items-start gap-3">
+                        {r.products?.image_url && <img src={r.products.image_url} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-sm">{r.products?.name}</p>
+                            <Badge variant={statusVariant[r.status]} className="text-[10px]">{statusLabel[r.status]}</Badge>
+                          </div>
+                          {r.products?.vendors?.name && (
+                            <p className="text-xs text-muted-foreground">oleh {r.products.vendors.name}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(r.start_date)} → {formatDate(r.end_date)} • {r.total_days} hari • Qty: {r.qty}
+                          </p>
+                          <p className="text-sm font-semibold text-primary mt-1">
+                            {formatPrice(r.total_price)}
+                            {r.deposit_amount > 0 && <span className="text-xs font-normal text-muted-foreground ml-1">+ deposit {formatPrice(r.deposit_amount)}</span>}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>

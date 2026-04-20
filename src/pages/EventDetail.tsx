@@ -9,6 +9,7 @@ import GallerySection from '@/components/EventLanding/GallerySection';
 import FinalCtaBanner from '@/components/EventLanding/FinalCtaBanner';
 import ShareButton from '@/components/ShareButton';
 import EventRecommendations from '@/components/EventRecommendations';
+import TripParticipants from '@/components/TripParticipants';
 import TripSponsors from '@/components/TripSponsors';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Button } from '@/components/ui/button';
@@ -534,6 +535,9 @@ export default function EventDetail() {
 
           {/* Trip Sponsors */}
           <div className="mt-8"><TripSponsors eventId={event.id} /></div>
+
+          {/* Riders yang ikut trip ini */}
+          <TripParticipants eventId={event.id} />
 
           {/* Rekomendasi Event */}
           <EventRecommendations currentEvent={event} />

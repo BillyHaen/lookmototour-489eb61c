@@ -23,6 +23,7 @@ import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
+import BannerUpload from '@/components/BannerUpload';
 import RecommendedSponsors from '@/components/RecommendedSponsors';
 
 const BADGES = [
@@ -241,8 +242,14 @@ export default function Profile() {
                   )} />
                   <FormField control={form.control} name="banner_url" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>URL Banner (opsional)</FormLabel>
-                      <FormControl><Input placeholder="https://..." {...field} /></FormControl>
+                      <FormLabel>Banner Profil</FormLabel>
+                      <FormControl>
+                        <BannerUpload
+                          userId={user!.id}
+                          currentUrl={field.value}
+                          onUploaded={(url) => field.onChange(url)}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />

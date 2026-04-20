@@ -200,9 +200,9 @@ export default function AdminProducts() {
               </div>
               <div>
                 <Label className="text-xs">Tipe Gear</Label>
-                <Select value={form.gear_type} onValueChange={(v) => setForm({ ...form, gear_type: v })}>
+                <Select value={form.gear_type || 'none'} onValueChange={(v) => setForm({ ...form, gear_type: v === 'none' ? '' : v })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                  <SelectContent>{GEAR_TYPES.map(g => <SelectItem key={g || 'none'} value={g}>{g || '—'}</SelectItem>)}</SelectContent>
+                  <SelectContent>{GEAR_TYPES.map(g => <SelectItem key={g} value={g}>{g === 'none' ? '—' : g}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

@@ -1,85 +1,98 @@
 
 
-## Fix: WhatsApp Preview Hilang untuk Profil Rider
+## Tambah Role "Vendor" — Akses Khusus Produk & Sewa Gear
 
-### Akar masalah
-URL `https://lookmototour.com/riders/billyhn` di-share langsung. Tidak ada Cloudflare Worker yang mendeteksi crawler (WhatsApp/FB/X) di domain utama, jadi WA mengambil `index.html` statis yang berisi meta tag default LookMotoTour. Edge function `share-meta` tetap berfungsi, tetapi hanya kalau URL pakai prefix `s.lookmototour.com/s/rider/...` — yang tidak terjadi saat user salin URL dari address bar.
+Memperluas sistem role dari `user`/`admin` menjadi `user`/`admin`/`vendor`. Vendor login mendapat dashboard khusus untuk mengelola produk & sewa gear miliknya saja.
 
-`wrangler.jsonc` saat ini hanya mengaktifkan static asset SPA fallback, **tidak ada worker script** yang berjalan di request.
+### Perubahan Database
 
-### Solusi
-Tambahkan **Cloudflare Worker entry script** yang berjalan untuk setiap request ke `lookmototour.com`:
+**1. Tambah enum value `vendor`** ke type `app_role`:
+```sql
+ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'vendor';
+```
 
-1. Periksa header `User-Agent`. Kalau cocok regex crawler (`whatsapp|facebookexternalhit|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|skypeuripreview|embedly|redditbot|googlebot|bingbot|applebot|pinterest|tiktok`):
-   - Untuk path `/riders/:username` → proxy ke `share-meta?type=rider&slug=:username&site=https://lookmototour.com`
-   - Untuk path `/blog/:slug` → proxy ke `share-meta?type=blog_post&slug=:slug`
-   - Untuk path `/jurnal/:slug` → proxy ke `share-meta?type=trip_journal&slug=:slug`
-   - Untuk path `/events/:slug` → proxy ke `share-meta?type=event&slug=:slug`
-   - Stream HTML response dari edge function ke crawler (status 200 + meta tag yang benar)
-2. Untuk semua user/UA lain → lanjut ke SPA static asset (perilaku saat ini).
+**2. Link vendor ke user account** — tambah kolom di `vendors`:
+```sql
+ALTER TABLE public.vendors ADD COLUMN owner_user_id uuid;
+CREATE UNIQUE INDEX ON public.vendors(owner_user_id) WHERE owner_user_id IS NOT NULL;
+```
+Satu user vendor terkait ke satu vendor record.
 
-Worker dipasang lewat `wrangler.jsonc` dengan `main: "worker/index.ts"` dan handler `fetch` standar Cloudflare Workers. Static assets tetap di-serve via `env.ASSETS.fetch(request)` untuk request non-crawler.
+**3. Helper RPC `get_my_vendor_id()`** (security definer):
+```sql
+SELECT id FROM public.vendors WHERE owner_user_id = auth.uid() LIMIT 1
+```
+
+**4. RLS baru:**
+- `products`: vendor bisa SELECT/INSERT/UPDATE/DELETE produk **hanya jika** `vendor_id = get_my_vendor_id()`. Saat INSERT, `vendor_id` di-force ke vendor-nya via trigger `BEFORE INSERT` jika role vendor.
+- `gear_rentals`: vendor bisa SELECT semua sewa di mana `product.vendor_id = get_my_vendor_id()`, dan UPDATE status (confirmed/picked_up/returned/cancelled + notes).
+- `vendors`: vendor bisa SELECT & UPDATE record sendiri (kecuali kolom `owner_user_id`, dijaga trigger).
+- `profiles`: vendor bisa SELECT profil renter pada sewa miliknya (untuk nama+phone) — pakai SECURITY DEFINER RPC `get_renter_contact_for_vendor(_rental_id)`.
+
+**5. Update trigger `handle_new_user`** tetap sama — vendor di-assign role manual oleh admin via UI.
+
+### Perubahan UI
+
+**Admin:**
+- `AdminUsers.tsx` → di dialog detail user, tambah dropdown role: `user / admin / vendor`. Jika dipilih `vendor`, muncul dropdown "Link ke Vendor" (list vendor yang `owner_user_id IS NULL` + vendor yang sedang terkait user ini). Simpan via 2 RPC: `admin_set_user_role(_user_id, _role)` + `admin_link_vendor_to_user(_vendor_id, _user_id)`.
+- `AdminVendors.tsx` → tampilkan kolom "Owner" (nama user terkait) dengan tombol link/unlink.
+
+**Hook baru:** `useMyVendor()` — return vendor record milik user login (atau null).
+
+**Hook baru:** `useUserRole()` — return `'admin' | 'vendor' | 'user'` berbasis check `has_role` berurutan.
+
+**Layout vendor baru:** `src/pages/vendor/VendorLayout.tsx` — sidebar minimal dengan 2 menu: **Produk Saya** & **Sewa Gear Saya**. Guard: redirect ke `/` jika bukan vendor.
+
+**Halaman vendor:**
+- `src/pages/vendor/VendorProducts.tsx` — clone `AdminProducts` tapi:
+  - Query produk pakai filter `vendor_id = my_vendor_id`
+  - Form **tanpa** dropdown Vendor (vendor_id di-set otomatis ke `my_vendor_id` sebelum insert)
+  - Tetap punya semua field produk (beli/sewa/inventori/dll)
+- `src/pages/vendor/VendorRentals.tsx` — clone `AdminRentals` tapi:
+  - Pakai hook baru `useVendorRentals()` yang query `gear_rentals` join `products` dengan filter `products.vendor_id = my_vendor_id`
+  - Tombol aksi sama (Konfirmasi, Mark Diambil, Mark Dikembalikan, Batal)
+  - Tambah tombol **Chat WhatsApp Penyewa** → buka `https://wa.me/{phone}?text=Halo {name}, terkait sewa gear {product.name}...`. Phone diambil dari RPC `get_renter_contact_for_vendor`.
+
+**Routing (`App.tsx`):**
+```
+/vendor             → VendorLayout > VendorProducts (default)
+/vendor/products    → VendorProducts
+/vendor/rentals     → VendorRentals
+```
+
+**Navbar (`Navbar.tsx`):**
+- Jika `useUserRole() === 'vendor'`: tampilkan tombol "Vendor" → `/vendor` (mirip tombol Admin existing). Sembunyikan tombol Admin.
+- User biasa & admin: tidak ada perubahan.
+
+**Login redirect:** Setelah login, kalau user adalah vendor (bukan admin), redirect ke `/vendor`.
+
+### Validasi
+1. Admin set seorang user jadi `vendor` & link ke vendor "Bengkel A" → user logout/login → navbar tampilkan tombol "Vendor".
+2. User vendor buka `/vendor/products` → hanya lihat produk milik Bengkel A. Buat produk baru → form tidak ada field Vendor → produk tersimpan dengan `vendor_id = Bengkel A`.
+3. Coba akses `/admin` sebagai vendor → di-redirect ke `/`.
+4. User vendor buka `/vendor/rentals` → hanya lihat sewa untuk produk Bengkel A. Klik **Konfirmasi** → status berubah. **Mark Diambil**/**Dikembalikan** → status berubah. Klik tombol WhatsApp → buka chat ke penyewa.
+5. Vendor coba PATCH produk vendor lain via Supabase client → ditolak RLS.
+6. Admin tetap punya akses penuh ke semua produk & semua sewa.
 
 ### File yang dibuat / diubah
 
 | File | Perubahan |
 |---|---|
-| `worker/index.ts` (baru) | Cloudflare Worker entry: deteksi UA crawler, mapping path → param `share-meta`, proxy fetch ke edge function, fallback ke `env.ASSETS.fetch()` |
-| `wrangler.jsonc` | Tambah `"main": "worker/index.ts"`, binding `ASSETS` (sudah implisit lewat `assets`), set `assets.binding = "ASSETS"` |
+| Migration baru | enum value, kolom `owner_user_id`, RLS produk/rentals/vendors, trigger force vendor_id, RPC `get_my_vendor_id`, `admin_link_vendor_to_user`, `admin_set_user_role`, `get_renter_contact_for_vendor` |
+| `src/hooks/useUserRole.ts` (baru) | Return role efektif |
+| `src/hooks/useMyVendor.ts` (baru) | Vendor terkait user login |
+| `src/hooks/useVendorRentals.ts` (baru) | Query rentals filter vendor |
+| `src/pages/vendor/VendorLayout.tsx` (baru) | Layout sidebar vendor |
+| `src/pages/vendor/VendorProducts.tsx` (baru) | CRUD produk milik vendor |
+| `src/pages/vendor/VendorRentals.tsx` (baru) | Manajemen sewa + WA chat |
+| `src/pages/admin/AdminUsers.tsx` | Dropdown role + link vendor |
+| `src/pages/admin/AdminVendors.tsx` | Kolom owner + link/unlink |
+| `src/components/Navbar.tsx` | Tombol "Vendor" untuk role vendor |
+| `src/App.tsx` | Routes `/vendor/*` |
+| `src/pages/Login.tsx` | Redirect vendor ke `/vendor` |
 
-### Detail teknis
-
-**Mapping path → share-meta param:**
-```ts
-const ROUTES: Array<[RegExp, string]> = [
-  [/^\/riders\/([^\/]+)\/?$/, "rider"],
-  [/^\/blog\/([^\/]+)\/?$/, "blog_post"],
-  [/^\/jurnal\/([^\/]+)\/?$/, "trip_journal"],
-  [/^\/events\/([^\/]+)\/?$/, "event"],
-];
-```
-
-**Endpoint share-meta:**
-```
-https://efrwzkdfkfvedtdrxrfg.supabase.co/functions/v1/share-meta?type=...&slug=...&site=https://lookmototour.com
-```
-Worker meneruskan `User-Agent` asli supaya edge function tetap mendeteksi crawler dan mengembalikan HTML (bukan redirect 302).
-
-**Worker pseudocode:**
-```ts
-export default {
-  async fetch(req: Request, env: { ASSETS: Fetcher }): Promise<Response> {
-    const url = new URL(req.url);
-    const ua = req.headers.get("user-agent") || "";
-    const isCrawler = /whatsapp|facebookexternalhit|.../i.test(ua);
-
-    if (isCrawler) {
-      for (const [re, type] of ROUTES) {
-        const m = url.pathname.match(re);
-        if (m) {
-          const target = `https://efrwzkdfkfvedtdrxrfg.supabase.co/functions/v1/share-meta?type=${type}&slug=${encodeURIComponent(m[1])}&site=${url.origin}`;
-          const r = await fetch(target, { headers: { "user-agent": ua } });
-          return new Response(r.body, {
-            status: r.status,
-            headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" },
-          });
-        }
-      }
-    }
-    return env.ASSETS.fetch(req);
-  },
-};
-```
-
-### Validasi
-1. Deploy worker → debug pakai `curl -A "WhatsApp/2.0" https://lookmototour.com/riders/billyhn` → terima HTML dengan `<meta property="og:image" content="{avatar_url}">`, `<meta property="og:title" content="Riders Billy ... – ...">`
-2. Curl tanpa UA crawler → terima SPA `index.html` (tidak berubah)
-3. Tempel ulang `https://lookmototour.com/riders/billyhn` di chat WhatsApp → preview menampilkan **avatar rider**, judul "Riders Billy – {badge}", dan deskripsi excerpt LookMotoTour
-4. Tempel link blog/journal/event → preview meta-nya juga benar (bonus, karena route ikut tertangani)
-5. Browse normal di `/riders/billyhn` → tidak ada perubahan UX, tetap SPA
-
-### Dampak
-- Tidak mengubah React app, tidak mengubah edge function
-- Hanya menambah entry worker script + binding `ASSETS`
-- Setelah live, semua link riders existing langsung punya preview yang benar — tanpa perlu user pakai prefix `s.lookmototour.com`
+### Dampak & keamanan
+- Role enforcement 2 lapis: RLS + RPC security definer. Vendor tidak bisa lihat/ubah data vendor lain meski memanggil API langsung.
+- Admin tetap berhak penuh.
+- User biasa tidak terdampak sama sekali.
 

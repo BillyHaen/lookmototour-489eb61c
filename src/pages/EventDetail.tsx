@@ -35,16 +35,8 @@ export default function EventDetail() {
   const { user } = useAuth();
   const { data: isConfirmedParticipant } = useIsConfirmedParticipant(event?.id);
 
-  const { data: itineraries } = useQuery({
-    queryKey: ['event-itineraries', event?.id],
-    queryFn: async () => {
-      const { data, error } = await (supabase.from('event_itineraries' as any) as any)
-        .select('*').eq('event_id', event!.id).order('day_number');
-      if (error) return [];
-      return data as any[];
-    },
-    enabled: !!event?.id,
-  });
+  // Legacy event_itineraries removed — itinerary now lives in events.itinerary JSONB
+
 
   const { data: interestCount } = useQuery({
     queryKey: ['event-interest-count', event?.id],

@@ -187,15 +187,30 @@ export default function AdminUsers() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-                  <Badge variant={role === 'admin' ? 'default' : 'secondary'}>{role}</Badge>
-                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as 'admin' | 'user' })}>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
+                  <Badge variant={role === 'admin' ? 'default' : role === 'vendor' ? 'outline' : 'secondary'}>{role}</Badge>
+                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as any })}>
                     <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="vendor">Vendor</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
+                  {role === 'vendor' && (
+                    <Select
+                      value={(vendors?.find((v: any) => v.owner_user_id === profile.user_id)?.id) || 'none'}
+                      onValueChange={(v) => linkVendorMutation.mutate({ vendorId: v, userId: v === 'none' ? null : profile.user_id })}
+                    >
+                      <SelectTrigger className="w-[160px]"><SelectValue placeholder="Link vendor" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Tanpa vendor —</SelectItem>
+                        {vendors?.filter((v: any) => !v.owner_user_id || v.owner_user_id === profile.user_id).map((v: any) => (
+                          <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   {stats.total_trips === 0 && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

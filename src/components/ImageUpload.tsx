@@ -10,9 +10,11 @@ interface ImageUploadProps {
   onChange: (url: string) => void;
   bucket: string;
   label?: string;
+  /** Folder prefix inside bucket. Required for buckets with `{uid}/...` RLS (e.g. "garage"). */
+  pathPrefix?: string;
 }
 
-export default function ImageUpload({ value, onChange, bucket, label = 'Gambar' }: ImageUploadProps) {
+export default function ImageUpload({ value, onChange, bucket, label = 'Gambar', pathPrefix }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -30,7 +32,8 @@ export default function ImageUpload({ value, onChange, bucket, label = 'Gambar' 
     setUploading(true);
     try {
       const ext = file.name.split('.').pop();
-      const fileName = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const prefix = pathPrefix ? (pathPrefix.endsWith('/') ? pathPrefix : `${pathPrefix}/`) : 'uploads/';
+      const fileName = `${prefix}${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
       const { error } = await supabase.storage.from(bucket).upload(fileName, file, { upsert: true });
       if (error) throw error;
       const { data: urlData } = supabase.storage.from(bucket).getPublicUrl(fileName);

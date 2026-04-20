@@ -247,7 +247,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
             idempotencyKey: `rental-confirm-${regId}-${i}`,
             templateData: {
               name: data.name,
-              productName: r.product_name || 'Gear',
+              productName: r.name || 'Gear',
               qty: r.qty,
               startDate: eventDateStr,
               endDate: event.end_date ? new Date(event.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : eventDateStr,

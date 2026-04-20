@@ -115,13 +115,44 @@ export default function EventDetail() {
     <div className="min-h-screen">
       <Navbar />
       <div className="pt-20">
-        <div className="relative h-64 md:h-96 overflow-hidden">
-          <img src={event.image_url || eventPlaceholder} alt={event.title} className="w-full h-full object-cover" width={1920} height={600} />
-          <div className="absolute inset-0 bg-gradient-hero" />
-          <div className="absolute bottom-6 left-0 right-0 container">
-            <Button variant="outline" size="sm" className="mb-4" style={{ borderColor: 'hsl(0 0% 80%)', color: 'hsl(0 0% 100%)', backgroundColor: 'hsla(0 0% 100% / 0.1)' }} asChild>
-              <Link to="/events"><ArrowLeft className="h-4 w-4 mr-1" /> Kembali</Link>
-            </Button>
+        <div className="relative h-72 md:h-[28rem] overflow-hidden">
+          <img
+            src={event.image_url || eventPlaceholder}
+            alt={`${event.title} – ${event.location} motor adventure tour`}
+            className="w-full h-full object-cover"
+            width={1920}
+            height={600}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
+          <div className="absolute inset-0 flex flex-col justify-end pb-8">
+            <div className="container">
+              <Button variant="outline" size="sm" className="mb-4 w-fit" style={{ borderColor: 'hsl(0 0% 80%)', color: 'hsl(0 0% 100%)', backgroundColor: 'hsla(0 0% 100% / 0.1)' }} asChild>
+                <Link to="/events"><ArrowLeft className="h-4 w-4 mr-1" /> Kembali</Link>
+              </Button>
+              <h1 className="font-heading font-bold text-3xl md:text-5xl lg:text-6xl text-white drop-shadow-lg max-w-4xl">
+                {event.title}
+              </h1>
+              {ev.hero_subheadline && (
+                <p className="mt-3 text-lg md:text-xl text-white/90 max-w-3xl drop-shadow">
+                  {ev.hero_subheadline}
+                </p>
+              )}
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Button
+                  size="lg"
+                  className="gap-2 text-base font-semibold shadow-lg"
+                  onClick={() => document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  <Zap className="h-5 w-5" />
+                  {ev.cta_primary_label || '🔥 Secure Your Slot Now – Limited Riders Only'}
+                </Button>
+                {!forceFull && spotsLeft > 0 && spotsLeft <= 10 && (
+                  <span className="px-3 py-1.5 rounded-full bg-destructive text-destructive-foreground text-sm font-bold animate-pulse">
+                    🔥 Hanya {spotsLeft} slot tersisa!
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

@@ -627,11 +627,76 @@ export default function EventDetail() {
             </div>
           </div>
 
+          {/* Why Riders Trust Us */}
+          {ev.trust_section && (
+            <section className="border-t border-border pt-10 mt-10">
+              <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4 flex items-center gap-2">
+                <Star className="h-6 w-6 text-primary" /> Why Riders Trust LookMotoTour
+              </h2>
+              <RichTextContent content={ev.trust_section} />
+            </section>
+          )}
+
+          {/* FAQ */}
+          <FaqSection faq={ev.faq || []} />
+
+          {/* Final CTA Banner */}
+          <FinalCtaBanner
+            ctaLabel={ev.cta_primary_label || 'Book Your Adventure Today'}
+            spotsLeft={spotsLeft}
+            onCtaClick={() => document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' })}
+          />
+
           {/* Trip Sponsors */}
           <div className="mt-8"><TripSponsors eventId={event.id} /></div>
 
           {/* Rekomendasi Event */}
           <EventRecommendations currentEvent={event} />
+
+          {/* Internal links — homepage anchor for SEO */}
+          <div className="mt-10 pt-6 border-t border-border text-sm text-muted-foreground">
+            <p>
+              Lihat lebih banyak{' '}
+              <Link to="/" className="text-primary hover:underline font-medium">
+                motor adventure tour Indonesia
+              </Link>
+              {' '}atau baca panduan lengkap di{' '}
+              <Link to="/blog" className="text-primary hover:underline font-medium">
+                blog perjalanan kami
+              </Link>.
+            </p>
+          </div>
+
+          {/* JSON-LD: Event schema */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'Event',
+                name: event.title,
+                description: metaDesc,
+                startDate: event.date,
+                endDate: event.end_date || event.date,
+                eventStatus: 'https://schema.org/EventScheduled',
+                eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                location: {
+                  '@type': 'Place',
+                  name: event.location,
+                  address: { '@type': 'PostalAddress', addressLocality: event.location, addressCountry: 'ID' },
+                },
+                image: event.image_url ? [event.image_url] : undefined,
+                offers: {
+                  '@type': 'Offer',
+                  price: ev.price_single || event.price || 0,
+                  priceCurrency: 'IDR',
+                  availability: spotsLeft > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+                  url: typeof window !== 'undefined' ? window.location.href : '',
+                },
+                organizer: { '@type': 'Organization', name: 'LookMotoTour', url: 'https://lookmototour.com' },
+              }),
+            }}
+          />
         </div>
       </div>
       <Footer />

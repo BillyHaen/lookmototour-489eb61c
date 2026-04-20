@@ -67,11 +67,15 @@ export default function EventDetail() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const ev: any = event;
+  const metaTitle = ev?.meta_title || (event ? `${event.title} – Motor Adventure Tour | LookMotoTour` : 'Event');
+  const metaDesc = ev?.meta_description || event?.description?.replace(/<[^>]*>/g, '').slice(0, 160);
+
   useSeoMeta({
-    title: event ? `${event.title} - Event` : 'Event',
-    description: event?.description?.replace(/<[^>]*>/g, '').slice(0, 160),
+    title: metaTitle,
+    description: metaDesc,
     image: event?.image_url,
-    url: window.location.href,
+    url: typeof window !== 'undefined' ? window.location.href : undefined,
   });
 
   if (isLoading) {

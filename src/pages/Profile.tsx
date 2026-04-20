@@ -89,20 +89,20 @@ export default function Profile() {
     return r.status === 'confirmed' && ev?.status === 'completed';
   });
 
+  const p: any = profile || {};
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', username: '', phone: '', bio: '', riding_style: '', location: '', banner_url: '' },
+    values: profile ? {
+      name: p.name || '',
+      username: p.username || '',
+      phone: p.phone || '',
+      bio: p.bio || '',
+      riding_style: p.riding_style || '',
+      location: p.location || '',
+      banner_url: p.banner_url || '',
+    } : undefined,
   });
-
-  useEffect(() => {
-    if (profile) {
-      const p = profile as any;
-      form.reset({
-        name: p.name || '', username: p.username || '', phone: p.phone || '', bio: p.bio || '',
-        riding_style: p.riding_style || '', location: p.location || '', banner_url: p.banner_url || '',
-      });
-    }
-  }, [profile, form]);
 
   const updateProfile = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {

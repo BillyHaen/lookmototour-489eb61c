@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2, ImagePlus, X } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
+import BannerCropDialog from './BannerCropDialog';
 
 interface BannerUploadProps {
   userId: string;
@@ -13,10 +14,11 @@ interface BannerUploadProps {
 
 export default function BannerUpload({ userId, currentUrl, onUploaded }: BannerUploadProps) {
   const [uploading, setUploading] = useState(false);
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) {
@@ -27,20 +29,30 @@ export default function BannerUpload({ userId, currentUrl, onUploaded }: BannerU
       toast({ title: 'Ukuran file maksimal 5MB', variant: 'destructive' });
       return;
     }
+    const reader = new FileReader();
+    reader.onload = () => setCropSrc(reader.result as string);
+    reader.readAsDataURL(file);
+    if (fileRef.current) fileRef.current.value = '';
+  };
+
+  const handleCropped = async (blob: Blob) => {
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const filePath = `${userId}/banner.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file, { upsert: true });
+      const filePath = `${userId}/banner.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, blob, { upsert: true, contentType: 'image/jpeg' });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(filePath);
       const bannerUrl = `${publicUrl}?t=${Date.now()}`;
-      const { error: updateError } = await supabase.from('profiles').update({ banner_url: bannerUrl }).eq('user_id', userId);
+      const { error: updateError } = await supabase
+        .from('profiles').update({ banner_url: bannerUrl }).eq('user_id', userId);
       if (updateError) throw updateError;
       queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['rider'] });
       onUploaded?.(bannerUrl);
       toast({ title: 'Banner berhasil diperbarui! ✅' });
+      setCropSrc(null);
     } catch (err: any) {
       toast({ title: 'Gagal upload', description: err.message, variant: 'destructive' });
     } finally {
@@ -67,7 +79,7 @@ export default function BannerUpload({ userId, currentUrl, onUploaded }: BannerU
   return (
     <div className="space-y-2">
       <div
-        className="relative aspect-[16/6] w-full rounded-lg border border-border overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 cursor-pointer group"
+        className="relative aspect-[16/9] sm:aspect-[2.6/1] max-h-[360px] w-full rounded-lg border border-border overflow-hidden bg-gradient-to-br from-primary/20 to-accent/20 cursor-pointer group"
         onClick={() => fileRef.current?.click()}
       >
         {currentUrl && <img src={currentUrl} alt="Banner profil" className="w-full h-full object-cover" />}
@@ -85,8 +97,17 @@ export default function BannerUpload({ userId, currentUrl, onUploaded }: BannerU
           <X className="h-3 w-3 mr-1" />Hapus banner
         </Button>
       )}
-      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
-      <p className="text-xs text-muted-foreground">Rasio 16:6 disarankan • Max 5MB</p>
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+      <p className="text-xs text-muted-foreground">Desktop 820×312 • Mobile 640×360 • Max 5MB • Bisa zoom & crop saat upload</p>
+      {cropSrc && (
+        <BannerCropDialog
+          open={!!cropSrc}
+          onOpenChange={(o) => !o && setCropSrc(null)}
+          imageSrc={cropSrc}
+          onCropped={handleCropped}
+          saving={uploading}
+        />
+      )}
     </div>
   );
 }

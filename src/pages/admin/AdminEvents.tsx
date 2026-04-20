@@ -345,6 +345,7 @@ export default function AdminEvents() {
                   <SelectItem value="race">Race</SelectItem>
                   <SelectItem value="gathering">Gathering</SelectItem>
                   <SelectItem value="workshop">Workshop</SelectItem>
+                  <SelectItem value="motocamp">🏕️ Motocamp</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={form.difficulty} onValueChange={(v) => setForm({ ...form, difficulty: v })}>

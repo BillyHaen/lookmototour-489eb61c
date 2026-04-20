@@ -685,10 +685,79 @@ export default function AdminEvents() {
                   </div>
                 ))}
                 {!itineraries.length && <p className="text-sm text-muted-foreground text-center py-2">Belum ada itinerary.</p>}
-              </CardContent>
             </Card>
+            </TabsContent>
 
-            <div className="flex gap-3">
+            <TabsContent value="seo" className="space-y-4 mt-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Meta Title (Google)</label>
+                <Input placeholder="Sumba Motor Tour 360 (Exploride) – Ultimate Adventure | Book Now" value={form.meta_title} onChange={(e) => setForm({ ...form, meta_title: e.target.value })} maxLength={70} />
+                <p className="text-xs text-muted-foreground mt-1">{form.meta_title.length}/70 karakter (ideal &lt; 60)</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Meta Description</label>
+                <Textarea rows={3} maxLength={170} placeholder="Join Sumba Exploride 360: epic motor adventure across savanna, beach & off-road trails. Limited slots. Book now." value={form.meta_description} onChange={(e) => setForm({ ...form, meta_description: e.target.value })} />
+                <p className="text-xs text-muted-foreground mt-1">{form.meta_description.length}/170 karakter (ideal &lt; 160)</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Hero Subheadline (di bawah H1)</label>
+                <Textarea rows={2} placeholder="Mis: 5 hari menaklukkan savana, pantai tersembunyi & jalur off-road eksklusif." value={form.hero_subheadline} onChange={(e) => setForm({ ...form, hero_subheadline: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Label CTA Utama</label>
+                <Input placeholder="🔥 Secure Your Slot Now – Limited Riders Only" value={form.cta_primary_label} onChange={(e) => setForm({ ...form, cta_primary_label: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Tag Blog Terkait (Internal Link)</label>
+                <Input placeholder="mis: sumba" value={form.internal_link_blog_tag} onChange={(e) => setForm({ ...form, internal_link_blog_tag: e.target.value })} />
+                <p className="text-xs text-muted-foreground mt-1">Otomatis tampilkan blog dengan tag ini di bagian related.</p>
+              </div>
+              <GalleryEditor value={seoGallery} onChange={setSeoGallery} />
+            </TabsContent>
+
+            <TabsContent value="landing" className="space-y-5 mt-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">🎣 Opening Hook (2–3 paragraf, emosional)</label>
+                <RichTextEditor value={form.opening_hook} onChange={(v) => setForm({ ...form, opening_hook: v })} placeholder="Bayangkan motormu meraung di tengah savana Sumba..." minHeight="120px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">💎 Why Join This Tour</label>
+                <RichTextEditor value={form.why_join} onChange={(v) => setForm({ ...form, why_join: v })} placeholder="Bullet list: terrain unik, off-road, full support..." minHeight="120px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">🌟 What You Will Experience</label>
+                <RichTextEditor value={form.experience_section} onChange={(v) => setForm({ ...form, experience_section: v })} placeholder="Riding experience, landscape, cultural exposure, adrenaline..." minHeight="120px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">🌴 About Destination (300–500 kata, SEO)</label>
+                <RichTextEditor value={form.about_destination} onChange={(v) => setForm({ ...form, about_destination: v })} placeholder="Sumba adalah pulau dengan lanskap savana, pantai..." minHeight="200px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">🎯 Who Is This Trip For</label>
+                <RichTextEditor value={form.target_audience} onChange={(v) => setForm({ ...form, target_audience: v })} placeholder="Skill level, rider type, expectations..." minHeight="100px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">🛡️ Why Riders Trust Us (Trust Section)</label>
+                <RichTextEditor value={form.trust_section} onChange={(v) => setForm({ ...form, trust_section: v })} placeholder="Pengalaman, jumlah riders, dokumentasi, profesionalisme..." minHeight="100px" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="itinerary" className="mt-4">
+              <p className="text-xs text-muted-foreground mb-3">Itinerary terstruktur untuk landing page SEO (per hari + foto + alt). Beda dari "Itinerary Perhari" lama di tab Dasar.</p>
+              <ItineraryEditor value={seoItinerary} onChange={setSeoItinerary} />
+            </TabsContent>
+
+            <TabsContent value="checklist" className="space-y-5 mt-4">
+              <ChecklistEditor label="✅ What's Included" value={seoIncluded} onChange={setSeoIncluded} placeholder="mis: Penginapan 4 malam" />
+              <ChecklistEditor label="❌ What's Excluded" value={seoExcluded} onChange={setSeoExcluded} placeholder="mis: Tiket pesawat" variant="destructive" />
+            </TabsContent>
+
+            <TabsContent value="faq" className="mt-4">
+              <FaqEditor value={seoFaq} onChange={setSeoFaq} />
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex gap-3 pt-4 border-t mt-4">
               <Button
                 variant="outline"
                 className="flex-1"
@@ -707,7 +776,6 @@ export default function AdminEvents() {
                 {editId ? 'Simpan & Publikasi' : 'Tambah & Publikasi'}
               </Button>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
       {participantsEvent && (

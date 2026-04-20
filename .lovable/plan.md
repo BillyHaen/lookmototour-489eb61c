@@ -1,61 +1,109 @@
 
+## Perbaikan Sinkronisasi Data `/profile` dan `/riders/:username`
 
-## Redesign Halaman Rider — Facebook-style Cover & Profile Header
+Memastikan data profil yang sudah disimpan selalu tampil konsisten di:
+- halaman edit profil `/profile`
+- halaman profil publik `/riders/:username`
 
-Mengubah `/riders/:username` agar mengikuti pola layout cover + profile Facebook dari screenshot referensi.
+### Akar masalah
+Masalah utamanya ada pada cache query frontend:
+- `Navbar.tsx` dan `Profile.tsx` memakai query key yang sama: `['profile', user.id]`
+- tetapi bentuk datanya berbeda:
+  - `Navbar` hanya mengambil `name, avatar_url`
+  - `Profile` mengambil seluruh kolom profil
+- akibatnya cache React Query bisa tertimpa data parsial dari `Navbar`, lalu form di `/profile` ter-reset dengan field kosong saat refresh / render ulang
 
-### Perubahan visual
+Backend bukan sumber masalah:
+- data di tabel `profiles` memang ada
+- akses baca owner juga sudah diizinkan
 
-**1. Cover Banner (Foto Sampul)**
-- Banner full-width edge-to-edge (no rounded di mobile, rounded-b-xl di desktop tetap), tinggi lebih dominan: mobile `aspect-[16/9]` (640×360), desktop `aspect-[2.6/1]` max-h `~360px` — sudah sesuai.
-- Tombol **"Edit Foto Sampul"** (putih, dengan ikon kamera) overlay di **pojok kanan-bawah banner** — hanya tampil jika `isOwner`. Klik → buka file picker → masuk ke `BannerCropDialog` (zoom + crop sudah ada).
-- Saat hover (desktop) overlay gelap halus muncul di seluruh banner sebagai indikator klikable bagi owner.
+### Yang akan diperbaiki
 
-**2. Avatar (Foto Profil)**
-- Avatar bulat besar (mobile 112px / desktop 144px) dengan **ring putih tebal 4px**, posisi **overlap banner** (-mt-14 mobile / -mt-16 desktop), align kiri (di mobile dan desktop), bukan center.
-- Tombol kamera kecil bulat (badge) di **pojok kanan-bawah avatar** — hanya untuk owner. Klik → buka `AvatarCropDialog` (zoom + crop sudah ada).
-- Hover state pada avatar dihilangkan — diganti badge kamera permanen agar konsisten dengan FB.
+#### 1. Pisahkan query profil menjadi jelas dan tidak saling menimpa
+Buat pemisahan query key agar tidak collision:
 
-**3. Info Block (di samping avatar pada desktop, di bawah pada mobile)**
-- Layout desktop: `flex-row` — avatar kiri, info di tengah (nama + meta), tombol aksi (Follow / Edit Profil) di **kanan**.
-- Layout mobile: `flex-col` — avatar kiri di atas, nama + meta di bawah avatar, tombol aksi full-width di paling bawah.
-- Nama: `font-bold text-2xl sm:text-3xl`, baris berikutnya counter: **"{follower_count} pengikut · {following_count} mengikuti"** (format ringkas: 1,4 rb dst via helper `Intl.NumberFormat('id-ID', { notation: 'compact' })`).
-- Baris bio singkat (jika ada).
-- Baris meta dengan ikon kecil: `riding_style`, `location` (gunakan ikon Bike & MapPin yang sudah ada).
-- **TrustBadge** dipindah ke samping nama (inline, kecil).
+- `['profile-full', user.id]` untuk halaman `/profile`
+- `['profile-nav', user.id]` untuk navbar
+- query rider publik tetap terpisah di `['rider', username]`
 
-**4. Tombol aksi**
-- Owner: **Edit Profil** (variant default solid, ikon Pencil) → link ke `/profile`.
-- Visitor login: **Follow / Following** (FollowButton existing) + tombol **Message** (variant outline, ikon MessageSquare) — placeholder, disable jika DM belum tersedia, atau buka WhatsApp jika nomor publik (skip untuk sekarang, hanya Follow).
-- Spacing: `gap-2`, di mobile turun ke baris baru, full width grid 2 kolom.
+Hasilnya:
+- navbar tetap ringan
+- halaman profil selalu memakai data lengkap
+- refresh tidak lagi menghilangkan `username`, `nama`, `no. HP`, `riding style`, `lokasi`, `bio`, dan `banner`
 
-**5. Separator**
-- Tambahkan garis pemisah halus (`border-b`) di bawah header sebelum stat bar, mengikuti pola FB.
+#### 2. Rapikan sumber data profil sendiri
+Refactor menjadi pola shared hook agar konsisten:
 
-### File yang diubah
+- `useMyProfile()` untuk full profile user login
+- `useMyProfileSummary()` untuk navbar / kebutuhan ringan
+
+Ini menghindari duplikasi query manual di banyak file dan menjaga struktur data selalu benar.
+
+#### 3. Perbaiki sinkronisasi form di halaman `/profile`
+Di `Profile.tsx`:
+- form hanya di-reset saat data full profile benar-benar tersedia
+- gunakan mapping field yang stabil dan tidak terpengaruh hasil query parsial
+- pertahankan nilai yang sudah ada selama loading/refetch, supaya form tidak sempat “kosong” lalu muncul lagi
+
+Field yang harus tetap tampil setelah refresh:
+- Nama
+- Username
+- No. HP
+- Riding Style
+- Lokasi
+- Bio
+- Avatar
+- Banner URL yang tersimpan
+
+#### 4. Samakan invalidasi cache setelah update/upload
+Setelah user:
+- simpan informasi profil
+- upload avatar
+- upload / hapus banner
+
+maka semua query terkait harus ikut di-refresh dengan key yang benar:
+- `profile-full`
+- `profile-nav`
+- `my-username`
+- `rider`
+
+Ini memastikan perubahan langsung terlihat di kedua halaman tanpa mismatch.
+
+### File yang akan diubah
 
 | File | Perubahan |
 |---|---|
-| `src/components/rider/RiderHeader.tsx` | Restruktur layout cover+avatar+info ala FB; tambahkan tombol "Edit Foto Sampul" overlay di banner; badge kamera di avatar; counter pengikut/mengikuti; layout responsif baru. |
-| `src/components/AvatarUpload.tsx` | Tambah prop `variant?: 'overlay' \| 'badge'`. Mode `badge` menampilkan tombol kamera kecil permanen di pojok kanan-bawah avatar (bukan overlay hover). |
-| `src/components/BannerUpload.tsx` | Tambah prop `variant?: 'card' \| 'inline'`. Mode `inline` hanya merender tombol "Edit Foto Sampul" + dialog (tanpa preview area), karena banner sudah dirender oleh `RiderHeader`. |
-| `src/components/rider/RiderHeader.tsx` (baru terima `isOwner` prop) | Komposisi `BannerUpload variant="inline"` + `AvatarUpload variant="badge"` saat `isOwner=true`. |
-| `src/pages/RiderProfile.tsx` | Pass `isOwner` ke `RiderHeader`. |
+| `src/pages/Profile.tsx` | Ganti query key profil penuh, pakai hook profile penuh, perbaiki reset form agar tidak tertimpa data parsial |
+| `src/components/Navbar.tsx` | Pakai query key khusus navbar / hook summary agar tidak berbenturan dengan halaman profil |
+| `src/components/AvatarUpload.tsx` | Ubah invalidasi query ke key baru supaya avatar update muncul di `/profile` dan `/riders/:username` |
+| `src/components/BannerUpload.tsx` | Ubah invalidasi query ke key baru supaya banner update muncul di kedua halaman |
+| `src/hooks/useRider.ts` atau hook baru `src/hooks/useProfile.ts` | Tambah hook profil sendiri agar pengambilan data full vs summary rapi dan reusable |
 
-### Catatan teknis
+### Detail teknis
+Implementasi cache akan dibuat seperti ini:
 
-- Tetap pakai `react-easy-crop` (sudah terpasang) untuk avatar & banner.
-- Format counter pakai `Intl.NumberFormat('id-ID', { notation: 'compact', maximumFractionDigits: 1 })` → "1,4 rb", "12 jt".
-- Variant lama `BannerUpload` (card) tetap dipertahankan untuk `Profile.tsx` agar tidak rusak.
-- Variant lama `AvatarUpload` (overlay hover) tetap default; halaman lain tidak terpengaruh.
-- Tidak ada perubahan database/RLS.
+```text
+/profile           -> ['profile-full', user.id]
+navbar             -> ['profile-nav', user.id]
+/riders/:username  -> ['rider', username]
+```
+
+Prinsipnya:
+- satu key = satu bentuk data
+- jangan reuse query key yang sama untuk payload berbeda
 
 ### Validasi
+Setelah implementasi, alur berikut harus lolos:
 
-1. Visitor (belum login / bukan owner): tidak ada tombol Edit Sampul / kamera avatar, hanya tombol Follow.
-2. Owner: tombol "Edit Foto Sampul" di pojok kanan-bawah banner; badge kamera di avatar; klik → dialog crop dengan zoom in/out berfungsi.
-3. Mobile (375px): avatar overlap banner, info stack vertikal, tombol Edit Profil full-width.
-4. Desktop: layout 3-kolom horizontal (avatar | info | actions) seperti FB.
-5. Counter "1,4 rb pengikut · 3,2 rb mengikuti" tampil dengan format Indonesia.
-6. Refresh halaman → banner & avatar tetap tampil (cache-busting `?t=` sudah ada).
+1. Simpan `Nama`, `Username`, `No. HP`, `Riding Style`, `Lokasi`, `Bio` di `/profile`
+2. Refresh `/profile` → semua field tetap tampil
+3. Buka `/riders/{username}` → data yang sama tampil di profil publik
+4. Upload avatar → avatar berubah di `/profile`, navbar, dan `/riders/{username}`
+5. Upload banner → banner tetap tampil setelah refresh
+6. Pindah halaman lalu kembali ke `/profile` → form tidak kosong lagi
+7. Tidak ada flicker kosong akibat refetch navbar
 
+### Dampak
+- Tidak perlu perubahan database
+- Tidak perlu perubahan RLS
+- Fokus sepenuhnya di frontend data flow dan cache consistency

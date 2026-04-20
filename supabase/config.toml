@@ -17,3 +17,5 @@ project_id = "efrwzkdfkfvedtdrxrfg"
     verify_jwt = false
   [functions.send-test-email]
     verify_jwt = false
+  [functions.log-audit-event]
+    verify_jwt = false

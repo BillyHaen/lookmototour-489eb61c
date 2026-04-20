@@ -16,6 +16,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Plus, Pencil, Trash2, Eye, X } from 'lucide-react';
+import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
 import { format } from 'date-fns';
 import { syncPostCategories, syncPostTags, usePostCategories, usePostTags, useCategories, useTags } from '@/hooks/useBlogTaxonomy';
 
@@ -67,6 +68,8 @@ export default function AdminBlog() {
   const [filterTo, setFilterTo] = useState<string>('');
   const [filterCat, setFilterCat] = useState<string>('all');
   const [filterTag, setFilterTag] = useState<string>('all');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data: posts, isLoading } = useQuery({
     queryKey: ['admin-blog-posts'],
@@ -259,7 +262,7 @@ export default function AdminBlog() {
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : (
         <div className="space-y-3">
-          {filteredPosts.map((p: any) => (
+          {paginate(filteredPosts, page, pageSize).map((p: any) => (
             <Card key={p.id}>
               <CardContent className="p-4 flex items-center gap-4 flex-wrap">
                 {(() => {
@@ -285,6 +288,16 @@ export default function AdminBlog() {
             </Card>
           ))}
           {filteredPosts.length === 0 && <p className="text-center text-muted-foreground py-8">Tidak ada post yang cocok dengan filter.</p>}
+          {filteredPosts.length > 0 && (
+            <DataPagination
+              page={page}
+              pageSize={pageSize}
+              total={filteredPosts.length}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              className="pt-2"
+            />
+          )}
         </div>
       )}
 

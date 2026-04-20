@@ -1,99 +1,123 @@
 
 
-## Audit Trail (Jejak Audit) Admin
+## Sumba Exploride 360 — SEO Landing Page via Admin Event System
 
-### 1. Skema Database
+I'll explore current event structure to map every required SEO/landing-page element to an existing field — and identify what's missing and must be added.
 
-**Tabel baru `audit_logs`:**
-| Kolom | Tipe | Keterangan |
+### Investigation Findings
+
+**Current event schema** (from prior context: `EventDetail.tsx`, `AdminEvents.tsx`, `useEvents.ts`):
+- Has: `title`, `description` (rich text WYSIWYG), `date`, `endDate`, `location`, `price`, `image`, `highlights[]`, `difficulty`, `distance`, tier pricing (Single/Sharing/Couple), towing, gear rentals, testimonials (moderated per event), `currentParticipants/maxParticipants` (urgency).
+- Missing for full SEO landing: `slug` (currently uses ID — `sumba-exploride-360` won't work), `meta_title`, `meta_description`, `hero_subheadline`, `cta_label`, `opening_hook` (rich text), `why_join` (rich text or list), `experience_section` (rich text), `itinerary` (structured per-day: `day, title, description, image`), `about_destination` (rich text 300-500 words for SEO), `included[]` / `excluded[]` (checklist arrays), `target_audience` (rich text), `trust_section` (rich text), `faq` (Q&A array), `gallery` (already supported via MultiImageUpload? confirm), `internal_links` (auto from blog tag).
+
+### Proposed Solution
+
+**1. DB Migration — extend `events` table:**
+
+| Column | Type | Purpose |
 |---|---|---|
-| `id` | uuid PK | gen_random_uuid() |
-| `user_id` | uuid | aktor (NULL = system / anon) |
-| `user_email` | text | snapshot email saat aksi |
-| `user_name` | text | snapshot name |
-| `action` | text | `create`, `update`, `delete`, `login`, `logout`, `login_failed`, `signup`, `password_reset`, dll. |
-| `table_name` | text | objek (mis. `events`, `products`, `gear_rentals`) |
-| `record_id` | uuid/text | ID baris yang dipengaruhi |
-| `old_values` | jsonb | sebelum (NULL untuk create/login) |
-| `new_values` | jsonb | sesudah (NULL untuk delete/logout) |
-| `ip_address` | text | dari edge function `req` headers |
-| `user_agent` | text | browser/device |
-| `status` | text | `success` / `failed` |
-| `error_message` | text | nullable |
-| `metadata` | jsonb | konteks tambahan |
-| `created_at` | timestamptz | default `now()` |
+| `slug` | text UNIQUE | URL like `/events/sumba-exploride-360` |
+| `meta_title` | text | `<title>` & og:title |
+| `meta_description` | text | meta description & og |
+| `hero_subheadline` | text | emotional sub under H1 |
+| `cta_primary_label` | text | default "🔥 Secure Your Slot Now" |
+| `opening_hook` | text (HTML) | hook paragraphs |
+| `why_join` | text (HTML) | bulleted reasons |
+| `experience_section` | text (HTML) | what you'll experience |
+| `itinerary` | jsonb | `[{day, title, description, image_url, image_alt}]` |
+| `about_destination` | text (HTML) | 300-500 word SEO section |
+| `included` | text[] | checklist |
+| `excluded` | text[] | checklist |
+| `target_audience` | text (HTML) | who it's for |
+| `trust_section` | text (HTML) | trust copy |
+| `faq` | jsonb | `[{question, answer}]` |
+| `gallery` | jsonb | `[{url, alt}]` (SEO alt text) |
+| `internal_link_blog_tag` | text | auto-pull related blog posts |
 
-**Indeks:** `(created_at DESC)`, `(user_id)`, `(table_name)`, `(action)`.
+Add unique index on `slug`.
 
-**RLS (sangat ketat — append-only):**
-- SELECT: hanya admin (`has_role(auth.uid(),'admin')`).
-- INSERT: hanya `service_role` (dari edge functions/triggers).
-- UPDATE & DELETE: **DITOLAK SEMUA** (no policy = no access). Bahkan admin tidak bisa edit/hapus → memenuhi kriteria "tidak bisa diubah".
+**2. Routing update (`App.tsx` + `EventDetail.tsx`):**
+- Support both `/events/:idOrSlug` — resolve by slug first, fallback to UUID.
+- `useSeoMeta` already exists → use `meta_title` + `meta_description` + `og:image`.
 
-### 2. Pencatatan Otomatis (DB Triggers)
+**3. Admin editor (`AdminEvents.tsx` → `EventEditor` dialog):**
 
-Buat fungsi trigger generik `public.log_audit_event()` yang dipasang di tabel-tabel kritikal: `events`, `products`, `event_registrations`, `gear_rentals`, `vendors`, `sponsors`, `blog_posts`, `site_settings`, `email_template_overrides`, `user_roles`, `profiles`.
+Reorganize into tabs to keep it usable:
+- **Tab "Dasar"**: title, slug (auto-generate from title with edit), date/location/price/difficulty/distance, hero image, gallery.
+- **Tab "SEO"**: meta_title, meta_description, hero_subheadline, cta_primary_label.
+- **Tab "Konten Landing"** (semua RichTextEditor + bantuan placeholder copy):
+  - Opening Hook
+  - Why Join (H2 section)
+  - What You'll Experience
+  - About Destination (300-500 words)
+  - Target Audience
+  - Trust Section
+- **Tab "Itinerary"**: dynamic list — add/remove/reorder days (`day #`, title, description, optional image upload + alt).
+- **Tab "Included/Excluded"**: dua list editor (chip-style, tambah/hapus item).
+- **Tab "FAQ"**: dynamic Q&A list (add/remove/reorder).
+- **Tab "Pricing & Tier"**: existing tier/towing/gear settings (unchanged).
 
-Trigger menangkap `TG_OP` (INSERT/UPDATE/DELETE), `OLD`, `NEW`, dan `auth.uid()` lalu insert ke `audit_logs`. IP/user_agent di trigger DB **tidak tersedia** — itu di-enrich dari edge function untuk auth events.
+Slug auto-generator: lowercase, dash, strip special chars; uniqueness check via debounced query.
 
-### 3. Pencatatan Auth Events (Edge Function)
+**4. Frontend rendering (`EventDetail.tsx`) — full SEO landing layout:**
 
-Buat edge function baru `log-audit-event` (verify_jwt = false; validasi internal):
-- Dipanggil dari frontend setelah `signIn`, `signUp`, `signOut`, gagal login, reset password.
-- Menerima `action`, `status`, `metadata`, dan otomatis menangkap `req.headers` → `x-forwarded-for` (IP), `user-agent`.
-- Insert ke `audit_logs` via service role.
+Sections (in order, each conditional — hide if empty so existing events don't break):
+1. **Hero** — H1 = `title`, subheadline = `hero_subheadline`, CTA button = `cta_primary_label`, hero image with keyword-rich alt = `${title} - motor adventure tour`. Sticky scarcity bar: "Hanya {maxParticipants - currentParticipants} slot tersisa".
+2. **Opening Hook** — RichTextContent.
+3. **Why Join** (H2) — RichTextContent.
+4. **What You'll Experience** (H2) — RichTextContent + gallery slider.
+5. **Route & Itinerary** (H2) — render `itinerary[]` as cards/timeline (Day N, title, desc, image).
+6. **About Destination** (H2) — RichTextContent (SEO body).
+7. **What's Included / Excluded** (H2) — two-column checklist (✅ / ❌).
+8. **Who Is This Trip For** (H2) — RichTextContent.
+9. **Pricing & Booking** (H2) — existing tier UI + CTA #2.
+10. **Why Riders Trust Us** (H2) — `trust_section` RichTextContent.
+11. **Testimonials** (H2) — existing moderated testimonials per event.
+12. **FAQ** (H2) — Accordion from `faq[]` + JSON-LD `FAQPage` schema in `<script type="application/ld+json">` for SEO rich snippets.
+13. **Final CTA** — sticky/banner repeat ("Join The Ride – Apply Now").
+14. **Internal links** — auto-list 2-3 related blog posts (filter by `internal_link_blog_tag`) + link to homepage with anchor "motor adventure tour Indonesia".
 
-Wiring di `useAuth.tsx`: invoke setelah setiap aksi auth (success & failure).
+Add CTA in Hero (1), after Itinerary (2), Pricing (3), Final banner (4) → ≥4 CTAs.
 
-### 4. Halaman Admin `/admin/audit-logs`
+**5. Structured data (SEO boost):**
+- Inject JSON-LD `Event` schema (name, description, startDate, endDate, location, image, offers/price) + `FAQPage` schema in `EventDetail.tsx`.
 
-**File baru:** `src/pages/admin/AdminAuditLogs.tsx` + tambah link sidebar `AdminLayout.tsx` (icon `ShieldCheck`).
+**6. Image SEO:**
+- Gallery uploader stores `alt` per image (already partially supported in MultiImageUpload — verify, extend if needed).
+- Itinerary images include alt field in editor.
+- Hero auto-alt fallback: `${title} - ${location} motor tour`.
 
-**UI:**
-- Tabel paginated (50 per halaman) urut `created_at DESC`.
-- Kolom: Waktu, User (nama+email), Aksi (badge berwarna), Tabel, Record ID, Status, IP, Aksi (tombol "Detail").
-- **Filter:** rentang tanggal, user (search), action (dropdown), table_name (dropdown), status.
-- **Detail dialog:** menampilkan diff `old_values` vs `new_values` side-by-side (JSON viewer rapi), full metadata, IP, user-agent.
-- **Export CSV** untuk rentang tertentu (compliance).
-- Read-only — tidak ada tombol edit/delete.
+**7. Seed Sumba Exploride 360 (optional helper):**
+- Provide a "Duplicate from template" button or a one-click migration that seeds the Sumba event with all sections pre-filled with the brief's copy (H1, hook, why-join, itinerary days, FAQ, etc.). User can then edit in admin.
 
-### 5. Routing & Akses
+### Files Created/Modified
 
-- Route `/admin/audit-logs` di `App.tsx`.
-- `AdminLayout` sudah memblokir non-admin → otomatis aman.
-- Tambahkan ke `ADMIN_NAV` array.
+| File | Change |
+|---|---|
+| Migration (new) | Add columns to `events`, unique slug index |
+| `src/pages/admin/AdminEvents.tsx` | Tabbed editor with all new fields |
+| `src/components/admin/ItineraryEditor.tsx` (new) | Dynamic day list editor |
+| `src/components/admin/FaqEditor.tsx` (new) | Dynamic Q&A editor |
+| `src/components/admin/ChecklistEditor.tsx` (new) | Included/excluded chips |
+| `src/components/admin/SlugInput.tsx` (new) | Auto-gen + uniqueness check |
+| `src/pages/EventDetail.tsx` | Full landing layout with all 14 sections + JSON-LD |
+| `src/components/EventLandingSections/*` (new) | Hero, Itinerary, FAQ, Checklist, Gallery, FinalCTA components |
+| `src/App.tsx` | Route accepts slug or ID |
+| `src/hooks/useEvents.ts` | Fetch by slug, include new fields |
+| `src/integrations/supabase/types.ts` | Auto-regenerated |
 
-### 6. Files yang dibuat / diubah
-
-**Migration baru:**
-- Buat `audit_logs` + RLS + trigger function + attach trigger ke 11 tabel kritikal.
-
-**Edge function baru:**
-- `supabase/functions/log-audit-event/index.ts` (untuk auth events + IP enrichment).
-
-**Frontend baru:**
-- `src/pages/admin/AdminAuditLogs.tsx` (halaman utama)
-- `src/components/admin/AuditLogDetailDialog.tsx` (modal diff)
-- `src/hooks/useAuditLogs.ts` (query + filter)
-
-**Frontend diubah:**
-- `src/App.tsx` — daftarkan route
-- `src/pages/admin/AdminLayout.tsx` — tambah menu sidebar
-- `src/hooks/useAuth.tsx` — invoke `log-audit-event` setelah signIn/signUp/signOut/resetPassword (success & error)
-
-### 7. Validasi
-1. Login admin → muncul entry `action=login, status=success` dengan IP & user-agent.
-2. Salah password → entry `action=login_failed, status=failed`.
-3. Edit event di admin → entry `action=update, table=events` dengan diff old/new.
-4. Hapus produk → entry `action=delete` dengan `old_values` lengkap.
-5. Buka `/admin/audit-logs` → list kronologis terbaru di atas, filter by user/action/date jalan.
-6. Klik Detail → lihat diff JSON old vs new + IP/user-agent/metadata.
-7. Coba akses `/admin/audit-logs` sebagai non-admin → di-redirect ke `/`.
-8. Coba `UPDATE`/`DELETE` audit_logs sebagai admin via SQL → ditolak RLS.
-9. Export CSV → file ter-download dengan kolom lengkap.
+### Validation
+1. Buat event "Sumba Exploride 360" via admin — semua tab terisi.
+2. URL `/events/sumba-exploride-360` muncul (slug routing jalan).
+3. View source → meta title/description benar, og:image set, JSON-LD `Event` + `FAQPage` valid (test di Google Rich Results).
+4. Semua 14 section render, 4 CTA muncul, scarcity bar tampil.
+5. Itinerary, FAQ accordion, included/excluded checklist, gallery dengan alt benar.
+6. Existing events tanpa data baru tetap render (graceful fallback ke layout lama).
+7. Lighthouse SEO ≥ 95.
+8. Edit event dari admin → preview update real-time.
 
 ### Out of scope
-- Retensi otomatis (purge log lama) — bisa ditambah cron nanti.
-- Real-time live tail — admin refresh manual.
-- Logging untuk SELECT (hanya mutations + auth).
+- Multi-language (ID/EN toggle) — bisa fase berikutnya.
+- A/B testing CTA copy.
+- Auto-generate copy via AI (bisa ditambah tombol "AI generate" nanti).
 

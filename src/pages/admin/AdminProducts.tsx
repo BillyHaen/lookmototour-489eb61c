@@ -14,6 +14,7 @@ import { useVendors } from '@/hooks/useVendors';
 import { toast } from '@/hooks/use-toast';
 import { formatPrice } from '@/data/events';
 import { Loader2, Plus, Pencil, Trash2 } from 'lucide-react';
+import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
 
 interface ProductForm {
   name: string; description: string; price: number; stock: number;
@@ -61,6 +62,8 @@ export default function AdminProducts() {
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(empty);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const { data: vendors = [] } = useVendors(true);
 
   const { data: products, isLoading } = useQuery({
@@ -153,7 +156,7 @@ export default function AdminProducts() {
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : (
         <div className="space-y-3">
-          {products?.map((p: any) => (
+          {paginate(products || [], page, pageSize).map((p: any) => (
             <div key={p.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
               <div className="flex items-center gap-3 flex-1 min-w-0">
                 {p.image_url && <img src={p.image_url} alt={p.name} className="w-12 h-12 rounded-lg object-cover" />}
@@ -190,6 +193,16 @@ export default function AdminProducts() {
             </div>
           ))}
           {!products?.length && <p className="text-muted-foreground text-center py-8">Belum ada produk.</p>}
+          {!!products?.length && (
+            <DataPagination
+              page={page}
+              pageSize={pageSize}
+              total={products.length}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              className="pt-2"
+            />
+          )}
         </div>
       )}
 

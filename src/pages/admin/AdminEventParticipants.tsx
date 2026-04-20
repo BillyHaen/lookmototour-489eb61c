@@ -355,7 +355,7 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                       </div>
                       <div className="p-2 rounded-md bg-background border border-border">
                         <p className="text-xs text-muted-foreground">Sudah Dibayar</p>
-                        <p className="font-bold text-green-600">{formatPrice(paid)}</p>
+                        <p className="font-bold text-green-600">{formatPaid(paid)}</p>
                       </div>
                       <div className="p-2 rounded-md bg-background border border-border">
                         <p className="text-xs text-muted-foreground">Sisa</p>
@@ -448,14 +448,70 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                     )}
                   </div>
 
-                  {/* Towing info */}
-                  {((r as any).towing_pergi || (r as any).towing_pulang) && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Truck className="h-3.5 w-3.5" />
-                      {(r as any).towing_pergi && <Badge variant="outline" className="text-xs">Towing Pergi</Badge>}
-                      {(r as any).towing_pulang && <Badge variant="outline" className="text-xs">Towing Pulang</Badge>}
-                    </div>
-                  )}
+                  {/* Cost breakdown */}
+                  {(() => {
+                    const tierPrice =
+                      r.registration_type === 'sharing' ? (event?.price_sharing || 0) :
+                      r.registration_type === 'couple' ? (event?.price_couple || 0) :
+                      (event?.price_single || event?.price || 0);
+                    const towingPergiPrice = (r as any).towing_pergi ? (event?.towing_pergi_price || 0) : 0;
+                    const towingPulangPrice = (r as any).towing_pulang ? (event?.towing_pulang_price || 0) : 0;
+                    return (
+                      <div className="p-3 rounded-lg border border-border bg-background/50 space-y-2">
+                        <p className="text-xs font-medium flex items-center gap-1.5">
+                          <Wallet className="h-3.5 w-3.5 text-primary" /> Rincian Biaya
+                        </p>
+                        <div className="text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Trip ({regTypeLabel(r.registration_type)})</span>
+                            <span>{formatPrice(tierPrice)}</span>
+                          </div>
+                          {(r as any).towing_pergi && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground flex items-center gap-1"><Truck className="h-3 w-3" /> Towing Pergi</span>
+                              <span>{formatPrice(towingPergiPrice)}</span>
+                            </div>
+                          )}
+                          {(r as any).towing_pulang && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground flex items-center gap-1"><Truck className="h-3 w-3" /> Towing Pulang</span>
+                              <span>{formatPrice(towingPulangPrice)}</span>
+                            </div>
+                          )}
+                          {(r.rentals || []).length > 0 && (
+                            <div className="pt-1.5 mt-1.5 border-t border-border space-y-1.5">
+                              <p className="text-xs font-medium flex items-center gap-1.5">
+                                <Package className="h-3 w-3" /> Sewa Gear ({r.rentals.length})
+                              </p>
+                              {r.rentals.map((gr: any) => (
+                                <div key={gr.id} className="flex items-start justify-between gap-2 pl-4">
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    {gr.products?.image_url && (
+                                      <img src={gr.products.image_url} alt="" className="w-7 h-7 rounded object-cover flex-shrink-0" />
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-xs font-medium truncate">
+                                        {gr.products?.name || 'Gear'} {gr.qty > 1 && <span className="text-muted-foreground">× {gr.qty}</span>}
+                                      </p>
+                                      <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border mt-0.5 ${rentalStatusClass(gr.status)}`}>
+                                        {gr.status === 'pending' && <AlertCircle className="h-2.5 w-2.5" />}
+                                        {rentalStatusLabel(gr.status)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-medium flex-shrink-0">{formatPrice(gr.total_price || 0)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex justify-between pt-1.5 mt-1.5 border-t border-border font-bold">
+                            <span>Total</span>
+                            <span className="text-primary">{formatPrice(total)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {r.notes && (
                     <p className="text-xs text-muted-foreground bg-muted/50 rounded p-2">

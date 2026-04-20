@@ -49,7 +49,8 @@ export default function BannerUpload({ userId, currentUrl, onUploaded, variant =
       const { error: updateError } = await supabase
         .from('profiles').update({ banner_url: bannerUrl }).eq('user_id', userId);
       if (updateError) throw updateError;
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-full', userId] });
+      queryClient.invalidateQueries({ queryKey: ['profile-nav', userId] });
       queryClient.invalidateQueries({ queryKey: ['rider'] });
       onUploaded?.(bannerUrl);
       toast({ title: 'Banner berhasil diperbarui! ✅' });
@@ -66,7 +67,8 @@ export default function BannerUpload({ userId, currentUrl, onUploaded, variant =
     try {
       const { error } = await supabase.from('profiles').update({ banner_url: null }).eq('user_id', userId);
       if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-full', userId] });
+      queryClient.invalidateQueries({ queryKey: ['profile-nav', userId] });
       queryClient.invalidateQueries({ queryKey: ['rider'] });
       onUploaded?.('');
       toast({ title: 'Banner dihapus' });

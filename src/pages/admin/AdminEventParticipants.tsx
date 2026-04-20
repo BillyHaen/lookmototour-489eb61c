@@ -187,6 +187,31 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
     return 0;
   };
 
+  // Local formatter — shows "Rp 0" instead of "GRATIS" for zero amounts
+  const formatPaid = (n: number): string => {
+    if (n <= 0) return 'Rp 0';
+    return formatPrice(n);
+  };
+
+  const rentalStatusLabel = (s: string) => ({
+    pending: 'Belum Dikonfirmasi',
+    confirmed: 'Dikonfirmasi',
+    picked_up: 'Sudah Diambil',
+    returned: 'Dikembalikan',
+    cancelled: 'Dibatalkan',
+  } as Record<string, string>)[s] || s;
+
+  const rentalStatusClass = (s: string): string => {
+    switch (s) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-200 dark:border-yellow-800';
+      case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800';
+      case 'picked_up': return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-950 dark:text-green-200 dark:border-green-800';
+      case 'returned': return 'bg-muted text-muted-foreground border-border';
+      case 'cancelled': return 'bg-destructive/10 text-destructive border-destructive/30';
+      default: return 'bg-muted text-muted-foreground border-border';
+    }
+  };
+
   // Block close on outside-click / Escape — only X icon closes
   const handleOpenChange = (v: boolean) => {
     if (v) onOpenChange(true);

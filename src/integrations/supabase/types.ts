@@ -535,8 +535,10 @@ export type Database = {
       }
       events: {
         Row: {
+          about_destination: string | null
           category: string
           created_at: string
+          cta_primary_label: string | null
           current_participants: number
           date: string
           deleted_at: string | null
@@ -545,17 +547,26 @@ export type Database = {
           distance: string | null
           end_date: string | null
           excludes: string[] | null
+          experience_section: string | null
+          faq: Json
           fatigue_level: number
           force_full: boolean
+          gallery: Json
+          hero_subheadline: string | null
           highlights: string[] | null
           id: string
           image_url: string | null
           includes: string[] | null
           insurance_description: string | null
           insurance_enabled: boolean
+          internal_link_blog_tag: string | null
+          itinerary: Json
           location: string
           max_participants: number
+          meta_description: string | null
+          meta_title: string | null
           motor_types: string[]
+          opening_hook: string | null
           price: number
           price_couple: number
           price_sharing: number
@@ -567,6 +578,7 @@ export type Database = {
           route_data: Json | null
           slug: string
           status: string
+          target_audience: string | null
           tentative_month: string | null
           title: string
           touring_style: string
@@ -574,11 +586,15 @@ export type Database = {
           towing_enabled: boolean
           towing_pergi_price: number
           towing_pulang_price: number
+          trust_section: string | null
           updated_at: string
+          why_join: string | null
         }
         Insert: {
+          about_destination?: string | null
           category?: string
           created_at?: string
+          cta_primary_label?: string | null
           current_participants?: number
           date: string
           deleted_at?: string | null
@@ -587,17 +603,26 @@ export type Database = {
           distance?: string | null
           end_date?: string | null
           excludes?: string[] | null
+          experience_section?: string | null
+          faq?: Json
           fatigue_level?: number
           force_full?: boolean
+          gallery?: Json
+          hero_subheadline?: string | null
           highlights?: string[] | null
           id?: string
           image_url?: string | null
           includes?: string[] | null
           insurance_description?: string | null
           insurance_enabled?: boolean
+          internal_link_blog_tag?: string | null
+          itinerary?: Json
           location?: string
           max_participants?: number
+          meta_description?: string | null
+          meta_title?: string | null
           motor_types?: string[]
+          opening_hook?: string | null
           price?: number
           price_couple?: number
           price_sharing?: number
@@ -609,6 +634,7 @@ export type Database = {
           route_data?: Json | null
           slug?: string
           status?: string
+          target_audience?: string | null
           tentative_month?: string | null
           title: string
           touring_style?: string
@@ -616,11 +642,15 @@ export type Database = {
           towing_enabled?: boolean
           towing_pergi_price?: number
           towing_pulang_price?: number
+          trust_section?: string | null
           updated_at?: string
+          why_join?: string | null
         }
         Update: {
+          about_destination?: string | null
           category?: string
           created_at?: string
+          cta_primary_label?: string | null
           current_participants?: number
           date?: string
           deleted_at?: string | null
@@ -629,17 +659,26 @@ export type Database = {
           distance?: string | null
           end_date?: string | null
           excludes?: string[] | null
+          experience_section?: string | null
+          faq?: Json
           fatigue_level?: number
           force_full?: boolean
+          gallery?: Json
+          hero_subheadline?: string | null
           highlights?: string[] | null
           id?: string
           image_url?: string | null
           includes?: string[] | null
           insurance_description?: string | null
           insurance_enabled?: boolean
+          internal_link_blog_tag?: string | null
+          itinerary?: Json
           location?: string
           max_participants?: number
+          meta_description?: string | null
+          meta_title?: string | null
           motor_types?: string[]
+          opening_hook?: string | null
           price?: number
           price_couple?: number
           price_sharing?: number
@@ -651,6 +690,7 @@ export type Database = {
           route_data?: Json | null
           slug?: string
           status?: string
+          target_audience?: string | null
           tentative_month?: string | null
           title?: string
           touring_style?: string
@@ -658,7 +698,9 @@ export type Database = {
           towing_enabled?: boolean
           towing_pergi_price?: number
           towing_pulang_price?: number
+          trust_section?: string | null
           updated_at?: string
+          why_join?: string | null
         }
         Relationships: []
       }

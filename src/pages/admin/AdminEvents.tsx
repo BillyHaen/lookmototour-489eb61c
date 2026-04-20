@@ -21,6 +21,12 @@ import AdminEventInterests from './AdminEventInterests';
 import EventImageUpload from '@/components/EventImageUpload';
 import RouteEditor from '@/components/admin/RouteEditor';
 import type { RouteData } from '@/lib/gpxParser';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import ItineraryEditor, { type ItineraryDay } from '@/components/admin/ItineraryEditor';
+import FaqEditor, { type FaqItem } from '@/components/admin/FaqEditor';
+import ChecklistEditor from '@/components/admin/ChecklistEditor';
+import GalleryEditor, { type GalleryImage } from '@/components/admin/GalleryEditor';
 
 interface EventForm {
   title: string;
@@ -55,6 +61,18 @@ interface EventForm {
   fatigue_level: number;
   tentative_month: string;
   road_condition: number;
+  // ===== SEO landing fields =====
+  meta_title: string;
+  meta_description: string;
+  hero_subheadline: string;
+  cta_primary_label: string;
+  opening_hook: string;
+  why_join: string;
+  experience_section: string;
+  about_destination: string;
+  target_audience: string;
+  trust_section: string;
+  internal_link_blog_tag: string;
 }
 
 function generateSlug(title: string): string {
@@ -75,6 +93,9 @@ const emptyForm: EventForm = {
   towing_enabled: false, towing_description: '', towing_pergi_price: 0, towing_pulang_price: 0,
   rider_level: 'all', motor_types: [], touring_style: 'adventure', riding_hours_per_day: 0, fatigue_level: 1,
   tentative_month: '', road_condition: 3,
+  meta_title: '', meta_description: '', hero_subheadline: '', cta_primary_label: '🔥 Secure Your Slot Now – Limited Riders Only',
+  opening_hook: '', why_join: '', experience_section: '', about_destination: '',
+  target_audience: '', trust_section: '', internal_link_blog_tag: '',
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }
@@ -85,6 +106,11 @@ export default function AdminEvents() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [seoItinerary, setSeoItinerary] = useState<ItineraryDay[]>([]);
+  const [seoFaq, setSeoFaq] = useState<FaqItem[]>([]);
+  const [seoIncluded, setSeoIncluded] = useState<string[]>([]);
+  const [seoExcluded, setSeoExcluded] = useState<string[]>([]);
+  const [seoGallery, setSeoGallery] = useState<GalleryImage[]>([]);
   const [participantsEvent, setParticipantsEvent] = useState<{ id: string; title: string } | null>(null);
   const [interestsEvent, setInterestsEvent] = useState<{ id: string; title: string } | null>(null);
   const [routeData, setRouteData] = useState<RouteData | null>(null);
@@ -114,8 +140,8 @@ export default function AdminEvents() {
         status: finalStatus, difficulty: form.difficulty, distance: form.distance,
         highlights: form.highlights.split(',').map(h => h.trim()).filter(Boolean),
         requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
-        includes: form.includes.split(',').map(i => i.trim()).filter(Boolean),
-        excludes: form.excludes.split(',').map(e => e.trim()).filter(Boolean),
+        includes: seoIncluded.length ? seoIncluded : form.includes.split(',').map(i => i.trim()).filter(Boolean),
+        excludes: seoExcluded.length ? seoExcluded : form.excludes.split(',').map(e => e.trim()).filter(Boolean),
         insurance_enabled: form.insurance_enabled,
         insurance_description: form.insurance_description,
         towing_enabled: form.towing_enabled,
@@ -130,6 +156,21 @@ export default function AdminEvents() {
         tentative_month: form.tentative_month || null,
         road_condition: form.road_condition,
         route_data: routeData,
+        // SEO landing fields
+        meta_title: form.meta_title || null,
+        meta_description: form.meta_description || null,
+        hero_subheadline: form.hero_subheadline || null,
+        cta_primary_label: form.cta_primary_label || null,
+        opening_hook: form.opening_hook || null,
+        why_join: form.why_join || null,
+        experience_section: form.experience_section || null,
+        about_destination: form.about_destination || null,
+        target_audience: form.target_audience || null,
+        trust_section: form.trust_section || null,
+        internal_link_blog_tag: form.internal_link_blog_tag || null,
+        itinerary: seoItinerary,
+        faq: seoFaq,
+        gallery: seoGallery,
       } as any;
 
       let eventId = editId;
@@ -206,7 +247,11 @@ export default function AdminEvents() {
     onError: (e: Error) => toast({ title: 'Gagal menghapus', description: e.message, variant: 'destructive' }),
   });
 
-  const openCreate = () => { setEditId(null); setForm(emptyForm); setItineraries([]); setRouteData(null); setOpen(true); };
+  const openCreate = () => {
+    setEditId(null); setForm(emptyForm); setItineraries([]); setRouteData(null);
+    setSeoItinerary([]); setSeoFaq([]); setSeoIncluded([]); setSeoExcluded([]); setSeoGallery([]);
+    setOpen(true);
+  };
 
   const openEdit = async (event: any) => {
     setEditId(event.id);
@@ -232,9 +277,25 @@ export default function AdminEvents() {
       fatigue_level: event.fatigue_level || 1,
       tentative_month: event.tentative_month || '',
       road_condition: event.road_condition ?? 3,
+      meta_title: event.meta_title || '',
+      meta_description: event.meta_description || '',
+      hero_subheadline: event.hero_subheadline || '',
+      cta_primary_label: event.cta_primary_label || '🔥 Secure Your Slot Now – Limited Riders Only',
+      opening_hook: event.opening_hook || '',
+      why_join: event.why_join || '',
+      experience_section: event.experience_section || '',
+      about_destination: event.about_destination || '',
+      target_audience: event.target_audience || '',
+      trust_section: event.trust_section || '',
+      internal_link_blog_tag: event.internal_link_blog_tag || '',
     });
     setRouteData((event as any).route_data || null);
-    // Load itineraries
+    setSeoItinerary(Array.isArray(event.itinerary) ? event.itinerary : []);
+    setSeoFaq(Array.isArray(event.faq) ? event.faq : []);
+    setSeoIncluded(((event as any).includes || []) as string[]);
+    setSeoExcluded(((event as any).excludes || []) as string[]);
+    setSeoGallery(Array.isArray(event.gallery) ? event.gallery : []);
+    // Load itineraries (legacy)
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
     setItineraries((data || []).map((it: any) => ({
       id: it.id, day_number: it.day_number, date: it.date || '', title: it.title, description: it.description,

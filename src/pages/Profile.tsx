@@ -23,7 +23,7 @@ import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
-import BannerUpload from '@/components/BannerUpload';
+
 import RecommendedSponsors from '@/components/RecommendedSponsors';
 
 const BADGES = [

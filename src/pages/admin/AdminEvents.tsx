@@ -21,6 +21,12 @@ import AdminEventInterests from './AdminEventInterests';
 import EventImageUpload from '@/components/EventImageUpload';
 import RouteEditor from '@/components/admin/RouteEditor';
 import type { RouteData } from '@/lib/gpxParser';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import ItineraryEditor, { type ItineraryDay } from '@/components/admin/ItineraryEditor';
+import FaqEditor, { type FaqItem } from '@/components/admin/FaqEditor';
+import ChecklistEditor from '@/components/admin/ChecklistEditor';
+import GalleryEditor, { type GalleryImage } from '@/components/admin/GalleryEditor';
 
 interface EventForm {
   title: string;

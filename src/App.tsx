@@ -36,6 +36,8 @@ import TrackPublic from "./pages/TrackPublic";
 import SponsorDetail from "./pages/SponsorDetail";
 import SponsorDeals from "./pages/SponsorDeals";
 import AdminSponsors from "./pages/admin/AdminSponsors";
+import AdminVendors from "./pages/admin/AdminVendors";
+import AdminRentals from "./pages/admin/AdminRentals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,6 +82,8 @@ const App = () => (
             <Route path="/sponsor/:slug" element={<SponsorDetail />} />
             <Route path="/dashboard/sponsor-deals" element={<SponsorDeals />} />
             <Route path="/admin/sponsors" element={<AdminSponsors />} />
+            <Route path="/admin/vendors" element={<AdminVendors />} />
+            <Route path="/admin/rentals" element={<AdminRentals />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

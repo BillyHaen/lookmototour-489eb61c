@@ -1,7 +1,12 @@
 import { useParams, Link } from 'react-router-dom';
 import RichTextContent from '@/components/RichTextContent';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck, Shield } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck, Shield, Zap, Star } from 'lucide-react';
+import ItinerarySection from '@/components/EventLanding/ItinerarySection';
+import IncludedExcludedSection from '@/components/EventLanding/IncludedExcludedSection';
+import FaqSection from '@/components/EventLanding/FaqSection';
+import GallerySection from '@/components/EventLanding/GallerySection';
+import FinalCtaBanner from '@/components/EventLanding/FinalCtaBanner';
 import ShareButton from '@/components/ShareButton';
 import EventRecommendations from '@/components/EventRecommendations';
 import TripSponsors from '@/components/TripSponsors';

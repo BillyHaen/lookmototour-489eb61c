@@ -1,64 +1,99 @@
 
 
-## Masalah yang akan diperbaiki
+## Audit Trail (Jejak Audit) Admin
 
-### 1. Email konfirmasi pendaftaran tidak terkirim
-**Penyebab:** `EventRegistrationForm.tsx` belum invoke `send-transactional-email` setelah RPC `create_registration_with_rentals` sukses (wiring Fase 1 belum selesai untuk trigger ini).
+### 1. Skema Database
 
-**Fix:** Setelah RPC sukses, panggil `supabase.functions.invoke('send-transactional-email', ...)` dengan:
-- 1× email `event-registration-confirmation` ke user (idempotency `reg-confirm-{regId}`)
-- Loop per rental → 1× email `gear-rental-confirmation` per rental (idempotency `rental-confirm-{regId}-{idx}`)
+**Tabel baru `audit_logs`:**
+| Kolom | Tipe | Keterangan |
+|---|---|---|
+| `id` | uuid PK | gen_random_uuid() |
+| `user_id` | uuid | aktor (NULL = system / anon) |
+| `user_email` | text | snapshot email saat aksi |
+| `user_name` | text | snapshot name |
+| `action` | text | `create`, `update`, `delete`, `login`, `logout`, `login_failed`, `signup`, `password_reset`, dll. |
+| `table_name` | text | objek (mis. `events`, `products`, `gear_rentals`) |
+| `record_id` | uuid/text | ID baris yang dipengaruhi |
+| `old_values` | jsonb | sebelum (NULL untuk create/login) |
+| `new_values` | jsonb | sesudah (NULL untuk delete/logout) |
+| `ip_address` | text | dari edge function `req` headers |
+| `user_agent` | text | browser/device |
+| `status` | text | `success` / `failed` |
+| `error_message` | text | nullable |
+| `metadata` | jsonb | konteks tambahan |
+| `created_at` | timestamptz | default `now()` |
 
-### 2. Detail peserta event di admin
-**a) "GRATIS" muncul untuk pembayaran 0**
-- Penyebab: `formatPrice(0)` mengembalikan "GRATIS" (rule global di `src/data/events.ts`).
-- Fix: di `AdminEventParticipants.tsx`, untuk field "Sudah Dibayar" gunakan formatter lokal — kalau `paid === 0` tampilkan `Rp 0` (bukan GRATIS). Field "Total Biaya" & "Sisa" tetap pakai `formatPrice` (kalau total benar-benar 0, "GRATIS" wajar).
+**Indeks:** `(created_at DESC)`, `(user_id)`, `(table_name)`, `(action)`.
 
-**b) Munculkan detail sewa gear & breakdown biaya towing/sewa**
-- Saat ini query rentals hanya ambil `total_price`. Ubah jadi ambil `id, qty, total_price, status, products(name, image_url)`.
-- Tambah panel breakdown di tiap registrasi:
-  - Biaya tier (Single/Sharing/Couple): `Rp X`
-  - Biaya towing pergi (kalau ada): `Rp X`
-  - Biaya towing pulang (kalau ada): `Rp X`
-  - Daftar Sewa Gear (per item dengan qty + total)
-  - Total: `Rp X`
+**RLS (sangat ketat — append-only):**
+- SELECT: hanya admin (`has_role(auth.uid(),'admin')`).
+- INSERT: hanya `service_role` (dari edge functions/triggers).
+- UPDATE & DELETE: **DITOLAK SEMUA** (no policy = no access). Bahkan admin tidak bisa edit/hapus → memenuhi kriteria "tidak bisa diubah".
 
-**c) Sewa Gear status "belum dikonfirmasi" → ikon kuning**
-- Tiap rental ditampilkan dengan badge berwarna:
-  - `pending` → kuning (`bg-yellow-100 text-yellow-800`, ikon `AlertCircle` kuning)
-  - `confirmed` → biru/secondary
-  - `picked_up` → hijau
-  - `returned` → muted
-  - `cancelled` → merah
+### 2. Pencatatan Otomatis (DB Triggers)
 
-### 3. Inventori produk berubah-ubah sesuai status sewa
-**Status saat ini:** RPC `get_product_availability` SUDAH menghitung `currently_rented` dari rental berstatus `confirmed` atau `picked_up`. Jadi:
-- Sewa `pending` → BELUM mengurangi inventori (perlu admin konfirmasi dulu)
-- Sewa `confirmed` atau `picked_up` → SUDAH mengurangi inventori (otomatis)
-- Sewa `returned` atau `cancelled` → SUDAH dikembalikan ke inventori (otomatis)
+Buat fungsi trigger generik `public.log_audit_event()` yang dipasang di tabel-tabel kritikal: `events`, `products`, `event_registrations`, `gear_rentals`, `vendors`, `sponsors`, `blog_posts`, `site_settings`, `email_template_overrides`, `user_roles`, `profiles`.
 
-**Yang perlu diperbaiki sesuai permintaan user (#3 & #4):**
-- User minta: "bila produk sedang disewa/sudah di book sewa, harus mengurangi inventori". Artinya **`pending` juga harus mengurangi** (saat user submit booking). 
-- Update RPC `get_product_availability` agar `currently_rented` juga termasuk `pending` (selain `confirmed` & `picked_up`).
-- Saat status berubah ke `returned` atau `cancelled`, inventori otomatis kembali (sudah berjalan via filter status di RPC).
+Trigger menangkap `TG_OP` (INSERT/UPDATE/DELETE), `OLD`, `NEW`, dan `auth.uid()` lalu insert ke `audit_logs`. IP/user_agent di trigger DB **tidak tersedia** — itu di-enrich dari edge function untuk auth events.
 
-**#4 (Admin Kelola Produk):** Di `AdminProducts.tsx`, tampilkan inventori dinamis (Total / Disewa / Tersedia) memakai RPC `get_product_availability`, sama seperti `ProductCard`. Saat ini cuma tampil `Inventori: X • Terjual: Y`. Tambah: `Disewa: Z • Sisa Tersedia: W`.
+### 3. Pencatatan Auth Events (Edge Function)
 
-## Files yang diubah
+Buat edge function baru `log-audit-event` (verify_jwt = false; validasi internal):
+- Dipanggil dari frontend setelah `signIn`, `signUp`, `signOut`, gagal login, reset password.
+- Menerima `action`, `status`, `metadata`, dan otomatis menangkap `req.headers` → `x-forwarded-for` (IP), `user-agent`.
+- Insert ke `audit_logs` via service role.
 
-| File | Perubahan |
-|---|---|
-| `src/components/EventRegistrationForm.tsx` | Invoke `send-transactional-email` setelah RPC sukses (registration + per-rental loop) |
-| `src/pages/admin/AdminEventParticipants.tsx` | Query rentals lengkap (`status`, `products(name, image_url)`), panel breakdown biaya, badge status rental berwarna kuning untuk pending, formatter lokal untuk "Sudah Dibayar" |
-| `src/pages/admin/AdminProducts.tsx` | Fetch availability per product (via RPC), tampilkan "Disewa: X • Tersedia: Y" |
-| Migration baru | Update RPC `get_product_availability` — sertakan status `pending` di `currently_rented` |
+Wiring di `useAuth.tsx`: invoke setelah setiap aksi auth (success & failure).
 
-## Validasi
-1. Daftar event baru → cek inbox: dapat email konfirmasi (+ email per rental kalau ada).
-2. Buka admin Peserta → "Sudah Dibayar" `Rp 0` (bukan GRATIS) saat belum bayar.
-3. Lihat breakdown: tier, towing pergi, towing pulang, list sewa gear muncul terpisah.
-4. Sewa gear status `pending` → badge kuning. Setelah admin konfirmasi → biru.
-5. Submit sewa baru → langsung `pending` & inventori berkurang di Shop & admin.
-6. Mark `returned` di Sewa Gear → inventori bertambah lagi otomatis.
-7. Buka /admin/products → tiap baris produk yang rentable menunjukkan "Disewa: X • Tersedia: Y" real-time.
+### 4. Halaman Admin `/admin/audit-logs`
+
+**File baru:** `src/pages/admin/AdminAuditLogs.tsx` + tambah link sidebar `AdminLayout.tsx` (icon `ShieldCheck`).
+
+**UI:**
+- Tabel paginated (50 per halaman) urut `created_at DESC`.
+- Kolom: Waktu, User (nama+email), Aksi (badge berwarna), Tabel, Record ID, Status, IP, Aksi (tombol "Detail").
+- **Filter:** rentang tanggal, user (search), action (dropdown), table_name (dropdown), status.
+- **Detail dialog:** menampilkan diff `old_values` vs `new_values` side-by-side (JSON viewer rapi), full metadata, IP, user-agent.
+- **Export CSV** untuk rentang tertentu (compliance).
+- Read-only — tidak ada tombol edit/delete.
+
+### 5. Routing & Akses
+
+- Route `/admin/audit-logs` di `App.tsx`.
+- `AdminLayout` sudah memblokir non-admin → otomatis aman.
+- Tambahkan ke `ADMIN_NAV` array.
+
+### 6. Files yang dibuat / diubah
+
+**Migration baru:**
+- Buat `audit_logs` + RLS + trigger function + attach trigger ke 11 tabel kritikal.
+
+**Edge function baru:**
+- `supabase/functions/log-audit-event/index.ts` (untuk auth events + IP enrichment).
+
+**Frontend baru:**
+- `src/pages/admin/AdminAuditLogs.tsx` (halaman utama)
+- `src/components/admin/AuditLogDetailDialog.tsx` (modal diff)
+- `src/hooks/useAuditLogs.ts` (query + filter)
+
+**Frontend diubah:**
+- `src/App.tsx` — daftarkan route
+- `src/pages/admin/AdminLayout.tsx` — tambah menu sidebar
+- `src/hooks/useAuth.tsx` — invoke `log-audit-event` setelah signIn/signUp/signOut/resetPassword (success & error)
+
+### 7. Validasi
+1. Login admin → muncul entry `action=login, status=success` dengan IP & user-agent.
+2. Salah password → entry `action=login_failed, status=failed`.
+3. Edit event di admin → entry `action=update, table=events` dengan diff old/new.
+4. Hapus produk → entry `action=delete` dengan `old_values` lengkap.
+5. Buka `/admin/audit-logs` → list kronologis terbaru di atas, filter by user/action/date jalan.
+6. Klik Detail → lihat diff JSON old vs new + IP/user-agent/metadata.
+7. Coba akses `/admin/audit-logs` sebagai non-admin → di-redirect ke `/`.
+8. Coba `UPDATE`/`DELETE` audit_logs sebagai admin via SQL → ditolak RLS.
+9. Export CSV → file ter-download dengan kolom lengkap.
+
+### Out of scope
+- Retensi otomatis (purge log lama) — bisa ditambah cron nanti.
+- Real-time live tail — admin refresh manual.
+- Logging untuk SELECT (hanya mutations + auth).
 

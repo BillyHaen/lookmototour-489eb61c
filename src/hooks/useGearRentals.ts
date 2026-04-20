@@ -23,10 +23,18 @@ export function useAllRentals() {
     queryKey: ['admin-rentals'],
     queryFn: async () => {
       const { data, error } = await (supabase.from('gear_rentals') as any)
-        .select('*, products(name, image_url, vendors(name)), events(title), profiles:user_id(name, phone)')
+        .select('*, products(name, image_url, vendors(name)), events(title)')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as any[];
+      const rentals = (data || []) as any[];
+      const userIds = Array.from(new Set(rentals.map(r => r.user_id).filter(Boolean)));
+      if (userIds.length === 0) return rentals;
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, name, phone')
+        .in('user_id', userIds);
+      const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
+      return rentals.map(r => ({ ...r, profiles: profileMap.get(r.user_id) || null }));
     },
   });
 }

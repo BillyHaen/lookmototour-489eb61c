@@ -685,6 +685,7 @@ export default function AdminEvents() {
                   </div>
                 ))}
                 {!itineraries.length && <p className="text-sm text-muted-foreground text-center py-2">Belum ada itinerary.</p>}
+              </CardContent>
             </Card>
             </TabsContent>
 

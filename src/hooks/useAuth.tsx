@@ -35,8 +35,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  const logAudit = async (payload: Record<string, unknown>) => {
+    try {
+      await supabase.functions.invoke('log-audit-event', { body: payload });
+    } catch (e) {
+      console.warn('audit log failed', e);
+    }
+  };
+
   const signUp = async (email: string, password: string, name: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -44,21 +52,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: window.location.origin,
       },
     });
+    await logAudit({
+      action: 'signup',
+      status: error ? 'failed' : 'success',
+      user_id: data?.user?.id ?? null,
+      user_email: email,
+      user_name: name,
+      error_message: error?.message ?? null,
+    });
     return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    await logAudit({
+      action: error ? 'login_failed' : 'login',
+      status: error ? 'failed' : 'success',
+      user_id: data?.user?.id ?? null,
+      user_email: email,
+      error_message: error?.message ?? null,
+    });
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
+    const currentUser = user;
     await supabase.auth.signOut();
+    await logAudit({
+      action: 'logout',
+      status: 'success',
+      user_id: currentUser?.id ?? null,
+      user_email: currentUser?.email ?? null,
+    });
   };
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
+    });
+    await logAudit({
+      action: 'password_reset',
+      status: error ? 'failed' : 'success',
+      user_email: email,
+      error_message: error?.message ?? null,
     });
     return { error: error as Error | null };
   };

@@ -1766,6 +1766,10 @@ export type Database = {
           claim_id: string
         }[]
       }
+      create_registration_with_rentals: {
+        Args: { _event_id: string; _payload: Json; _rentals?: Json }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean

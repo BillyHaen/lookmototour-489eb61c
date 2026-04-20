@@ -23,7 +23,7 @@ import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
-import BannerUpload from '@/components/BannerUpload';
+
 import RecommendedSponsors from '@/components/RecommendedSponsors';
 
 const BADGES = [
@@ -89,7 +89,6 @@ export default function Profile() {
     return r.status === 'confirmed' && ev?.status === 'completed';
   });
 
-  const p: any = profile || {};
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', username: '', phone: '', bio: '', riding_style: '', location: '', banner_url: '' },
@@ -97,17 +96,18 @@ export default function Profile() {
 
   useEffect(() => {
     if (!profile) return;
+    const p: any = profile;
     form.reset({
-      name: p.name || '',
-      username: p.username || '',
-      phone: p.phone || '',
-      bio: p.bio || '',
-      riding_style: p.riding_style || '',
-      location: p.location || '',
-      banner_url: p.banner_url || '',
+      name: p.name ?? '',
+      username: p.username ?? '',
+      phone: p.phone ?? '',
+      bio: p.bio ?? '',
+      riding_style: p.riding_style ?? '',
+      location: p.location ?? '',
+      banner_url: p.banner_url ?? '',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile?.user_id, profile?.updated_at]);
+  }, [profile]);
 
   const updateProfile = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {
@@ -242,19 +242,6 @@ export default function Profile() {
                     <FormItem>
                       <FormLabel>Bio</FormLabel>
                       <FormControl><Textarea placeholder="Ceritakan tentang kamu..." {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="banner_url" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Banner Profil</FormLabel>
-                      <FormControl>
-                        <BannerUpload
-                          userId={user!.id}
-                          currentUrl={field.value}
-                          onUploaded={(url) => field.onChange(url)}
-                        />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />

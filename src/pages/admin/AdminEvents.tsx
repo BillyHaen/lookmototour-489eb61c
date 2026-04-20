@@ -697,9 +697,29 @@ export default function AdminEvents() {
               </div>
             </TabsContent>
 
-            <TabsContent value="itinerary" className="mt-4">
-              <p className="text-xs text-muted-foreground mb-3">Itinerary terstruktur untuk landing page SEO (per hari + foto + alt). Beda dari "Itinerary Perhari" lama di tab Dasar.</p>
-              <ItineraryEditor value={seoItinerary} onChange={setSeoItinerary} />
+            <TabsContent value="itinerary" className="space-y-6 mt-4">
+              {/* Rute Touring Keseluruhan */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    🗺️ Rute Touring Keseluruhan (GPX + Waypoint)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RouteEditor value={routeData} onChange={setRouteData} />
+                </CardContent>
+              </Card>
+
+              {/* Itinerary Per Hari + Rute Per Hari */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-primary" /> Itinerary Per Hari
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Per hari: judul, deskripsi, gambar SEO (alt), dan rute opsional (start → end, jarak, Google Maps).
+                </p>
+                <ItineraryEditor value={seoItinerary} onChange={setSeoItinerary} />
+              </div>
             </TabsContent>
 
             <TabsContent value="checklist" className="space-y-5 mt-4">

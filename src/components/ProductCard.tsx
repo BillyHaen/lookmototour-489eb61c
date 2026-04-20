@@ -92,11 +92,17 @@ export default function ProductCard({ product }: Props) {
                 <p className="font-bold text-xl text-primary">{formatPrice(product.daily_rent_price)}</p>
                 <p className="text-[11px] text-muted-foreground">/ hari</p>
               </div>
-              {product.rent_deposit > 0 && (
-                <span className="text-[11px] text-muted-foreground text-right">
-                  Deposit<br />{formatPrice(product.rent_deposit)}
+              <div className="text-right">
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1 justify-end">
+                  <Package className="h-3 w-3" /> {availableToRent} tersedia
                 </span>
-              )}
+                {currentlyRented > 0 && (
+                  <span className="text-[10px] text-muted-foreground">{currentlyRented} disewa</span>
+                )}
+                {product.rent_deposit > 0 && (
+                  <span className="block text-[10px] text-muted-foreground">Deposit {formatPrice(product.rent_deposit)}</span>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -108,6 +114,15 @@ export default function ProductCard({ product }: Props) {
 
         {/* CTA */}
         {mode === 'rent' && canRent ? (
+          <RentalCheckoutDialog
+            product={product}
+            trigger={
+              <Button className="w-full gap-2" disabled={availableToRent <= 0}>
+                <CalendarDays className="h-4 w-4" /> {availableToRent > 0 ? 'Sewa Sekarang' : 'Habis Disewa'}
+              </Button>
+            }
+          />
+        ) : (
           <RentalCheckoutDialog
             product={product}
             trigger={

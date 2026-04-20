@@ -1,46 +1,63 @@
 
 
-## Akar masalah (sudah dikonfirmasi via DB query)
+## Diagnosis
 
-RPC `recommend_rental_gear` melempar error PostgreSQL:
-```
-ERROR: 42702: column reference "available_qty" is ambiguous
-```
-Ada nama `available_qty` baik di SELECT (alias kolom) maupun sebagai variabel PL/pgSQL → query gagal eksekusi → frontend dapat error → `recs.length === 0` → empty state muncul (yang user lihat di screenshot).
+Saya cek database — ada 1 rental dengan `registration_id = NULL` (artinya rental orphan tanpa pendaftaran). Setelah audit:
 
-Data lain sudah benar:
-- Produk SHAD TR08 ada (rentable, harga 50k, stok 3, brand & motor types lengkap).
-- Event Sumba: `touring_style=adventure`, `difficulty=sedang`. Match seharusnya skor tinggi.
+**Flow registrasi event (`EventRegistrationForm.onSubmit`)**: secara teknis sudah benar — gear rental hanya di-insert SETELAH user klik "Kirim Pendaftaran" (selection cuma local state sampai submit). 
 
-## Fix (1 migration SQL)
+**Tapi** ada 2 masalah nyata yang menimbulkan persepsi "rental terproses padahal batal":
 
-Rename alias di CTE dari `available_qty` → `avail_qty` (atau qualify dengan nama CTE) supaya tidak bentrok dengan variabel PL/pgSQL. Hanya 1 file yang berubah.
+### Masalah #1 — Tidak atomic
+Di `onSubmit`: registration di-insert dulu → lalu rental di-insert terpisah. Kalau insert rental gagal, registration tetap ada. Lebih buruk: kalau user **menutup tab di tengah submit** (network slow), bisa terjadi parsial.
+
+### Masalah #2 — Tidak ada cascade saat batal
+Kalau admin/user batalkan `event_registrations` (set status `cancelled` atau hapus row), `gear_rentals` terkait tetap `pending` di tabel — muncul di "Sewa Gear Saya" & dihitung di availability inventori. Inilah yang terlihat user: registrasi batal, tapi sewa masih nyangkut.
+
+### Masalah #3 — Rental orphan dari Shop (`RentalCheckoutDialog`)
+Path Shop insert rental tanpa `event_id`/`registration_id` — itu by design (sewa standalone). Bukan bug, tapi user mungkin bingung melihatnya di "Sewa Gear Saya".
+
+## Fix
+
+### 1. Atomic insert via RPC baru `create_registration_with_rentals`
+Migration SQL: function `SECURITY DEFINER` yang insert registration + rentals dalam **1 transaksi**. Kalau salah satu gagal → rollback semua. Frontend cuma panggil 1 RPC.
 
 ```sql
-CREATE OR REPLACE FUNCTION public.recommend_rental_gear(...)
--- di dalam WITH scored AS (...): ganti `AS available_qty` → `AS avail_qty`
--- di WHERE akhir: `WHERE avail_qty > 0`
--- di SELECT akhir: alias balik jadi `avail_qty AS available_qty` agar TS type tetap kompatibel
+CREATE FUNCTION public.create_registration_with_rentals(
+  _event_id uuid, _payload jsonb, _rentals jsonb
+) RETURNS uuid -- returns registration id
+-- BEGIN; insert registration; loop insert rentals; COMMIT (atomic by default in plpgsql)
 ```
 
-## Bagian setup yang perlu user kerjakan agar gear muncul
+### 2. Cascade trigger: registration cancelled → rentals cancelled
+Migration SQL: trigger `AFTER UPDATE OF status ON event_registrations` — kalau `NEW.status = 'cancelled'` (atau payment_status = 'batal'), set semua `gear_rentals.status = 'cancelled'` yang `registration_id = NEW.id` & masih `pending`/`confirmed`.
 
-Untuk produk lain yang ingin masuk rekomendasi, di `/admin/products` pastikan tiap produk punya:
-1. **Vendor** ter-assign (sudah ada `MotoGear`/dst).
-2. **Aktif** & toggle **Bisa Disewa** ON.
-3. **Harga sewa/hari** > 0.
-4. **Total inventory** > 0.
-5. **Suitable motor types** terisi (minimal 1 dari: sport/touring/adventure/naked/cruiser/matic).
-6. **Suitable trip styles** terisi (adventure/touring/city) — match dengan `touring_style` event.
-7. **Motor brands** opsional (boost skor +5 jika match merek user).
-8. **Min difficulty** ≤ difficulty event (mudah=1, sedang=2, sulit=3, ekstrem=4).
+Plus: trigger `AFTER DELETE` untuk hard-delete registration → cascade cancel rentals (bukan delete, agar audit trail tetap).
 
-## Validasi setelah fix
-1. Buka event Sumba → Daftar Sekarang → pilih Brand `Honda` Model `CRF250 Rally` (kategori adventure).
-2. Section "Sewa Gear" tampil produk SHAD TR08 dengan badge "Rekomen" (skor: 10 motor + 8 style + 5 brand + 5 difficulty + 2 luggage = 30).
-3. Pilih qty → total registrasi bertambah otomatis.
+### 3. Frontend `EventRegistrationForm.onSubmit`
+Refactor: ganti 2 insert terpisah → 1 panggilan `supabase.rpc('create_registration_with_rentals', {...})`. Lebih bersih, atomic, no parsial state.
+
+### 4. Cleanup orphan rental
+1 SQL one-shot: `UPDATE gear_rentals SET status='cancelled' WHERE id='96970955-...'` (rental test orphan).
+
+### 5. Profile UX (kecil)
+Filter di `useMyRentals` query — exclude `status='cancelled'` dari tampilan default, atau tampilkan dengan badge "Dibatalkan" (sudah ada). Optional, tapi disarankan: sembunyikan cancelled lebih dari 30 hari.
 
 ## Files
-- **New migration**: fix `recommend_rental_gear` (rename alias).
-- Tidak ada perubahan frontend.
+- **New migration**: 
+  - `create_registration_with_rentals` RPC
+  - `cascade_cancel_rentals_on_registration_cancel` trigger
+  - Cleanup orphan
+- **Edited**: `src/components/EventRegistrationForm.tsx` (pakai RPC tunggal)
+- **Optional edit**: `src/hooks/useGearRentals.ts` (filter cancelled lama)
+
+## Validasi
+1. Buka registrasi event Sumba, pilih gear, **tutup dialog tanpa submit** → cek DB: tidak ada row baru di `gear_rentals`. ✅ (sudah benar sekarang juga)
+2. Submit registration + gear → cek DB: keduanya ada, terhubung via `registration_id`.
+3. Admin batalkan registration (`payment_status='batal'` atau `status='cancelled'`) → otomatis `gear_rentals` jadi `cancelled`, hilang dari "Sewa Gear Saya" aktif.
+4. Submit dengan gear yang stoknya habis → seluruh transaksi rollback, registration tidak terbuat.
+
+## Out of scope
+- Auto-refund deposit (manual via admin).
+- Notifikasi WhatsApp ke vendor saat cancel (bisa fase berikutnya).
 

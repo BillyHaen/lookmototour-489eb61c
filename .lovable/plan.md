@@ -1,63 +1,150 @@
 
 
-## Diagnosis
+## Tujuan
+Tambahkan halaman admin untuk **edit semua template email (auth + transactional)** + tombol **Kirim Test Email**, di samping eksekusi rencana Fase 1+2 yang sudah disetujui.
 
-Saya cek database — ada 1 rental dengan `registration_id = NULL` (artinya rental orphan tanpa pendaftaran). Setelah audit:
+## Arsitektur penyimpanan template
 
-**Flow registrasi event (`EventRegistrationForm.onSubmit`)**: secara teknis sudah benar — gear rental hanya di-insert SETELAH user klik "Kirim Pendaftaran" (selection cuma local state sampai submit). 
+Saat ini template adalah file `.tsx` React Email yang di-bundle ke edge function. Itu tidak bisa diedit dari UI tanpa redeploy. Solusi:
 
-**Tapi** ada 2 masalah nyata yang menimbulkan persepsi "rental terproses padahal batal":
+**Hybrid model**: file `.tsx` jadi **default/fallback**, sementara admin bisa **override** via DB. Saat kirim, edge function cek DB dulu — kalau ada override aktif → render override; kalau tidak → render template default.
 
-### Masalah #1 — Tidak atomic
-Di `onSubmit`: registration di-insert dulu → lalu rental di-insert terpisah. Kalau insert rental gagal, registration tetap ada. Lebih buruk: kalau user **menutup tab di tengah submit** (network slow), bisa terjadi parsial.
+### Tabel baru `email_template_overrides`
+| kolom | tipe | catatan |
+|---|---|---|
+| `id` | uuid PK | |
+| `template_name` | text UNIQUE | mis. `event-registration-confirmation`, `signup`, `recovery` |
+| `subject` | text | subject line (bisa pakai placeholder `{{name}}`) |
+| `body_html` | text | HTML lengkap (sudah branded, agar render konsisten) |
+| `body_text` | text nullable | plain-text fallback |
+| `is_active` | boolean default true | toggle override on/off tanpa hapus |
+| `updated_by` | uuid | auth.uid() admin |
+| `updated_at` | timestamptz | |
 
-### Masalah #2 — Tidak ada cascade saat batal
-Kalau admin/user batalkan `event_registrations` (set status `cancelled` atau hapus row), `gear_rentals` terkait tetap `pending` di tabel — muncul di "Sewa Gear Saya" & dihitung di availability inventori. Inilah yang terlihat user: registrasi batal, tapi sewa masih nyangkut.
+RLS: hanya `admin` (via `has_role`) yang bisa SELECT/INSERT/UPDATE. Edge function akses pakai service role.
 
-### Masalah #3 — Rental orphan dari Shop (`RentalCheckoutDialog`)
-Path Shop insert rental tanpa `event_id`/`registration_id` — itu by design (sewa standalone). Bukan bug, tapi user mungkin bingung melihatnya di "Sewa Gear Saya".
+### Placeholder system
+Pakai sintaks `{{variable}}` mustache-style sederhana. Variable = props yang dikirim via `templateData` (mis. `{{name}}`, `{{eventTitle}}`, `{{totalAmount}}`). Edge function ganti string sebelum kirim.
 
-## Fix
+Tiap template punya **daftar variable yang tersedia** (didefinisikan di registry frontend, ditampilkan di editor sebagai chips yang bisa di-klik untuk insert).
 
-### 1. Atomic insert via RPC baru `create_registration_with_rentals`
-Migration SQL: function `SECURITY DEFINER` yang insert registration + rentals dalam **1 transaksi**. Kalau salah satu gagal → rollback semua. Frontend cuma panggil 1 RPC.
+## Perubahan edge function
 
-```sql
-CREATE FUNCTION public.create_registration_with_rentals(
-  _event_id uuid, _payload jsonb, _rentals jsonb
-) RETURNS uuid -- returns registration id
--- BEGIN; insert registration; loop insert rentals; COMMIT (atomic by default in plpgsql)
+### `send-transactional-email/index.ts`
+Tambah logic di awal render:
+1. Query `email_template_overrides` where `template_name = X and is_active = true`.
+2. Kalau ada → ganti `{{var}}` di `subject` & `body_html` pakai `templateData` → enqueue dengan HTML hasil render (skip React Email).
+3. Kalau tidak ada → render React Email seperti biasa.
+
+### `auth-email-hook/index.ts`
+Sama — cek override untuk `template_name = signup|recovery|magic-link|invite|email-change|reauthentication` sebelum render React component.
+
+### Edge function baru `send-test-email`
+- Body: `{ templateName, recipientEmail, sampleData }`.
+- Auth: hanya admin (`has_role(auth.uid(), 'admin')`).
+- Kirim via `send-transactional-email` dengan idempotency unik (`test-{ts}-{admin_id}`) supaya tiap test selalu terkirim.
+- Mark email subject dengan prefix `[TEST]` agar jelas.
+
+## Frontend admin
+
+### Halaman baru `/admin/emails`
+Layout: list di kiri (semua template — auth + transactional), editor di kanan.
+
+**List item** menampilkan:
+- Display name (mis. "Konfirmasi Pendaftaran Event")
+- Badge "Default" / "Custom" (kalau ada override aktif)
+- Badge kategori (Auth / Transactional)
+
+**Editor panel:**
+- Field: Subject (input)
+- Field: Body HTML (textarea besar, monospace) — atau opsional pakai RichTextEditor yang sudah ada di project (`src/components/RichTextEditor.tsx`).
+- Sidebar variabel: chips yang bisa di-klik → insert `{{varName}}` di posisi cursor.
+- Tombol **Preview** → render HTML dengan sample data di iframe.
+- Tombol **Reset to Default** → hapus row override (kembali ke template `.tsx`).
+- Tombol **Save** → upsert ke `email_template_overrides`.
+- Tombol **Send Test** → modal input email tujuan + sample data JSON → invoke `send-test-email`.
+
+### Registry frontend `src/lib/emailTemplateRegistry.ts`
+Daftar semua template + variabelnya:
+```ts
+{
+  'event-registration-confirmation': {
+    displayName: 'Konfirmasi Pendaftaran Event',
+    category: 'transactional',
+    variables: ['name', 'eventTitle', 'eventDate', 'totalAmount', 'eventUrl'],
+    sampleData: { name: 'Budi', eventTitle: 'Sumba Adventure', ... },
+  },
+  'signup': { displayName: 'Konfirmasi Email Signup', category: 'auth', variables: ['confirmation_url'], ... },
+  // ...total ~15 templates (6 auth + 9 transactional)
+}
 ```
 
-### 2. Cascade trigger: registration cancelled → rentals cancelled
-Migration SQL: trigger `AFTER UPDATE OF status ON event_registrations` — kalau `NEW.status = 'cancelled'` (atau payment_status = 'batal'), set semua `gear_rentals.status = 'cancelled'` yang `registration_id = NEW.id` & masih `pending`/`confirmed`.
+### Navigasi admin
+Tambah menu "Emails" di `AdminLayout.tsx` sidebar.
 
-Plus: trigger `AFTER DELETE` untuk hard-delete registration → cascade cancel rentals (bukan delete, agar audit trail tetap).
+## Eksekusi (urutan)
 
-### 3. Frontend `EventRegistrationForm.onSubmit`
-Refactor: ganti 2 insert terpisah → 1 panggilan `supabase.rpc('create_registration_with_rentals', {...})`. Lebih bersih, atomic, no parsial state.
-
-### 4. Cleanup orphan rental
-1 SQL one-shot: `UPDATE gear_rentals SET status='cancelled' WHERE id='96970955-...'` (rental test orphan).
-
-### 5. Profile UX (kecil)
-Filter di `useMyRentals` query — exclude `status='cancelled'` dari tampilan default, atau tampilkan dengan badge "Dibatalkan" (sudah ada). Optional, tapi disarankan: sembunyikan cancelled lebih dari 30 hari.
+1. **Email infra setup** (otomatis): `setup_email_infra` → `scaffold_transactional_email` → halaman `/unsubscribe`.
+2. **Buat 9 template transactional `.tsx`** (Fase 1+2) sesuai branding navy/sky-blue + logo.
+3. **Migration**: tabel `email_template_overrides` + RLS admin-only.
+4. **Edge functions**:
+   - Update `send-transactional-email/index.ts`: cek override + simple `{{var}}` replacer.
+   - Update `auth-email-hook/index.ts`: cek override.
+   - Buat `send-test-email/index.ts` (admin-only).
+5. **Cron edge functions** (Fase 2): `event-reminders-cron`, `rental-reminders-cron` (kirim ke user + vendor via `vendors.contact_email`).
+6. **Schedule cron** (SQL insert, bukan migration): pg_cron daily 09:00 WIB untuk 2 reminder cron.
+7. **Frontend wiring** (semua trigger Fase 1):
+   - `EventRegistrationForm.tsx` — invoke setelah RPC sukses (registration + per-rental).
+   - `RentalCheckoutDialog.tsx` — invoke setelah insert.
+   - `AdminEventParticipants.tsx` — invoke saat ubah `payment_status`.
+   - `useGearRentals.ts` — invoke di `useUpdateRentalStatus`.
+   - `AdminTestimonials.tsx` — invoke saat approve/reject.
+   - Tracking session start — invoke per recipient.
+8. **Halaman admin `/admin/emails`** + registry + route + sidebar entry.
+9. **Halaman `/unsubscribe`** branded.
+10. **Deploy semua edge functions**.
 
 ## Files
-- **New migration**: 
-  - `create_registration_with_rentals` RPC
-  - `cascade_cancel_rentals_on_registration_cancel` trigger
-  - Cleanup orphan
-- **Edited**: `src/components/EventRegistrationForm.tsx` (pakai RPC tunggal)
-- **Optional edit**: `src/hooks/useGearRentals.ts` (filter cancelled lama)
+
+**Baru:**
+- `supabase/functions/_shared/transactional-email-templates/registry.ts`
+- 9× template `.tsx` Fase 1+2
+- `supabase/functions/send-transactional-email/index.ts` (auto-scaffold + tambah override logic)
+- `supabase/functions/handle-email-unsubscribe/index.ts` (auto)
+- `supabase/functions/handle-email-suppression/index.ts` (auto)
+- `supabase/functions/send-test-email/index.ts`
+- `supabase/functions/event-reminders-cron/index.ts`
+- `supabase/functions/rental-reminders-cron/index.ts`
+- `src/lib/emailTemplateRegistry.ts`
+- `src/pages/admin/AdminEmails.tsx`
+- `src/components/admin/EmailTemplateEditor.tsx`
+- `src/components/admin/EmailTestDialog.tsx`
+- `src/pages/Unsubscribe.tsx`
+- Migration: `email_template_overrides` table + RLS
+
+**Diubah:**
+- `supabase/functions/auth-email-hook/index.ts` — tambah override check
+- `src/components/EventRegistrationForm.tsx`
+- `src/components/RentalCheckoutDialog.tsx`
+- `src/pages/admin/AdminEventParticipants.tsx`
+- `src/pages/admin/AdminTestimonials.tsx`
+- `src/hooks/useGearRentals.ts`
+- `src/pages/TrackingStart.tsx` (atau hook tracking)
+- `src/pages/admin/AdminLayout.tsx` — tambah menu Emails
+- `src/App.tsx` — route `/admin/emails` & `/unsubscribe`
 
 ## Validasi
-1. Buka registrasi event Sumba, pilih gear, **tutup dialog tanpa submit** → cek DB: tidak ada row baru di `gear_rentals`. ✅ (sudah benar sekarang juga)
-2. Submit registration + gear → cek DB: keduanya ada, terhubung via `registration_id`.
-3. Admin batalkan registration (`payment_status='batal'` atau `status='cancelled'`) → otomatis `gear_rentals` jadi `cancelled`, hilang dari "Sewa Gear Saya" aktif.
-4. Submit dengan gear yang stoknya habis → seluruh transaksi rollback, registration tidak terbuat.
+1. Buka `/admin/emails` → pilih "Konfirmasi Pendaftaran Event" → ubah subject jadi "Halo {{name}}, pendaftaranmu masuk!" → Save.
+2. Klik "Send Test" → masukkan email pribadi → cek inbox: subject custom muncul dengan nama sample.
+3. Daftar event sungguhan → cek inbox: pakai versi custom (override aktif).
+4. Klik "Reset to Default" → daftar event lagi → kembali pakai template asli.
+5. Edit template `signup` di admin → register user baru → email confirmation pakai versi custom.
+6. Cron reminder: invoke manual `event-reminders-cron` dengan event H-1 → user dapat email.
+7. Cron rental pickup: rental dengan vendor `contact_email` terisi → user **dan** vendor dapat email.
 
 ## Out of scope
-- Auto-refund deposit (manual via admin).
-- Notifikasi WhatsApp ke vendor saat cancel (bisa fase berikutnya).
+- Versioning history template (cuma current state).
+- A/B testing template.
+- Multi-language template (single language: Indonesia).
+- WYSIWYG visual builder (pakai HTML textarea + RichTextEditor existing).
 

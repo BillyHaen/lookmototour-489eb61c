@@ -2305,7 +2305,7 @@ export type Database = {
       user_has_active_tracking: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "vendor"
       gear_rental_status:
         | "pending"
         | "confirmed"
@@ -2456,7 +2456,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "vendor"],
       gear_rental_status: [
         "pending",
         "confirmed",

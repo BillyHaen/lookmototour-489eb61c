@@ -281,18 +281,27 @@ export default function AdminEvents() {
       internal_link_blog_tag: event.internal_link_blog_tag || '',
     });
     setRouteData((event as any).route_data || null);
-    setSeoItinerary(Array.isArray(event.itinerary) ? event.itinerary : []);
+    const existingSeo: ItineraryDay[] = Array.isArray(event.itinerary) ? event.itinerary : [];
     setSeoFaq(Array.isArray(event.faq) ? event.faq : []);
     setSeoIncluded(((event as any).includes || []) as string[]);
     setSeoExcluded(((event as any).excludes || []) as string[]);
     setSeoGallery(Array.isArray(event.gallery) ? event.gallery : []);
-    // Load itineraries (legacy)
-    const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
-    setItineraries((data || []).map((it: any) => ({
-      id: it.id, day_number: it.day_number, date: it.date || '', title: it.title, description: it.description,
-    })));
+    // Graceful migration: if SEO itinerary empty, hydrate from legacy event_itineraries
+    if (existingSeo.length === 0) {
+      const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
+      const migrated: ItineraryDay[] = (data || []).map((it: any, idx: number) => ({
+        day: it.day_number || idx + 1,
+        title: it.title || '',
+        description: (it.description || '').replace(/<[^>]*>/g, ''),
+      }));
+      setSeoItinerary(migrated);
+    } else {
+      setSeoItinerary(existingSeo);
+    }
+    setItineraries([]);
     setOpen(true);
   };
+
 
   const addItineraryDay = () => {
     const nextDay = itineraries.length + 1;

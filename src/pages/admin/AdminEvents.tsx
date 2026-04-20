@@ -640,46 +640,8 @@ export default function AdminEvents() {
               </SelectContent>
             </Select>
 
-            {/* 🗺️ Route Editor */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  🗺️ Rute Touring (GPX + Waypoint)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RouteEditor value={routeData} onChange={setRouteData} />
-              </CardContent>
-            </Card>
-
-            {/* Itinerary Section */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-primary" /> Itinerary Perhari
-                  </CardTitle>
-                  <Button type="button" variant="outline" size="sm" onClick={addItineraryDay}><Plus className="h-3 w-3 mr-1" /> Tambah Hari</Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {itineraries.map((it, i) => (
-                  <div key={i} className="p-3 rounded-lg border border-border space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Hari {it.day_number}</span>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeItinerary(i)}><Trash2 className="h-3 w-3" /></Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input type="date" value={it.date} onChange={(e) => updateItinerary(i, 'date', e.target.value)} placeholder="Tanggal" />
-                      <Input value={it.title} onChange={(e) => updateItinerary(i, 'title', e.target.value)} placeholder="Judul hari ini" />
-                    </div>
-                    <RichTextEditor value={it.description} onChange={(v) => updateItinerary(i, 'description', v)} placeholder="Deskripsi kegiatan hari ini..." minHeight="100px" />
-                  </div>
-                ))}
-                {!itineraries.length && <p className="text-sm text-muted-foreground text-center py-2">Belum ada itinerary.</p>}
-              </CardContent>
-            </Card>
             </TabsContent>
+
 
             <TabsContent value="seo" className="space-y-4 mt-4">
               <div>

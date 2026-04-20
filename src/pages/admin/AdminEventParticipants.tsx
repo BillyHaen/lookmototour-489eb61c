@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard, Trash2, Truck, Plus, Wallet } from 'lucide-react';
+import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard, Trash2, Truck, Plus, Wallet, Package, AlertCircle } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { formatDate, formatPrice } from '@/data/events';
 import { toast } from '@/hooks/use-toast';
@@ -57,21 +57,30 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
 
       const [{ data: profiles }, { data: rentals }] = await Promise.all([
         supabase.from('profiles').select('user_id, name, avatar_url').in('user_id', userIds),
-        supabase.from('gear_rentals').select('registration_id, total_price').in('registration_id', regIds),
+        (supabase.from('gear_rentals') as any)
+          .select('id, registration_id, qty, total_price, deposit_amount, status, total_days, products(name, image_url)')
+          .in('registration_id', regIds),
       ]);
 
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
-      const rentalMap = new Map<string, number>();
+      const rentalsByReg = new Map<string, any[]>();
       (rentals || []).forEach((r: any) => {
         if (!r.registration_id) return;
-        rentalMap.set(r.registration_id, (rentalMap.get(r.registration_id) || 0) + (r.total_price || 0));
+        const arr = rentalsByReg.get(r.registration_id) || [];
+        arr.push(r);
+        rentalsByReg.set(r.registration_id, arr);
       });
 
-      return (data || []).map(r => ({
-        ...r,
-        profile: profileMap.get(r.user_id) || null,
-        rentals_total: rentalMap.get(r.id) || 0,
-      }));
+      return (data || []).map(r => {
+        const regRentals = rentalsByReg.get(r.id) || [];
+        const rentals_total = regRentals.reduce((s, x) => s + (x.total_price || 0), 0);
+        return {
+          ...r,
+          profile: profileMap.get(r.user_id) || null,
+          rentals: regRentals,
+          rentals_total,
+        };
+      });
     },
     enabled: open,
   });
@@ -176,6 +185,31 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
   const currentInstallmentNum = (status: string): number => {
     if (status?.startsWith('cicilan_')) return parseInt(status.split('_')[1]) || 0;
     return 0;
+  };
+
+  // Local formatter — shows "Rp 0" instead of "GRATIS" for zero amounts
+  const formatPaid = (n: number): string => {
+    if (n <= 0) return 'Rp 0';
+    return formatPrice(n);
+  };
+
+  const rentalStatusLabel = (s: string) => ({
+    pending: 'Belum Dikonfirmasi',
+    confirmed: 'Dikonfirmasi',
+    picked_up: 'Sudah Diambil',
+    returned: 'Dikembalikan',
+    cancelled: 'Dibatalkan',
+  } as Record<string, string>)[s] || s;
+
+  const rentalStatusClass = (s: string): string => {
+    switch (s) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-950 dark:text-yellow-200 dark:border-yellow-800';
+      case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-950 dark:text-blue-200 dark:border-blue-800';
+      case 'picked_up': return 'bg-green-100 text-green-800 border-green-300 dark:bg-green-950 dark:text-green-200 dark:border-green-800';
+      case 'returned': return 'bg-muted text-muted-foreground border-border';
+      case 'cancelled': return 'bg-destructive/10 text-destructive border-destructive/30';
+      default: return 'bg-muted text-muted-foreground border-border';
+    }
   };
 
   // Block close on outside-click / Escape — only X icon closes
@@ -321,7 +355,7 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                       </div>
                       <div className="p-2 rounded-md bg-background border border-border">
                         <p className="text-xs text-muted-foreground">Sudah Dibayar</p>
-                        <p className="font-bold text-green-600">{formatPrice(paid)}</p>
+                        <p className="font-bold text-green-600">{formatPaid(paid)}</p>
                       </div>
                       <div className="p-2 rounded-md bg-background border border-border">
                         <p className="text-xs text-muted-foreground">Sisa</p>
@@ -414,14 +448,70 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                     )}
                   </div>
 
-                  {/* Towing info */}
-                  {((r as any).towing_pergi || (r as any).towing_pulang) && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Truck className="h-3.5 w-3.5" />
-                      {(r as any).towing_pergi && <Badge variant="outline" className="text-xs">Towing Pergi</Badge>}
-                      {(r as any).towing_pulang && <Badge variant="outline" className="text-xs">Towing Pulang</Badge>}
-                    </div>
-                  )}
+                  {/* Cost breakdown */}
+                  {(() => {
+                    const tierPrice =
+                      r.registration_type === 'sharing' ? (event?.price_sharing || 0) :
+                      r.registration_type === 'couple' ? (event?.price_couple || 0) :
+                      (event?.price_single || event?.price || 0);
+                    const towingPergiPrice = (r as any).towing_pergi ? (event?.towing_pergi_price || 0) : 0;
+                    const towingPulangPrice = (r as any).towing_pulang ? (event?.towing_pulang_price || 0) : 0;
+                    return (
+                      <div className="p-3 rounded-lg border border-border bg-background/50 space-y-2">
+                        <p className="text-xs font-medium flex items-center gap-1.5">
+                          <Wallet className="h-3.5 w-3.5 text-primary" /> Rincian Biaya
+                        </p>
+                        <div className="text-xs space-y-1">
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Trip ({regTypeLabel(r.registration_type)})</span>
+                            <span>{formatPrice(tierPrice)}</span>
+                          </div>
+                          {(r as any).towing_pergi && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground flex items-center gap-1"><Truck className="h-3 w-3" /> Towing Pergi</span>
+                              <span>{formatPrice(towingPergiPrice)}</span>
+                            </div>
+                          )}
+                          {(r as any).towing_pulang && (
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground flex items-center gap-1"><Truck className="h-3 w-3" /> Towing Pulang</span>
+                              <span>{formatPrice(towingPulangPrice)}</span>
+                            </div>
+                          )}
+                          {(r.rentals || []).length > 0 && (
+                            <div className="pt-1.5 mt-1.5 border-t border-border space-y-1.5">
+                              <p className="text-xs font-medium flex items-center gap-1.5">
+                                <Package className="h-3 w-3" /> Sewa Gear ({r.rentals.length})
+                              </p>
+                              {r.rentals.map((gr: any) => (
+                                <div key={gr.id} className="flex items-start justify-between gap-2 pl-4">
+                                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                                    {gr.products?.image_url && (
+                                      <img src={gr.products.image_url} alt="" className="w-7 h-7 rounded object-cover flex-shrink-0" />
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-xs font-medium truncate">
+                                        {gr.products?.name || 'Gear'} {gr.qty > 1 && <span className="text-muted-foreground">× {gr.qty}</span>}
+                                      </p>
+                                      <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full border mt-0.5 ${rentalStatusClass(gr.status)}`}>
+                                        {gr.status === 'pending' && <AlertCircle className="h-2.5 w-2.5" />}
+                                        {rentalStatusLabel(gr.status)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <span className="text-xs font-medium flex-shrink-0">{formatPrice(gr.total_price || 0)}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          <div className="flex justify-between pt-1.5 mt-1.5 border-t border-border font-bold">
+                            <span>Total</span>
+                            <span className="text-primary">{formatPrice(total)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   {r.notes && (
                     <p className="text-xs text-muted-foreground bg-muted/50 rounded p-2">

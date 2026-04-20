@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from './AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -72,6 +72,24 @@ export default function AdminProducts() {
       if (error) throw error;
       return data as any[];
     },
+  });
+
+  // Per-product live availability (rented / available)
+  const availabilityQueries = useQueries({
+    queries: (products || []).map((p: any) => ({
+      queryKey: ['product-availability', p.id],
+      queryFn: async () => {
+        const { data, error } = await (supabase.rpc as any)('get_product_availability', { _product_id: p.id });
+        if (error) throw error;
+        return (data && data[0]) || null;
+      },
+      enabled: !!p.is_rentable,
+      staleTime: 30_000,
+    })),
+  });
+  const availabilityMap = new Map<string, any>();
+  (products || []).forEach((p: any, i: number) => {
+    if (availabilityQueries[i]?.data) availabilityMap.set(p.id, availabilityQueries[i].data);
   });
 
   const saveMutation = useMutation({
@@ -154,6 +172,14 @@ export default function AdminProducts() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Inventori: {p.total_inventory || p.stock} • Terjual: {p.sold_count || 0} • Kategori: {p.category}
+                    {p.is_rentable && availabilityMap.get(p.id) && (
+                      <>
+                        {' • '}
+                        <span className="text-orange-600 font-medium">Disewa: {availabilityMap.get(p.id).currently_rented}</span>
+                        {' • '}
+                        <span className="text-green-600 font-medium">Tersedia: {availabilityMap.get(p.id).available_to_rent}</span>
+                      </>
+                    )}
                   </p>
                 </div>
               </div>

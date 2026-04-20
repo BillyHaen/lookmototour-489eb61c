@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard, Trash2, Truck, Plus, Wallet } from 'lucide-react';
+import { Loader2, Users, MessageCircle, Search, Phone, Mail, Bike, CreditCard, Trash2, Truck, Plus, Wallet, Package, AlertCircle } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 import { formatDate, formatPrice } from '@/data/events';
 import { toast } from '@/hooks/use-toast';

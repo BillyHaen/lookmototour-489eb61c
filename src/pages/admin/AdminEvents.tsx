@@ -388,11 +388,21 @@ export default function AdminEvents() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editId ? 'Edit Event' : 'Tambah Event'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <Tabs defaultValue="dasar" className="w-full">
+            <TabsList className="grid grid-cols-6 w-full h-auto">
+              <TabsTrigger value="dasar" className="text-xs">📋 Dasar</TabsTrigger>
+              <TabsTrigger value="seo" className="text-xs">🔍 SEO</TabsTrigger>
+              <TabsTrigger value="landing" className="text-xs">📝 Konten</TabsTrigger>
+              <TabsTrigger value="itinerary" className="text-xs">🗓️ Itinerary</TabsTrigger>
+              <TabsTrigger value="checklist" className="text-xs">✅ Include</TabsTrigger>
+              <TabsTrigger value="faq" className="text-xs">❓ FAQ</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dasar" className="space-y-4 mt-4">
             <Input placeholder="Judul Event" value={form.title} onChange={(e) => {
               const newTitle = e.target.value;
               const autoSlug = !editId || form.slug === generateSlug(form.title);

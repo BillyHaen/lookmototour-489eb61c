@@ -1,4 +1,4 @@
-export type EventCategory = 'touring' | 'adventure' | 'race' | 'gathering' | 'workshop';
+export type EventCategory = 'touring' | 'adventure' | 'race' | 'gathering' | 'workshop' | 'motocamp';
 
 export interface MotoEvent {
   id: string;

@@ -28,6 +28,7 @@ export default function RentalGearRecommendations({ eventId, motorType, motorBra
 
   if (!motorType || motorType.length < 2) return null;
 
+
   const updateQty = (rec: RentalRecommendation, delta: number) => {
     const current = selected[rec.product_id]?.qty || 0;
     const next = Math.max(0, Math.min(rec.available_qty, current + delta));
@@ -61,7 +62,19 @@ export default function RentalGearRecommendations({ eventId, motorType, motorBra
     );
   }
 
-  if (recs.length === 0) return null;
+  if (recs.length === 0) {
+    return (
+      <div className="space-y-1 p-3 rounded-lg border border-dashed border-border bg-muted/20">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-muted-foreground" />
+          <p className="text-sm font-medium">Sewa Gear (Opsional)</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Belum ada gear yang cocok untuk motor & trip ini. Cek lagi nanti, kami terus menambah inventori.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3 p-3 rounded-lg border border-border bg-gradient-to-br from-primary/5 to-accent/5">

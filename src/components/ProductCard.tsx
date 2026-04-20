@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import RichTextContent from '@/components/RichTextContent';
 import RentalCheckoutDialog from '@/components/RentalCheckoutDialog';
+import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/events';
-import { MessageCircle, CalendarDays, Tag } from 'lucide-react';
+import { MessageCircle, CalendarDays, Tag, Package } from 'lucide-react';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 interface Props {
@@ -16,8 +18,22 @@ export default function ProductCard({ product }: Props) {
   const canBuy = product.is_purchasable && product.price > 0;
   const [mode, setMode] = useState<'rent' | 'buy'>(canRent && !canBuy ? 'rent' : 'buy');
 
-  // Simple availability based on inventory - sold (rentals checked at booking time)
-  const availableToBuy = Math.max(0, (product.total_inventory ?? product.stock ?? 0) - (product.sold_count || 0));
+  // Real-time availability via RPC (counts active rentals overlapping today)
+  const { data: availability } = useQuery({
+    queryKey: ['product-availability', product.id],
+    queryFn: async () => {
+      const { data, error } = await (supabase.rpc as any)('get_product_availability', {
+        _product_id: product.id,
+      });
+      if (error) throw error;
+      return (data?.[0] || null) as { available_to_buy: number; available_to_rent: number; currently_rented: number; sold: number; total_inventory: number } | null;
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const availableToBuy = availability?.available_to_buy ?? Math.max(0, (product.total_inventory ?? product.stock ?? 0) - (product.sold_count || 0));
+  const availableToRent = availability?.available_to_rent ?? (product.total_inventory ?? 0);
+  const currentlyRented = availability?.currently_rented ?? 0;
 
   const buyWhatsApp = () => {
     const msg = `Halo, saya ingin membeli:\n\n*${product.name}*\nHarga: ${formatPrice(product.price)}\n\nMohon info ketersediaan & pembayaran. Terima kasih!`;
@@ -76,11 +92,17 @@ export default function ProductCard({ product }: Props) {
                 <p className="font-bold text-xl text-primary">{formatPrice(product.daily_rent_price)}</p>
                 <p className="text-[11px] text-muted-foreground">/ hari</p>
               </div>
-              {product.rent_deposit > 0 && (
-                <span className="text-[11px] text-muted-foreground text-right">
-                  Deposit<br />{formatPrice(product.rent_deposit)}
+              <div className="text-right">
+                <span className="text-[11px] text-muted-foreground flex items-center gap-1 justify-end">
+                  <Package className="h-3 w-3" /> {availableToRent} tersedia
                 </span>
-              )}
+                {currentlyRented > 0 && (
+                  <span className="text-[10px] text-muted-foreground">{currentlyRented} disewa</span>
+                )}
+                {product.rent_deposit > 0 && (
+                  <span className="block text-[10px] text-muted-foreground">Deposit {formatPrice(product.rent_deposit)}</span>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -95,8 +117,8 @@ export default function ProductCard({ product }: Props) {
           <RentalCheckoutDialog
             product={product}
             trigger={
-              <Button className="w-full gap-2">
-                <CalendarDays className="h-4 w-4" /> Sewa Sekarang
+              <Button className="w-full gap-2" disabled={availableToRent <= 0}>
+                <CalendarDays className="h-4 w-4" /> {availableToRent > 0 ? 'Sewa Sekarang' : 'Habis Disewa'}
               </Button>
             }
           />

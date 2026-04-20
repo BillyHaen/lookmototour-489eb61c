@@ -123,15 +123,6 @@ export default function ProductCard({ product }: Props) {
             }
           />
         ) : (
-          <RentalCheckoutDialog
-            product={product}
-            trigger={
-              <Button className="w-full gap-2">
-                <CalendarDays className="h-4 w-4" /> Sewa Sekarang
-              </Button>
-            }
-          />
-        ) : (
           <Button className="w-full gap-2" asChild disabled={availableToBuy <= 0}>
             <a href={buyWhatsApp()} target="_blank" rel="noreferrer">
               <MessageCircle className="h-4 w-4" /> {availableToBuy > 0 ? 'Beli via WhatsApp' : 'Stok Habis'}

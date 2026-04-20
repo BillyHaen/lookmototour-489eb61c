@@ -106,6 +106,11 @@ export default function AdminEvents() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [seoItinerary, setSeoItinerary] = useState<ItineraryDay[]>([]);
+  const [seoFaq, setSeoFaq] = useState<FaqItem[]>([]);
+  const [seoIncluded, setSeoIncluded] = useState<string[]>([]);
+  const [seoExcluded, setSeoExcluded] = useState<string[]>([]);
+  const [seoGallery, setSeoGallery] = useState<GalleryImage[]>([]);
   const [participantsEvent, setParticipantsEvent] = useState<{ id: string; title: string } | null>(null);
   const [interestsEvent, setInterestsEvent] = useState<{ id: string; title: string } | null>(null);
   const [routeData, setRouteData] = useState<RouteData | null>(null);

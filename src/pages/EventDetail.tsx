@@ -389,66 +389,8 @@ export default function EventDetail() {
                 );
               })()}
 
-              <div>
-                <h2 className="font-heading font-semibold text-xl mb-3">Highlight Event</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {(event.highlights || []).map((h) => (
-                    <div key={h} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                      <span className="text-primary">✓</span> {h}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Highlights / Requirements / Includes / Excludes are now rendered via SEO sections (Why Join, Target Audience, IncludedExcludedSection) above */}
 
-              {/* Persyaratan */}
-              {(event as any).requirements && (event as any).requirements.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-accent" /> Persyaratan
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).requirements as string[]).map((r) => (
-                      <div key={r} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-accent">•</span> {r}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Include */}
-              {(event as any).includes && (event as any).includes.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary" /> Include
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).includes as string[]).map((item) => (
-                      <div key={item} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-primary">✓</span> {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Exclude */}
-              {(event as any).excludes && (event as any).excludes.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <XCircle className="h-5 w-5 text-destructive" /> Exclude
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).excludes as string[]).map((item) => (
-                      <div key={item} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-destructive">✗</span> {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Asuransi */}
               {(event as any).insurance_enabled && (
                 <Card className="border-primary/20">
                   <CardContent className="flex items-start gap-3 pt-6">

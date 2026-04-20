@@ -21,6 +21,7 @@ import EndorsementCard from '@/components/rider/EndorsementCard';
 import BikeFormDialog from '@/components/rider/BikeFormDialog';
 import GearFormDialog from '@/components/rider/GearFormDialog';
 import EndorsementFormDialog from '@/components/rider/EndorsementFormDialog';
+import RecommendedTripsStrip from '@/components/rider/RecommendedTripsStrip';
 import { formatDate } from '@/data/events';
 
 export default function RiderProfile() {
@@ -208,6 +209,9 @@ export default function RiderProfile() {
               )}
             </TabsContent>
           </Tabs>
+
+          {/* Recommended trips for the owner */}
+          {isOwner && <RecommendedTripsStrip ridingStyle={rider.riding_style} />}
         </div>
       </main>
       <Footer />

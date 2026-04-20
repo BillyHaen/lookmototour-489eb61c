@@ -288,6 +288,9 @@ export default function AdminUsers() {
                     )}
                   </div>
 
+                  {/* Admin Override Panel */}
+                  <RiderOverridePanel userId={selectedUser.user_id} />
+
                   <p className="text-xs text-muted-foreground">Bergabung: {new Date(selectedUser.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                 </div>
               </>

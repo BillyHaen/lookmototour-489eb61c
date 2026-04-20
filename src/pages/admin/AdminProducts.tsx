@@ -74,6 +74,24 @@ export default function AdminProducts() {
     },
   });
 
+  // Per-product live availability (rented / available)
+  const availabilityQueries = useQueries({
+    queries: (products || []).map((p: any) => ({
+      queryKey: ['product-availability', p.id],
+      queryFn: async () => {
+        const { data, error } = await (supabase.rpc as any)('get_product_availability', { _product_id: p.id });
+        if (error) throw error;
+        return (data && data[0]) || null;
+      },
+      enabled: !!p.is_rentable,
+      staleTime: 30_000,
+    })),
+  });
+  const availabilityMap = new Map<string, any>();
+  (products || []).forEach((p: any, i: number) => {
+    if (availabilityQueries[i]?.data) availabilityMap.set(p.id, availabilityQueries[i].data);
+  });
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const payload = { ...form, stock: form.total_inventory };

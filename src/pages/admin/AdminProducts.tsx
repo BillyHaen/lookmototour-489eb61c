@@ -39,7 +39,8 @@ const PRODUCT_CATEGORIES = ['aksesoris', 'apparel', 'sparepart', 'merchandise', 
 const GEAR_TYPES = ['none', 'helmet', 'jacket', 'gloves', 'boots', 'luggage', 'camera', 'tent', 'other'];
 const MOTOR_TYPES = ['sport', 'touring', 'adventure', 'naked', 'cruiser', 'matic'];
 const TRIP_STYLES = ['adventure', 'touring', 'city'];
-const MOTOR_BRANDS = ['honda', 'yamaha', 'kawasaki', 'suzuki', 'ducati', 'bmw', 'ktm', 'harley', 'royal enfield'];
+import { MOTOR_BRANDS as CATALOG_BRANDS } from '@/data/motorcycles';
+const MOTOR_BRANDS = CATALOG_BRANDS.map((b) => b.toLowerCase());
 
 function ChipMulti({ value, options, onChange }: { value: string[]; options: string[]; onChange: (v: string[]) => void }) {
   const toggle = (o: string) => onChange(value.includes(o) ? value.filter(x => x !== o) : [...value, o]);
@@ -247,6 +248,7 @@ export default function AdminProducts() {
                   <div>
                     <Label className="text-xs mb-1 block">Cocok untuk Tipe Motor</Label>
                     <ChipMulti value={form.suitable_motor_types} options={MOTOR_TYPES} onChange={(v) => setForm({ ...form, suitable_motor_types: v })} />
+                    <p className="text-[11px] text-muted-foreground mt-1">Pilih kategori motor & merk yang cocok agar produk muncul di rekomendasi sewa saat user pilih motor sesuai.</p>
                   </div>
                   <div>
                     <Label className="text-xs mb-1 block">Cocok untuk Gaya Trip</Label>

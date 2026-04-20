@@ -173,9 +173,54 @@ export default function EventDetail() {
                     <Badge variant="outline">{TOURING_STYLES[(event as any).touring_style as TouringStyle]?.icon} {TOURING_STYLES[(event as any).touring_style as TouringStyle]?.label}</Badge>
                   )}
                 </div>
-                <h1 className="font-heading font-bold text-2xl md:text-4xl mb-2">{event.title}</h1>
+                {/* H1 already rendered in hero — show H2 lead-in */}
                 <RichTextContent content={event.description} className="text-muted-foreground" />
+
+                {ev.opening_hook && (
+                  <div className="mt-6">
+                    <RichTextContent content={ev.opening_hook} className="text-base leading-relaxed" />
+                  </div>
+                )}
               </div>
+
+              {/* Why Join */}
+              {ev.why_join && (
+                <section className="border-t border-border pt-6">
+                  <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4">Why Join {event.title}?</h2>
+                  <RichTextContent content={ev.why_join} />
+                </section>
+              )}
+
+              {/* What You Will Experience */}
+              {ev.experience_section && (
+                <section className="border-t border-border pt-6">
+                  <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4">What You'll Experience</h2>
+                  <RichTextContent content={ev.experience_section} />
+                  {(ev.gallery || []).length > 0 && <GallerySection gallery={ev.gallery} />}
+                </section>
+              )}
+
+              {/* Itinerary from new structured field */}
+              <ItinerarySection itinerary={ev.itinerary || []} />
+
+              {/* About Destination — SEO body */}
+              {ev.about_destination && (
+                <section className="border-t border-border pt-6">
+                  <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4">About {event.location} Adventure Tour</h2>
+                  <RichTextContent content={ev.about_destination} />
+                </section>
+              )}
+
+              {/* Included / Excluded */}
+              <IncludedExcludedSection included={ev.included || event.includes} excluded={ev.excluded || event.excludes} />
+
+              {/* Target Audience */}
+              {ev.target_audience && (
+                <section className="border-t border-border pt-6">
+                  <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4">Who Is This Trip For</h2>
+                  <RichTextContent content={ev.target_audience} />
+                </section>
+              )}
 
               <div className={`grid grid-cols-2 ${isTentative ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
                 {[

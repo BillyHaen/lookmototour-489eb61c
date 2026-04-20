@@ -1,84 +1,85 @@
 
 
-## Admin Override: Badge, Jumlah Trip, dan Jumlah KM
+## Fix: WhatsApp Preview Hilang untuk Profil Rider
 
-Memberi admin kemampuan untuk meng-override stat rider (`total_trips`, `total_km`, `trust_score` / badge tier) tanpa harus mengikuti trip. Tetap aman: hanya admin, dan auto-recalc biasa tidak menimpa nilai override.
+### Akar masalah
+URL `https://lookmototour.com/riders/billyhn` di-share langsung. Tidak ada Cloudflare Worker yang mendeteksi crawler (WhatsApp/FB/X) di domain utama, jadi WA mengambil `index.html` statis yang berisi meta tag default LookMotoTour. Edge function `share-meta` tetap berfungsi, tetapi hanya kalau URL pakai prefix `s.lookmototour.com/s/rider/...` — yang tidak terjadi saat user salin URL dari address bar.
 
-### Konsep
-Tambahkan "manual override" di tabel `profiles`. Saat override aktif, fungsi `recalc_rider_stats` akan **menghormati** nilai override dan tidak menimpanya. Admin juga bisa unlock achievement (badge) secara manual.
+`wrangler.jsonc` saat ini hanya mengaktifkan static asset SPA fallback, **tidak ada worker script** yang berjalan di request.
 
-### Perubahan database
+### Solusi
+Tambahkan **Cloudflare Worker entry script** yang berjalan untuk setiap request ke `lookmototour.com`:
 
-**1. Tambah kolom override di `profiles`:**
-- `override_total_trips` (int, nullable)
-- `override_total_km` (numeric, nullable)
-- `override_trust_score` (int, nullable)
-- `override_updated_by` (uuid, nullable) — admin yang terakhir mengubah
-- `override_updated_at` (timestamptz, nullable)
+1. Periksa header `User-Agent`. Kalau cocok regex crawler (`whatsapp|facebookexternalhit|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|skypeuripreview|embedly|redditbot|googlebot|bingbot|applebot|pinterest|tiktok`):
+   - Untuk path `/riders/:username` → proxy ke `share-meta?type=rider&slug=:username&site=https://lookmototour.com`
+   - Untuk path `/blog/:slug` → proxy ke `share-meta?type=blog_post&slug=:slug`
+   - Untuk path `/jurnal/:slug` → proxy ke `share-meta?type=trip_journal&slug=:slug`
+   - Untuk path `/events/:slug` → proxy ke `share-meta?type=event&slug=:slug`
+   - Stream HTML response dari edge function ke crawler (status 200 + meta tag yang benar)
+2. Untuk semua user/UA lain → lanjut ke SPA static asset (perilaku saat ini).
 
-Logikanya: jika kolom override tidak NULL → nilai itulah yang tampil. Jika NULL → pakai hasil hitung otomatis.
+Worker dipasang lewat `wrangler.jsonc` dengan `main: "worker/index.ts"` dan handler `fetch` standar Cloudflare Workers. Static assets tetap di-serve via `env.ASSETS.fetch(request)` untuk request non-crawler.
 
-**2. Update `recalc_rider_stats(_user_id)`** agar:
-- hanya menulis `total_trips`, `total_km`, `trust_score` jika kolom override-nya NULL
-- jika override aktif, nilai override dipakai untuk evaluasi unlock achievement (sehingga admin bisa "memberikan" Road Warrior, dst.)
-
-**3. Update `get_rider_public_profile`** agar mengembalikan nilai final (override jika ada, else nilai hitung) — agar `/riders/:username`, share-meta, dan badge tampil benar.
-
-**4. RLS profiles**: kolom override hanya bisa diubah admin. Karena policy update existing `(user_id = auth.uid())` membolehkan user edit profil sendiri, kita tambah trigger `BEFORE UPDATE` yang menolak perubahan kolom `override_*` jika bukan admin. User biasa tetap bisa edit nama/bio/dll seperti biasa.
-
-**5. RPC `admin_set_rider_overrides`** (security definer, admin-only):
-```
-admin_set_rider_overrides(
-  _user_id uuid,
-  _trips int,            -- null = clear override
-  _km numeric,           -- null = clear override
-  _trust_score int,      -- null = clear override
-  _achievement_codes text[]  -- list achievement yang ingin diunlock manual
-)
-```
-- set kolom override
-- insert ke `user_achievements` untuk kode yang dipilih (ON CONFLICT DO NOTHING)
-- panggil `recalc_rider_stats(_user_id)` untuk sinkron
-- catat audit log
-
-**6. RPC `admin_revoke_achievement(_user_id, _code)`** untuk hapus achievement yang salah diberikan.
-
-### Perubahan UI Admin
-
-**File:** `src/pages/admin/AdminUsers.tsx` (dialog detail user yang sudah ada)
-
-Tambah section baru di dalam dialog detail: **"Override Rider Stats (Admin)"**, hanya tampil jika user login adalah admin (sudah dijamin oleh route admin):
-
-- Input "Jumlah Trip (override)" — kosong = pakai otomatis
-- Input "Jumlah KM (override)" — kosong = pakai otomatis
-- Input "Trust Score (override)" — kosong = pakai otomatis, dengan helper text "0–99 New Rider, 100–299 Trusted, 300+ Pro"
-- Multi-select achievement (badge) dari katalog `achievements` table — admin bisa centang badge yang ingin diberikan secara manual
-- Tombol **Simpan Override** → panggil `admin_set_rider_overrides`
-- Tombol **Reset ke Otomatis** → panggil RPC dengan semua param NULL & `_achievement_codes = '{}'`
-- Daftar achievement aktif user dengan tombol "Hapus" (panggil `admin_revoke_achievement`)
-- Indikator visual jika nilai sedang dalam mode override (badge "Manual" di samping angka)
-
-### Perubahan frontend lain
+### File yang dibuat / diubah
 
 | File | Perubahan |
 |---|---|
-| `src/hooks/useRider.ts` | Tidak perlu — RPC `get_rider_public_profile` sudah disesuaikan di DB |
-| `supabase/functions/share-meta/index.ts` | Tidak perlu — sudah memakai data dari profiles via RPC |
-| `src/components/UserBadge.tsx` | Tidak perlu — badge dihitung dari `total_trips` (yang sekarang sudah merefleksikan override) |
-| `src/integrations/supabase/types.ts` | Auto-generate setelah migration |
+| `worker/index.ts` (baru) | Cloudflare Worker entry: deteksi UA crawler, mapping path → param `share-meta`, proxy fetch ke edge function, fallback ke `env.ASSETS.fetch()` |
+| `wrangler.jsonc` | Tambah `"main": "worker/index.ts"`, binding `ASSETS` (sudah implisit lewat `assets`), set `assets.binding = "ASSETS"` |
+
+### Detail teknis
+
+**Mapping path → share-meta param:**
+```ts
+const ROUTES: Array<[RegExp, string]> = [
+  [/^\/riders\/([^\/]+)\/?$/, "rider"],
+  [/^\/blog\/([^\/]+)\/?$/, "blog_post"],
+  [/^\/jurnal\/([^\/]+)\/?$/, "trip_journal"],
+  [/^\/events\/([^\/]+)\/?$/, "event"],
+];
+```
+
+**Endpoint share-meta:**
+```
+https://efrwzkdfkfvedtdrxrfg.supabase.co/functions/v1/share-meta?type=...&slug=...&site=https://lookmototour.com
+```
+Worker meneruskan `User-Agent` asli supaya edge function tetap mendeteksi crawler dan mengembalikan HTML (bukan redirect 302).
+
+**Worker pseudocode:**
+```ts
+export default {
+  async fetch(req: Request, env: { ASSETS: Fetcher }): Promise<Response> {
+    const url = new URL(req.url);
+    const ua = req.headers.get("user-agent") || "";
+    const isCrawler = /whatsapp|facebookexternalhit|.../i.test(ua);
+
+    if (isCrawler) {
+      for (const [re, type] of ROUTES) {
+        const m = url.pathname.match(re);
+        if (m) {
+          const target = `https://efrwzkdfkfvedtdrxrfg.supabase.co/functions/v1/share-meta?type=${type}&slug=${encodeURIComponent(m[1])}&site=${url.origin}`;
+          const r = await fetch(target, { headers: { "user-agent": ua } });
+          return new Response(r.body, {
+            status: r.status,
+            headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" },
+          });
+        }
+      }
+    }
+    return env.ASSETS.fetch(req);
+  },
+};
+```
 
 ### Validasi
-1. Login sebagai admin → buka `/admin/users` → klik user → muncul section "Override Rider Stats"
-2. Set override trips=20, km=5000, trust=350, centang badge "Road Warrior" → Simpan
-3. Buka `/riders/{username}` user tsb → angka & badge tampil sesuai override (tanpa user pernah ikut trip)
-4. Login sebagai user biasa → coba PATCH kolom `override_*` via Supabase client → ditolak oleh trigger
-5. Klik "Reset ke Otomatis" di admin → nilai kembali ke hasil kalkulasi otomatis
-6. Tambah/hapus achievement manual → langsung tampil/hilang di profil rider
-7. Audit log mencatat siapa admin yang melakukan override dan kapan
+1. Deploy worker → debug pakai `curl -A "WhatsApp/2.0" https://lookmototour.com/riders/billyhn` → terima HTML dengan `<meta property="og:image" content="{avatar_url}">`, `<meta property="og:title" content="Riders Billy ... – ...">`
+2. Curl tanpa UA crawler → terima SPA `index.html` (tidak berubah)
+3. Tempel ulang `https://lookmototour.com/riders/billyhn` di chat WhatsApp → preview menampilkan **avatar rider**, judul "Riders Billy – {badge}", dan deskripsi excerpt LookMotoTour
+4. Tempel link blog/journal/event → preview meta-nya juga benar (bonus, karena route ikut tertangani)
+5. Browse normal di `/riders/billyhn` → tidak ada perubahan UX, tetap SPA
 
-### Dampak & keamanan
-- Hanya admin yang bisa mengubah override (dijaga 2 lapis: trigger DB + RPC security definer)
-- User biasa tetap bisa edit field profil mereka sendiri seperti sebelumnya
-- Trigger auto-recalc dari registrasi event tidak lagi menimpa override
-- Tidak mengubah skema yang dipakai komponen existing — angka tetap diambil dari kolom yang sama (`total_trips`, `total_km`, `trust_score`)
+### Dampak
+- Tidak mengubah React app, tidak mengubah edge function
+- Hanya menambah entry worker script + binding `ASSETS`
+- Setelah live, semua link riders existing langsung punya preview yang benar — tanpa perlu user pakai prefix `s.lookmototour.com`
 

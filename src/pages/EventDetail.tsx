@@ -424,83 +424,9 @@ export default function EventDetail() {
                 </Card>
               )}
 
-              {/* 🗺️ Route Preview */}
-              {user ? (
-                <RoutePreview routeData={(event as any).route_data} />
-              ) : (
-                (event as any).route_data && (
-                  <Card className="border-2 border-destructive/40 bg-destructive/5">
-                    <CardContent className="pt-6">
-                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
-                        <MapPin className="h-5 w-5 text-destructive" /> Rute Touring
-                      </h3>
-                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
-                        <Lock className="h-8 w-8 mx-auto" />
-                        <p className="font-semibold">Login/Daftar untuk melihat</p>
-                        <div className="flex gap-2 justify-center">
-                          <Button size="sm" variant="secondary" asChild>
-                            <Link to="/login">Login</Link>
-                          </Button>
-                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
-                            <Link to="/register">Daftar</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              )}
-
-              {/* Itinerary */}
-              {itineraries && itineraries.length > 0 && (
-                user ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-xl flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-primary" /> Itinerary Perjalanan
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {itineraries.map((it: any) => (
-                          <div key={it.id} className="relative pl-6 pb-4 border-l-2 border-primary/20 last:border-l-0">
-                            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary" />
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-heading font-semibold">Hari {it.day_number}</span>
-                                {it.date && <Badge variant="outline" className="text-xs">{formatDate(it.date)}</Badge>}
-                              </div>
-                              <p className="font-medium">{it.title}</p>
-                              <RichTextContent content={it.description} className="text-sm text-muted-foreground" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="border-2 border-destructive/40 bg-destructive/5">
-                    <CardContent className="pt-6">
-                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
-                        <CalendarDays className="h-5 w-5 text-destructive" /> Itinerary Perjalanan
-                      </h3>
-                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
-                        <Lock className="h-8 w-8 mx-auto" />
-                        <p className="font-semibold">Login/Daftar untuk melihat</p>
-                        <div className="flex gap-2 justify-center">
-                          <Button size="sm" variant="secondary" asChild>
-                            <Link to="/login">Login</Link>
-                          </Button>
-                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
-                            <Link to="/register">Daftar</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              )}
+              {/* Route Preview & per-day itinerary moved into ItinerarySection above (SEO-friendly) */}
             </div>
+
 
             <div className="space-y-4" id="booking-section">
               <div className="p-6 rounded-xl bg-card shadow-card border border-border space-y-4 sticky top-24">

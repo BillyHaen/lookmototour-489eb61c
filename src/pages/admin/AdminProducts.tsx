@@ -36,7 +36,7 @@ const empty: ProductForm = {
 };
 
 const PRODUCT_CATEGORIES = ['aksesoris', 'apparel', 'sparepart', 'merchandise', 'lainnya'];
-const GEAR_TYPES = ['', 'helmet', 'jacket', 'gloves', 'boots', 'luggage', 'camera', 'tent', 'other'];
+const GEAR_TYPES = ['none', 'helmet', 'jacket', 'gloves', 'boots', 'luggage', 'camera', 'tent', 'other'];
 const MOTOR_TYPES = ['sport', 'touring', 'adventure', 'naked', 'cruiser', 'matic'];
 const TRIP_STYLES = ['adventure', 'touring', 'city'];
 const MOTOR_BRANDS = ['honda', 'yamaha', 'kawasaki', 'suzuki', 'ducati', 'bmw', 'ktm', 'harley', 'royal enfield'];

@@ -232,7 +232,11 @@ export default function AdminEvents() {
     onError: (e: Error) => toast({ title: 'Gagal menghapus', description: e.message, variant: 'destructive' }),
   });
 
-  const openCreate = () => { setEditId(null); setForm(emptyForm); setItineraries([]); setRouteData(null); setOpen(true); };
+  const openCreate = () => {
+    setEditId(null); setForm(emptyForm); setItineraries([]); setRouteData(null);
+    setSeoItinerary([]); setSeoFaq([]); setSeoIncluded([]); setSeoExcluded([]); setSeoGallery([]);
+    setOpen(true);
+  };
 
   const openEdit = async (event: any) => {
     setEditId(event.id);
@@ -258,9 +262,25 @@ export default function AdminEvents() {
       fatigue_level: event.fatigue_level || 1,
       tentative_month: event.tentative_month || '',
       road_condition: event.road_condition ?? 3,
+      meta_title: event.meta_title || '',
+      meta_description: event.meta_description || '',
+      hero_subheadline: event.hero_subheadline || '',
+      cta_primary_label: event.cta_primary_label || '🔥 Secure Your Slot Now – Limited Riders Only',
+      opening_hook: event.opening_hook || '',
+      why_join: event.why_join || '',
+      experience_section: event.experience_section || '',
+      about_destination: event.about_destination || '',
+      target_audience: event.target_audience || '',
+      trust_section: event.trust_section || '',
+      internal_link_blog_tag: event.internal_link_blog_tag || '',
     });
     setRouteData((event as any).route_data || null);
-    // Load itineraries
+    setSeoItinerary(Array.isArray(event.itinerary) ? event.itinerary : []);
+    setSeoFaq(Array.isArray(event.faq) ? event.faq : []);
+    setSeoIncluded(((event as any).includes || []) as string[]);
+    setSeoExcluded(((event as any).excludes || []) as string[]);
+    setSeoGallery(Array.isArray(event.gallery) ? event.gallery : []);
+    // Load itineraries (legacy)
     const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
     setItineraries((data || []).map((it: any) => ({
       id: it.id, day_number: it.day_number, date: it.date || '', title: it.title, description: it.description,

@@ -134,16 +134,20 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', phone: '', motorType: '', plateNumber: '', emergencyContact: '', registrationType: 'single', towingPergi: false, towingPulang: false, notes: '' },
+    defaultValues: { name: '', email: '', phone: '', motorBrand: '', motorModel: '', plateNumber: '', emergencyContact: '', registrationType: 'single', towingPergi: false, towingPulang: false, notes: '' },
   });
 
   const selectedType = form.watch('registrationType');
   const towingPergi = form.watch('towingPergi');
   const towingPulang = form.watch('towingPulang');
-  const motorType = form.watch('motorType');
+  const motorBrand = form.watch('motorBrand');
+  const motorModel = form.watch('motorModel');
 
-  const motorCategory = useMemo(() => detectMotorCategory(motorType || ''), [motorType]);
-  const motorBrand = useMemo(() => detectMotorBrand(motorType || ''), [motorType]);
+  const motorCategory = useMemo(
+    () => (motorBrand && motorModel ? getModelCategory(motorBrand, motorModel) : ''),
+    [motorBrand, motorModel]
+  );
+  const motorBrandLower = useMemo(() => (motorBrand || '').toLowerCase(), [motorBrand]);
 
   const towingEnabled = (event as any).towing_enabled || false;
   const towingPergiPrice = (event as any).towing_pergi_price || 0;
@@ -179,7 +183,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       name: data.name,
       email: data.email,
       phone: data.phone,
-      motor_type: data.motorType,
+      motor_type: `${data.motorBrand} ${data.motorModel}`.trim(),
       plate_number: data.plateNumber,
       emergency_contact: data.emergencyContact,
       registration_type: data.registrationType,
@@ -313,21 +317,47 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                 )} />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField control={form.control} name="motorType" render={({ field }) => (
+                <FormField control={form.control} name="motorBrand" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tipe Motor *</FormLabel>
-                    <FormControl><Input placeholder="Honda CRF250" {...field} /></FormControl>
+                    <FormLabel>Merk Motor *</FormLabel>
+                    <Select
+                      value={field.value || ''}
+                      onValueChange={(v) => { field.onChange(v); form.setValue('motorModel', ''); }}
+                    >
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Pilih merk" /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {MOTOR_BRANDS.map((b) => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
-                <FormField control={form.control} name="plateNumber" render={({ field }) => (
+                <FormField control={form.control} name="motorModel" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Plat Nomor *</FormLabel>
-                    <FormControl><Input placeholder="B 1234 XYZ" {...field} /></FormControl>
+                    <FormLabel>Tipe Motor *</FormLabel>
+                    <Select value={field.value || ''} onValueChange={field.onChange} disabled={!motorBrand}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder={motorBrand ? 'Pilih tipe' : 'Pilih merk dulu'} /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {(MOTORCYCLES[motorBrand] || []).map((m) => (
+                          <SelectItem key={m.name} value={m.name}>{m.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )} />
               </div>
+              <FormField control={form.control} name="plateNumber" render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Plat Nomor *</FormLabel>
+                  <FormControl><Input placeholder="B 1234 XYZ" {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
               <FormField control={form.control} name="emergencyContact" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Kontak Darurat *</FormLabel>
@@ -359,7 +389,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
               <RentalGearRecommendations
                 eventId={event.id}
                 motorType={motorCategory}
-                motorBrand={motorBrand}
+                motorBrand={motorBrandLower}
                 selected={selectedRentals}
                 onChange={setSelectedRentals}
               />

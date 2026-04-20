@@ -42,8 +42,11 @@ export function EmailTestDialog({ open, onOpenChange, templateName, defaultSampl
     }
     setSending(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Sesi login tidak ditemukan. Silakan login ulang.');
       const { data, error } = await supabase.functions.invoke('send-test-email', {
         body: { templateName, recipientEmail: email, sampleData },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
       if (error) throw error;
       if ((data as any)?.error) throw new Error((data as any).error);

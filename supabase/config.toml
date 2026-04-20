@@ -16,4 +16,4 @@ project_id = "efrwzkdfkfvedtdrxrfg"
   [functions.handle-email-suppression]
     verify_jwt = false
   [functions.send-test-email]
-    verify_jwt = true
+    verify_jwt = false

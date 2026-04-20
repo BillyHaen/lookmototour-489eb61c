@@ -173,15 +173,13 @@ export default function EventDetail() {
                     <Badge variant="outline">{TOURING_STYLES[(event as any).touring_style as TouringStyle]?.icon} {TOURING_STYLES[(event as any).touring_style as TouringStyle]?.label}</Badge>
                   )}
                 </div>
-                {/* H1 already rendered in hero — show H2 lead-in */}
-                <RichTextContent content={event.description} className="text-muted-foreground" />
-
                 {ev.opening_hook && (
-                  <div className="mt-6">
+                  <div className="mt-2">
                     <RichTextContent content={ev.opening_hook} className="text-base leading-relaxed" />
                   </div>
                 )}
               </div>
+
 
               {/* Why Join */}
               {ev.why_join && (
@@ -200,8 +198,35 @@ export default function EventDetail() {
                 </section>
               )}
 
-              {/* Itinerary from new structured field */}
+              {/* Itinerary + Route (new SEO-friendly structure) */}
               <ItinerarySection itinerary={ev.itinerary || []} />
+
+              {/* Rute Touring Keseluruhan — visible to logged-in users */}
+              {user ? (
+                <RoutePreview routeData={(event as any).route_data} />
+              ) : (
+                (event as any).route_data && (
+                  <Card className="border-2 border-destructive/40 bg-destructive/5">
+                    <CardContent className="pt-6">
+                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
+                        <MapPin className="h-5 w-5 text-destructive" /> Rute Touring Keseluruhan
+                      </h3>
+                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
+                        <Lock className="h-8 w-8 mx-auto" />
+                        <p className="font-semibold">Login/Daftar untuk melihat</p>
+                        <div className="flex gap-2 justify-center">
+                          <Button size="sm" variant="secondary" asChild>
+                            <Link to="/login">Login</Link>
+                          </Button>
+                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
+                            <Link to="/register">Daftar</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              )}
 
               {/* About Destination — SEO body */}
               {ev.about_destination && (

@@ -535,7 +535,7 @@ export default function EventDetail() {
               )}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4" id="booking-section">
               <div className="p-6 rounded-xl bg-card shadow-card border border-border space-y-4 sticky top-24">
                 {isTentative ? (
                   <div className="text-center py-4">

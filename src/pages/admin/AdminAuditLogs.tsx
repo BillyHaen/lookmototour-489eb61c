@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, Download, ChevronLeft, ChevronRight, ShieldCheck } from 'lucide-react';
+import { Loader2, Download, ShieldCheck, RotateCcw } from 'lucide-react';
 import { AuditLogDetailDialog } from '@/components/admin/AuditLogDetailDialog';
+import DataPagination, { DEFAULT_PAGE_SIZE } from '@/components/admin/DataPagination';
 
 const ACTIONS = ['create', 'update', 'delete', 'login', 'logout', 'login_failed', 'signup', 'password_reset'];
 const TABLES = [
@@ -15,6 +16,14 @@ const TABLES = [
   'sponsors', 'blog_posts', 'site_settings', 'email_template_overrides',
   'user_roles', 'profiles',
 ];
+
+function todayISO(): string {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+const TODAY = todayISO();
 
 function actionVariant(a: string): 'default' | 'destructive' | 'secondary' | 'outline' {
   if (a === 'delete' || a === 'login_failed') return 'destructive';
@@ -28,27 +37,36 @@ export default function AdminAuditLogs() {
   const [action, setAction] = useState('all');
   const [tableName, setTableName] = useState('all');
   const [status, setStatus] = useState('all');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(TODAY);
+  const [endDate, setEndDate] = useState(TODAY);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [detail, setDetail] = useState<AuditLog | null>(null);
-  const pageSize = 50;
 
   const filters = useMemo(() => ({
     search: search.trim() || undefined,
     action,
     tableName,
     status,
-    startDate: startDate ? new Date(startDate).toISOString() : undefined,
+    startDate: startDate ? new Date(startDate + 'T00:00:00').toISOString() : undefined,
     endDate: endDate ? new Date(endDate + 'T23:59:59').toISOString() : undefined,
     page,
     pageSize,
-  }), [search, action, tableName, status, startDate, endDate, page]);
+  }), [search, action, tableName, status, startDate, endDate, page, pageSize]);
 
   const { data, isLoading } = useAuditLogs(filters);
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  const resetFilters = () => {
+    setSearch('');
+    setAction('all');
+    setTableName('all');
+    setStatus('all');
+    setStartDate(TODAY);
+    setEndDate(TODAY);
+    setPage(1);
+  };
 
   const exportCsv = () => {
     if (!rows.length) return;
@@ -90,13 +108,18 @@ export default function AdminAuditLogs() {
               Catatan kronologis semua aktivitas penting (read-only, tidak bisa diubah/dihapus).
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={exportCsv} disabled={!rows.length}>
-            <Download className="h-4 w-4" /> Ekspor CSV
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={resetFilters}>
+              <RotateCcw className="h-4 w-4" /> Reset Filter
+            </Button>
+            <Button variant="outline" size="sm" onClick={exportCsv} disabled={!rows.length}>
+              <Download className="h-4 w-4" /> Ekspor CSV
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-2 p-3 bg-card rounded-lg border">
+        <div className="grid grid-cols-1 md:grid-cols-7 gap-2 p-3 bg-card rounded-lg border">
           <Input
             placeholder="Cari user/email/record id"
             value={search}
@@ -117,6 +140,14 @@ export default function AdminAuditLogs() {
               {TABLES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
             </SelectContent>
           </Select>
+          <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
+            <SelectTrigger><SelectValue placeholder="Status" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Semua Status</SelectItem>
+              <SelectItem value="success">success</SelectItem>
+              <SelectItem value="failed">failed</SelectItem>
+            </SelectContent>
+          </Select>
           <Input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPage(1); }} />
           <Input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPage(1); }} />
         </div>
@@ -128,7 +159,9 @@ export default function AdminAuditLogs() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : rows.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">Tidak ada catatan.</div>
+            <div className="p-12 text-center text-sm text-muted-foreground">
+              Tidak ada catatan untuk filter ini. Coba reset filter atau perluas rentang tanggal.
+            </div>
           ) : (
             <Table>
               <TableHeader>
@@ -170,20 +203,13 @@ export default function AdminAuditLogs() {
           )}
         </div>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between text-sm">
-          <div className="text-muted-foreground">
-            Total: <strong>{total}</strong> · Halaman {page} dari {totalPages}
-          </div>
-          <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
-              <ChevronLeft className="h-4 w-4" /> Sebelumnya
-            </Button>
-            <Button size="sm" variant="outline" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
-              Berikutnya <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <DataPagination
+          page={page}
+          pageSize={pageSize}
+          total={total}
+          onPageChange={setPage}
+          onPageSizeChange={setPageSize}
+        />
       </div>
 
       <AuditLogDetailDialog log={detail} open={!!detail} onOpenChange={(v) => !v && setDetail(null)} />

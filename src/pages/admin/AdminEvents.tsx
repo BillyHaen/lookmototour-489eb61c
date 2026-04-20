@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { formatPrice, formatDate, formatTentativeMonth, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, ROAD_CONDITION_LABELS, calculateSafetyScore, SAFETY_LEVEL_LABELS } from '@/data/events';
 import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users, Heart, Shield } from 'lucide-react';
+import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
@@ -87,6 +88,8 @@ export default function AdminEvents() {
   const [participantsEvent, setParticipantsEvent] = useState<{ id: string; title: string } | null>(null);
   const [interestsEvent, setInterestsEvent] = useState<{ id: string; title: string } | null>(null);
   const [routeData, setRouteData] = useState<RouteData | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -265,7 +268,7 @@ export default function AdminEvents() {
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : (
         <div className="space-y-3">
-          {events?.map((event) => (
+          {paginate(events || [], page, pageSize).map((event) => (
             <div key={event.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -310,6 +313,16 @@ export default function AdminEvents() {
             </div>
           ))}
           {!events?.length && <p className="text-muted-foreground text-center py-8">Belum ada event.</p>}
+          {!!events?.length && (
+            <DataPagination
+              page={page}
+              pageSize={pageSize}
+              total={events.length}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              className="pt-2"
+            />
+          )}
         </div>
       )}
 

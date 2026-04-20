@@ -1,16 +1,12 @@
 ---
 name: route-preview
-description: Interactive route preview — Leaflet map, GPX upload, waypoints (resto/SPBU/viewpoint), elevation chart, Street View links
+description: Interactive route preview — Leaflet map, GPX upload, waypoints, elevation, Street View, plus per-day route in itinerary
 type: feature
 ---
-Route data disimpan di `events.route_data` (JSONB), nullable. Struktur: `{ polyline: [[lat,lng]], elevation: [{distance,alt}], waypoints: [{lat,lng,type,name,description}], start, end, stats }`.
+Rute keseluruhan disimpan di `events.route_data` (JSONB). Editor (`RouteEditor` + `RoutePreview`) sekarang ada di tab **Itinerary** admin (bukan tab Dasar lagi). Frontend `RoutePreview` di-render inline dalam Itinerary section di `EventDetail.tsx` (login-gated).
 
-Map: Leaflet + OpenStreetMap (gratis, no API key). Tile URL `https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png`.
+Per-hari route disimpan di `events.itinerary[i].route` dengan struktur `{ start, end, distance_km, gmaps_url }`. `ItineraryEditor` admin menyediakan field route opsional per day; `EventLanding/ItinerarySection.tsx` me-render mini-card "Rute Hari Ini" jika ada.
 
-Admin input via upload GPX (.gpx) — parser di `src/lib/gpxParser.ts` pakai DOMParser native. Auto-extract polyline, elevation (sampled max 500 pts / 200 ele), stats (gain/loss/distance), wpt waypoints. Admin juga bisa add waypoint manual via koordinat.
+Dasar tab admin sekarang hanya berisi field operasional (title/slug/date/lokasi/pricing/hero/asuransi/towing/smart-touring/status). Field SEO (description rich, highlights, requirements, includes, excludes) sudah dipindah ke tab Konten / Include / Itinerary / FAQ / SEO. Legacy `event_itineraries` table dipertahankan untuk back-compat tapi auto-migrasi ke `events.itinerary` JSONB saat openEdit jika SEO itinerary kosong.
 
-Street View: link ke `https://www.google.com/maps?q=&layer=c&cbll={lat},{lng}` (no API key).
-
-Waypoint types: start, end, resto, viewpoint, spbu, penginapan — di `WAYPOINT_META`.
-
-Komponen: `RouteMap`, `ElevationChart` (Recharts AreaChart), `RoutePreview` (wrapper untuk EventDetail), `admin/RouteEditor`. EventCard menampilkan badge "🗺️ Route" jika route_data ada.
+Map: Leaflet + OpenStreetMap. GPX parser di `src/lib/gpxParser.ts`. Waypoint types: start, end, resto, viewpoint, spbu, penginapan.

@@ -35,16 +35,8 @@ export default function EventDetail() {
   const { user } = useAuth();
   const { data: isConfirmedParticipant } = useIsConfirmedParticipant(event?.id);
 
-  const { data: itineraries } = useQuery({
-    queryKey: ['event-itineraries', event?.id],
-    queryFn: async () => {
-      const { data, error } = await (supabase.from('event_itineraries' as any) as any)
-        .select('*').eq('event_id', event!.id).order('day_number');
-      if (error) return [];
-      return data as any[];
-    },
-    enabled: !!event?.id,
-  });
+  // Legacy event_itineraries removed — itinerary now lives in events.itinerary JSONB
+
 
   const { data: interestCount } = useQuery({
     queryKey: ['event-interest-count', event?.id],
@@ -173,15 +165,13 @@ export default function EventDetail() {
                     <Badge variant="outline">{TOURING_STYLES[(event as any).touring_style as TouringStyle]?.icon} {TOURING_STYLES[(event as any).touring_style as TouringStyle]?.label}</Badge>
                   )}
                 </div>
-                {/* H1 already rendered in hero — show H2 lead-in */}
-                <RichTextContent content={event.description} className="text-muted-foreground" />
-
                 {ev.opening_hook && (
-                  <div className="mt-6">
+                  <div className="mt-2">
                     <RichTextContent content={ev.opening_hook} className="text-base leading-relaxed" />
                   </div>
                 )}
               </div>
+
 
               {/* Why Join */}
               {ev.why_join && (
@@ -200,8 +190,35 @@ export default function EventDetail() {
                 </section>
               )}
 
-              {/* Itinerary from new structured field */}
+              {/* Itinerary + Route (new SEO-friendly structure) */}
               <ItinerarySection itinerary={ev.itinerary || []} />
+
+              {/* Rute Touring Keseluruhan — visible to logged-in users */}
+              {user ? (
+                <RoutePreview routeData={(event as any).route_data} />
+              ) : (
+                (event as any).route_data && (
+                  <Card className="border-2 border-destructive/40 bg-destructive/5">
+                    <CardContent className="pt-6">
+                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
+                        <MapPin className="h-5 w-5 text-destructive" /> Rute Touring Keseluruhan
+                      </h3>
+                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
+                        <Lock className="h-8 w-8 mx-auto" />
+                        <p className="font-semibold">Login/Daftar untuk melihat</p>
+                        <div className="flex gap-2 justify-center">
+                          <Button size="sm" variant="secondary" asChild>
+                            <Link to="/login">Login</Link>
+                          </Button>
+                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
+                            <Link to="/register">Daftar</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              )}
 
               {/* About Destination — SEO body */}
               {ev.about_destination && (
@@ -364,66 +381,8 @@ export default function EventDetail() {
                 );
               })()}
 
-              <div>
-                <h2 className="font-heading font-semibold text-xl mb-3">Highlight Event</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {(event.highlights || []).map((h) => (
-                    <div key={h} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                      <span className="text-primary">✓</span> {h}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Highlights / Requirements / Includes / Excludes are now rendered via SEO sections (Why Join, Target Audience, IncludedExcludedSection) above */}
 
-              {/* Persyaratan */}
-              {(event as any).requirements && (event as any).requirements.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-accent" /> Persyaratan
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).requirements as string[]).map((r) => (
-                      <div key={r} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-accent">•</span> {r}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Include */}
-              {(event as any).includes && (event as any).includes.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary" /> Include
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).includes as string[]).map((item) => (
-                      <div key={item} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-primary">✓</span> {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Exclude */}
-              {(event as any).excludes && (event as any).excludes.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <XCircle className="h-5 w-5 text-destructive" /> Exclude
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).excludes as string[]).map((item) => (
-                      <div key={item} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-destructive">✗</span> {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Asuransi */}
               {(event as any).insurance_enabled && (
                 <Card className="border-primary/20">
                   <CardContent className="flex items-start gap-3 pt-6">
@@ -457,83 +416,9 @@ export default function EventDetail() {
                 </Card>
               )}
 
-              {/* 🗺️ Route Preview */}
-              {user ? (
-                <RoutePreview routeData={(event as any).route_data} />
-              ) : (
-                (event as any).route_data && (
-                  <Card className="border-2 border-destructive/40 bg-destructive/5">
-                    <CardContent className="pt-6">
-                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
-                        <MapPin className="h-5 w-5 text-destructive" /> Rute Touring
-                      </h3>
-                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
-                        <Lock className="h-8 w-8 mx-auto" />
-                        <p className="font-semibold">Login/Daftar untuk melihat</p>
-                        <div className="flex gap-2 justify-center">
-                          <Button size="sm" variant="secondary" asChild>
-                            <Link to="/login">Login</Link>
-                          </Button>
-                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
-                            <Link to="/register">Daftar</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              )}
-
-              {/* Itinerary */}
-              {itineraries && itineraries.length > 0 && (
-                user ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-xl flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-primary" /> Itinerary Perjalanan
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {itineraries.map((it: any) => (
-                          <div key={it.id} className="relative pl-6 pb-4 border-l-2 border-primary/20 last:border-l-0">
-                            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary" />
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-heading font-semibold">Hari {it.day_number}</span>
-                                {it.date && <Badge variant="outline" className="text-xs">{formatDate(it.date)}</Badge>}
-                              </div>
-                              <p className="font-medium">{it.title}</p>
-                              <RichTextContent content={it.description} className="text-sm text-muted-foreground" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="border-2 border-destructive/40 bg-destructive/5">
-                    <CardContent className="pt-6">
-                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
-                        <CalendarDays className="h-5 w-5 text-destructive" /> Itinerary Perjalanan
-                      </h3>
-                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
-                        <Lock className="h-8 w-8 mx-auto" />
-                        <p className="font-semibold">Login/Daftar untuk melihat</p>
-                        <div className="flex gap-2 justify-center">
-                          <Button size="sm" variant="secondary" asChild>
-                            <Link to="/login">Login</Link>
-                          </Button>
-                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
-                            <Link to="/register">Daftar</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              )}
+              {/* Route Preview & per-day itinerary moved into ItinerarySection above (SEO-friendly) */}
             </div>
+
 
             <div className="space-y-4" id="booking-section">
               <div className="p-6 rounded-xl bg-card shadow-card border border-border space-y-4 sticky top-24">

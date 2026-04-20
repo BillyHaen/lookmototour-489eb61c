@@ -189,20 +189,11 @@ export default function AdminEvents() {
         eventId = data.id;
       }
 
-      // Save itineraries
-      if (eventId) {
+      // Legacy event_itineraries: cleanup once SEO itinerary is in use
+      if (eventId && seoItinerary.length > 0) {
         await supabase.from('event_itineraries' as any).delete().eq('event_id', eventId);
-        if (itineraries.length > 0) {
-          const rows = itineraries.map(it => ({
-            event_id: eventId!,
-            day_number: it.day_number,
-            date: it.date || null,
-            title: it.title,
-            description: it.description,
-          }));
-          await (supabase.from('event_itineraries' as any) as any).insert(rows);
-        }
       }
+
 
       // Notify interested users if date was confirmed
       if (wasConfirmed && eventId) {
@@ -290,18 +281,27 @@ export default function AdminEvents() {
       internal_link_blog_tag: event.internal_link_blog_tag || '',
     });
     setRouteData((event as any).route_data || null);
-    setSeoItinerary(Array.isArray(event.itinerary) ? event.itinerary : []);
+    const existingSeo: ItineraryDay[] = Array.isArray(event.itinerary) ? event.itinerary : [];
     setSeoFaq(Array.isArray(event.faq) ? event.faq : []);
     setSeoIncluded(((event as any).includes || []) as string[]);
     setSeoExcluded(((event as any).excludes || []) as string[]);
     setSeoGallery(Array.isArray(event.gallery) ? event.gallery : []);
-    // Load itineraries (legacy)
-    const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
-    setItineraries((data || []).map((it: any) => ({
-      id: it.id, day_number: it.day_number, date: it.date || '', title: it.title, description: it.description,
-    })));
+    // Graceful migration: if SEO itinerary empty, hydrate from legacy event_itineraries
+    if (existingSeo.length === 0) {
+      const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
+      const migrated: ItineraryDay[] = (data || []).map((it: any, idx: number) => ({
+        day: it.day_number || idx + 1,
+        title: it.title || '',
+        description: (it.description || '').replace(/<[^>]*>/g, ''),
+      }));
+      setSeoItinerary(migrated);
+    } else {
+      setSeoItinerary(existingSeo);
+    }
+    setItineraries([]);
     setOpen(true);
   };
+
 
   const addItineraryDay = () => {
     const nextDay = itineraries.length + 1;
@@ -416,10 +416,6 @@ export default function AdminEvents() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">Otomatis dari judul. Bisa diedit manual.</p>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Deskripsi Event</label>
-              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Deskripsi event..." />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -498,11 +494,7 @@ export default function AdminEvents() {
             </div>
             <Input type="number" placeholder="Maks Peserta" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: Number(e.target.value) })} />
             <EventImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
-            <Input placeholder="Highlights (pisahkan koma)" value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} />
-            <Input placeholder="Persyaratan (pisahkan koma)" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />
-            <Input placeholder="Include (pisahkan koma)" value={form.includes} onChange={(e) => setForm({ ...form, includes: e.target.value })} />
-            <Input placeholder="Exclude (pisahkan koma)" value={form.excludes} onChange={(e) => setForm({ ...form, excludes: e.target.value })} />
-            
+
             {/* Asuransi */}
             <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
               <input type="checkbox" id="insurance" checked={form.insurance_enabled} onChange={(e) => setForm({ ...form, insurance_enabled: e.target.checked })} className="h-4 w-4 rounded border-input" />
@@ -648,46 +640,8 @@ export default function AdminEvents() {
               </SelectContent>
             </Select>
 
-            {/* 🗺️ Route Editor */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  🗺️ Rute Touring (GPX + Waypoint)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RouteEditor value={routeData} onChange={setRouteData} />
-              </CardContent>
-            </Card>
-
-            {/* Itinerary Section */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-primary" /> Itinerary Perhari
-                  </CardTitle>
-                  <Button type="button" variant="outline" size="sm" onClick={addItineraryDay}><Plus className="h-3 w-3 mr-1" /> Tambah Hari</Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {itineraries.map((it, i) => (
-                  <div key={i} className="p-3 rounded-lg border border-border space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Hari {it.day_number}</span>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeItinerary(i)}><Trash2 className="h-3 w-3" /></Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input type="date" value={it.date} onChange={(e) => updateItinerary(i, 'date', e.target.value)} placeholder="Tanggal" />
-                      <Input value={it.title} onChange={(e) => updateItinerary(i, 'title', e.target.value)} placeholder="Judul hari ini" />
-                    </div>
-                    <RichTextEditor value={it.description} onChange={(v) => updateItinerary(i, 'description', v)} placeholder="Deskripsi kegiatan hari ini..." minHeight="100px" />
-                  </div>
-                ))}
-                {!itineraries.length && <p className="text-sm text-muted-foreground text-center py-2">Belum ada itinerary.</p>}
-              </CardContent>
-            </Card>
             </TabsContent>
+
 
             <TabsContent value="seo" className="space-y-4 mt-4">
               <div>
@@ -743,9 +697,29 @@ export default function AdminEvents() {
               </div>
             </TabsContent>
 
-            <TabsContent value="itinerary" className="mt-4">
-              <p className="text-xs text-muted-foreground mb-3">Itinerary terstruktur untuk landing page SEO (per hari + foto + alt). Beda dari "Itinerary Perhari" lama di tab Dasar.</p>
-              <ItineraryEditor value={seoItinerary} onChange={setSeoItinerary} />
+            <TabsContent value="itinerary" className="space-y-6 mt-4">
+              {/* Rute Touring Keseluruhan */}
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    🗺️ Rute Touring Keseluruhan (GPX + Waypoint)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <RouteEditor value={routeData} onChange={setRouteData} />
+                </CardContent>
+              </Card>
+
+              {/* Itinerary Per Hari + Rute Per Hari */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-primary" /> Itinerary Per Hari
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Per hari: judul, deskripsi, gambar SEO (alt), dan rute opsional (start → end, jarak, Google Maps).
+                </p>
+                <ItineraryEditor value={seoItinerary} onChange={setSeoItinerary} />
+              </div>
             </TabsContent>
 
             <TabsContent value="checklist" className="space-y-5 mt-4">

@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Loader2, ImagePlus, X } from 'lucide-react';
+import { Loader2, ImagePlus, X, Camera } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import BannerCropDialog from './BannerCropDialog';
@@ -10,9 +10,10 @@ interface BannerUploadProps {
   userId: string;
   currentUrl?: string | null;
   onUploaded?: (url: string) => void;
+  variant?: 'card' | 'inline';
 }
 
-export default function BannerUpload({ userId, currentUrl, onUploaded }: BannerUploadProps) {
+export default function BannerUpload({ userId, currentUrl, onUploaded, variant = 'card' }: BannerUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -75,6 +76,35 @@ export default function BannerUpload({ userId, currentUrl, onUploaded }: BannerU
       setUploading(false);
     }
   };
+
+  if (variant === 'inline') {
+    return (
+      <>
+        <Button
+          type="button"
+          size="sm"
+          variant="secondary"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="gap-1.5 bg-background/95 hover:bg-background text-foreground shadow-md backdrop-blur"
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+          <span className="hidden sm:inline">Edit Foto Sampul</span>
+          <span className="sm:hidden">Sampul</span>
+        </Button>
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
+        {cropSrc && (
+          <BannerCropDialog
+            open={!!cropSrc}
+            onOpenChange={(o) => !o && setCropSrc(null)}
+            imageSrc={cropSrc}
+            onCropped={handleCropped}
+            saving={uploading}
+          />
+        )}
+      </>
+    );
+  }
 
   return (
     <div className="space-y-2">

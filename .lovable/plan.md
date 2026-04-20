@@ -1,150 +1,64 @@
 
 
-## Tujuan
-Tambahkan halaman admin untuk **edit semua template email (auth + transactional)** + tombol **Kirim Test Email**, di samping eksekusi rencana Fase 1+2 yang sudah disetujui.
+## Masalah yang akan diperbaiki
 
-## Arsitektur penyimpanan template
+### 1. Email konfirmasi pendaftaran tidak terkirim
+**Penyebab:** `EventRegistrationForm.tsx` belum invoke `send-transactional-email` setelah RPC `create_registration_with_rentals` sukses (wiring Fase 1 belum selesai untuk trigger ini).
 
-Saat ini template adalah file `.tsx` React Email yang di-bundle ke edge function. Itu tidak bisa diedit dari UI tanpa redeploy. Solusi:
+**Fix:** Setelah RPC sukses, panggil `supabase.functions.invoke('send-transactional-email', ...)` dengan:
+- 1× email `event-registration-confirmation` ke user (idempotency `reg-confirm-{regId}`)
+- Loop per rental → 1× email `gear-rental-confirmation` per rental (idempotency `rental-confirm-{regId}-{idx}`)
 
-**Hybrid model**: file `.tsx` jadi **default/fallback**, sementara admin bisa **override** via DB. Saat kirim, edge function cek DB dulu — kalau ada override aktif → render override; kalau tidak → render template default.
+### 2. Detail peserta event di admin
+**a) "GRATIS" muncul untuk pembayaran 0**
+- Penyebab: `formatPrice(0)` mengembalikan "GRATIS" (rule global di `src/data/events.ts`).
+- Fix: di `AdminEventParticipants.tsx`, untuk field "Sudah Dibayar" gunakan formatter lokal — kalau `paid === 0` tampilkan `Rp 0` (bukan GRATIS). Field "Total Biaya" & "Sisa" tetap pakai `formatPrice` (kalau total benar-benar 0, "GRATIS" wajar).
 
-### Tabel baru `email_template_overrides`
-| kolom | tipe | catatan |
-|---|---|---|
-| `id` | uuid PK | |
-| `template_name` | text UNIQUE | mis. `event-registration-confirmation`, `signup`, `recovery` |
-| `subject` | text | subject line (bisa pakai placeholder `{{name}}`) |
-| `body_html` | text | HTML lengkap (sudah branded, agar render konsisten) |
-| `body_text` | text nullable | plain-text fallback |
-| `is_active` | boolean default true | toggle override on/off tanpa hapus |
-| `updated_by` | uuid | auth.uid() admin |
-| `updated_at` | timestamptz | |
+**b) Munculkan detail sewa gear & breakdown biaya towing/sewa**
+- Saat ini query rentals hanya ambil `total_price`. Ubah jadi ambil `id, qty, total_price, status, products(name, image_url)`.
+- Tambah panel breakdown di tiap registrasi:
+  - Biaya tier (Single/Sharing/Couple): `Rp X`
+  - Biaya towing pergi (kalau ada): `Rp X`
+  - Biaya towing pulang (kalau ada): `Rp X`
+  - Daftar Sewa Gear (per item dengan qty + total)
+  - Total: `Rp X`
 
-RLS: hanya `admin` (via `has_role`) yang bisa SELECT/INSERT/UPDATE. Edge function akses pakai service role.
+**c) Sewa Gear status "belum dikonfirmasi" → ikon kuning**
+- Tiap rental ditampilkan dengan badge berwarna:
+  - `pending` → kuning (`bg-yellow-100 text-yellow-800`, ikon `AlertCircle` kuning)
+  - `confirmed` → biru/secondary
+  - `picked_up` → hijau
+  - `returned` → muted
+  - `cancelled` → merah
 
-### Placeholder system
-Pakai sintaks `{{variable}}` mustache-style sederhana. Variable = props yang dikirim via `templateData` (mis. `{{name}}`, `{{eventTitle}}`, `{{totalAmount}}`). Edge function ganti string sebelum kirim.
+### 3. Inventori produk berubah-ubah sesuai status sewa
+**Status saat ini:** RPC `get_product_availability` SUDAH menghitung `currently_rented` dari rental berstatus `confirmed` atau `picked_up`. Jadi:
+- Sewa `pending` → BELUM mengurangi inventori (perlu admin konfirmasi dulu)
+- Sewa `confirmed` atau `picked_up` → SUDAH mengurangi inventori (otomatis)
+- Sewa `returned` atau `cancelled` → SUDAH dikembalikan ke inventori (otomatis)
 
-Tiap template punya **daftar variable yang tersedia** (didefinisikan di registry frontend, ditampilkan di editor sebagai chips yang bisa di-klik untuk insert).
+**Yang perlu diperbaiki sesuai permintaan user (#3 & #4):**
+- User minta: "bila produk sedang disewa/sudah di book sewa, harus mengurangi inventori". Artinya **`pending` juga harus mengurangi** (saat user submit booking). 
+- Update RPC `get_product_availability` agar `currently_rented` juga termasuk `pending` (selain `confirmed` & `picked_up`).
+- Saat status berubah ke `returned` atau `cancelled`, inventori otomatis kembali (sudah berjalan via filter status di RPC).
 
-## Perubahan edge function
+**#4 (Admin Kelola Produk):** Di `AdminProducts.tsx`, tampilkan inventori dinamis (Total / Disewa / Tersedia) memakai RPC `get_product_availability`, sama seperti `ProductCard`. Saat ini cuma tampil `Inventori: X • Terjual: Y`. Tambah: `Disewa: Z • Sisa Tersedia: W`.
 
-### `send-transactional-email/index.ts`
-Tambah logic di awal render:
-1. Query `email_template_overrides` where `template_name = X and is_active = true`.
-2. Kalau ada → ganti `{{var}}` di `subject` & `body_html` pakai `templateData` → enqueue dengan HTML hasil render (skip React Email).
-3. Kalau tidak ada → render React Email seperti biasa.
+## Files yang diubah
 
-### `auth-email-hook/index.ts`
-Sama — cek override untuk `template_name = signup|recovery|magic-link|invite|email-change|reauthentication` sebelum render React component.
-
-### Edge function baru `send-test-email`
-- Body: `{ templateName, recipientEmail, sampleData }`.
-- Auth: hanya admin (`has_role(auth.uid(), 'admin')`).
-- Kirim via `send-transactional-email` dengan idempotency unik (`test-{ts}-{admin_id}`) supaya tiap test selalu terkirim.
-- Mark email subject dengan prefix `[TEST]` agar jelas.
-
-## Frontend admin
-
-### Halaman baru `/admin/emails`
-Layout: list di kiri (semua template — auth + transactional), editor di kanan.
-
-**List item** menampilkan:
-- Display name (mis. "Konfirmasi Pendaftaran Event")
-- Badge "Default" / "Custom" (kalau ada override aktif)
-- Badge kategori (Auth / Transactional)
-
-**Editor panel:**
-- Field: Subject (input)
-- Field: Body HTML (textarea besar, monospace) — atau opsional pakai RichTextEditor yang sudah ada di project (`src/components/RichTextEditor.tsx`).
-- Sidebar variabel: chips yang bisa di-klik → insert `{{varName}}` di posisi cursor.
-- Tombol **Preview** → render HTML dengan sample data di iframe.
-- Tombol **Reset to Default** → hapus row override (kembali ke template `.tsx`).
-- Tombol **Save** → upsert ke `email_template_overrides`.
-- Tombol **Send Test** → modal input email tujuan + sample data JSON → invoke `send-test-email`.
-
-### Registry frontend `src/lib/emailTemplateRegistry.ts`
-Daftar semua template + variabelnya:
-```ts
-{
-  'event-registration-confirmation': {
-    displayName: 'Konfirmasi Pendaftaran Event',
-    category: 'transactional',
-    variables: ['name', 'eventTitle', 'eventDate', 'totalAmount', 'eventUrl'],
-    sampleData: { name: 'Budi', eventTitle: 'Sumba Adventure', ... },
-  },
-  'signup': { displayName: 'Konfirmasi Email Signup', category: 'auth', variables: ['confirmation_url'], ... },
-  // ...total ~15 templates (6 auth + 9 transactional)
-}
-```
-
-### Navigasi admin
-Tambah menu "Emails" di `AdminLayout.tsx` sidebar.
-
-## Eksekusi (urutan)
-
-1. **Email infra setup** (otomatis): `setup_email_infra` → `scaffold_transactional_email` → halaman `/unsubscribe`.
-2. **Buat 9 template transactional `.tsx`** (Fase 1+2) sesuai branding navy/sky-blue + logo.
-3. **Migration**: tabel `email_template_overrides` + RLS admin-only.
-4. **Edge functions**:
-   - Update `send-transactional-email/index.ts`: cek override + simple `{{var}}` replacer.
-   - Update `auth-email-hook/index.ts`: cek override.
-   - Buat `send-test-email/index.ts` (admin-only).
-5. **Cron edge functions** (Fase 2): `event-reminders-cron`, `rental-reminders-cron` (kirim ke user + vendor via `vendors.contact_email`).
-6. **Schedule cron** (SQL insert, bukan migration): pg_cron daily 09:00 WIB untuk 2 reminder cron.
-7. **Frontend wiring** (semua trigger Fase 1):
-   - `EventRegistrationForm.tsx` — invoke setelah RPC sukses (registration + per-rental).
-   - `RentalCheckoutDialog.tsx` — invoke setelah insert.
-   - `AdminEventParticipants.tsx` — invoke saat ubah `payment_status`.
-   - `useGearRentals.ts` — invoke di `useUpdateRentalStatus`.
-   - `AdminTestimonials.tsx` — invoke saat approve/reject.
-   - Tracking session start — invoke per recipient.
-8. **Halaman admin `/admin/emails`** + registry + route + sidebar entry.
-9. **Halaman `/unsubscribe`** branded.
-10. **Deploy semua edge functions**.
-
-## Files
-
-**Baru:**
-- `supabase/functions/_shared/transactional-email-templates/registry.ts`
-- 9× template `.tsx` Fase 1+2
-- `supabase/functions/send-transactional-email/index.ts` (auto-scaffold + tambah override logic)
-- `supabase/functions/handle-email-unsubscribe/index.ts` (auto)
-- `supabase/functions/handle-email-suppression/index.ts` (auto)
-- `supabase/functions/send-test-email/index.ts`
-- `supabase/functions/event-reminders-cron/index.ts`
-- `supabase/functions/rental-reminders-cron/index.ts`
-- `src/lib/emailTemplateRegistry.ts`
-- `src/pages/admin/AdminEmails.tsx`
-- `src/components/admin/EmailTemplateEditor.tsx`
-- `src/components/admin/EmailTestDialog.tsx`
-- `src/pages/Unsubscribe.tsx`
-- Migration: `email_template_overrides` table + RLS
-
-**Diubah:**
-- `supabase/functions/auth-email-hook/index.ts` — tambah override check
-- `src/components/EventRegistrationForm.tsx`
-- `src/components/RentalCheckoutDialog.tsx`
-- `src/pages/admin/AdminEventParticipants.tsx`
-- `src/pages/admin/AdminTestimonials.tsx`
-- `src/hooks/useGearRentals.ts`
-- `src/pages/TrackingStart.tsx` (atau hook tracking)
-- `src/pages/admin/AdminLayout.tsx` — tambah menu Emails
-- `src/App.tsx` — route `/admin/emails` & `/unsubscribe`
+| File | Perubahan |
+|---|---|
+| `src/components/EventRegistrationForm.tsx` | Invoke `send-transactional-email` setelah RPC sukses (registration + per-rental loop) |
+| `src/pages/admin/AdminEventParticipants.tsx` | Query rentals lengkap (`status`, `products(name, image_url)`), panel breakdown biaya, badge status rental berwarna kuning untuk pending, formatter lokal untuk "Sudah Dibayar" |
+| `src/pages/admin/AdminProducts.tsx` | Fetch availability per product (via RPC), tampilkan "Disewa: X • Tersedia: Y" |
+| Migration baru | Update RPC `get_product_availability` — sertakan status `pending` di `currently_rented` |
 
 ## Validasi
-1. Buka `/admin/emails` → pilih "Konfirmasi Pendaftaran Event" → ubah subject jadi "Halo {{name}}, pendaftaranmu masuk!" → Save.
-2. Klik "Send Test" → masukkan email pribadi → cek inbox: subject custom muncul dengan nama sample.
-3. Daftar event sungguhan → cek inbox: pakai versi custom (override aktif).
-4. Klik "Reset to Default" → daftar event lagi → kembali pakai template asli.
-5. Edit template `signup` di admin → register user baru → email confirmation pakai versi custom.
-6. Cron reminder: invoke manual `event-reminders-cron` dengan event H-1 → user dapat email.
-7. Cron rental pickup: rental dengan vendor `contact_email` terisi → user **dan** vendor dapat email.
-
-## Out of scope
-- Versioning history template (cuma current state).
-- A/B testing template.
-- Multi-language template (single language: Indonesia).
-- WYSIWYG visual builder (pakai HTML textarea + RichTextEditor existing).
+1. Daftar event baru → cek inbox: dapat email konfirmasi (+ email per rental kalau ada).
+2. Buka admin Peserta → "Sudah Dibayar" `Rp 0` (bukan GRATIS) saat belum bayar.
+3. Lihat breakdown: tier, towing pergi, towing pulang, list sewa gear muncul terpisah.
+4. Sewa gear status `pending` → badge kuning. Setelah admin konfirmasi → biru.
+5. Submit sewa baru → langsung `pending` & inventori berkurang di Shop & admin.
+6. Mark `returned` di Sewa Gear → inventori bertambah lagi otomatis.
+7. Buka /admin/products → tiap baris produk yang rentable menunjukkan "Disewa: X • Tersedia: Y" real-time.
 

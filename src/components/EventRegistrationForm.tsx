@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -16,6 +16,7 @@ import { formatPrice } from '@/data/events';
 import { Loader2, CheckCircle2, Heart } from 'lucide-react';
 import type { DbEvent } from '@/hooks/useEvents';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import RentalGearRecommendations, { SelectedRental } from '@/components/RentalGearRecommendations';
 
 const schema = z.object({
   name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),
@@ -32,17 +33,36 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>;
 
+// Detect motor category from free-text input (e.g. "Honda CRF250" -> adventure)
+const detectMotorCategory = (text: string): string => {
+  const t = text.toLowerCase();
+  if (/crf|klx|wr|adv|x.?adv|himalayan|tenere|africa|gs|versys/.test(t)) return 'adventure';
+  if (/ninja|cbr|r\d|gsx.?r|panigale|rsv|zx/.test(t)) return 'sport';
+  if (/nmax|aerox|pcx|vario|beat|scoopy|lexi|adv\s*150/.test(t)) return 'matic';
+  if (/mt|cb\d|z\d|svartpilen|duke|svart/.test(t)) return 'naked';
+  if (/harley|sportster|rebel|bonneville|vulcan/.test(t)) return 'cruiser';
+  return 'touring';
+};
+
+const detectMotorBrand = (text: string): string => {
+  const t = text.toLowerCase();
+  for (const b of ['honda', 'yamaha', 'kawasaki', 'suzuki', 'ducati', 'bmw', 'ktm', 'harley', 'royal enfield', 'triumph', 'aprilia']) {
+    if (t.includes(b)) return b;
+  }
+  return '';
+};
+
 export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const [open, setOpen] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedRentals, setSelectedRentals] = useState<Record<string, SelectedRental>>({});
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const isTentative = !!(event as any).tentative_month;
   const isFull = event.current_participants >= event.max_participants || (event as any).force_full;
 
-  // Check if user already registered
   const { data: existingReg } = useQuery({
     queryKey: ['my-registration', event.id, user?.id],
     queryFn: async () => {
@@ -58,7 +78,6 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     enabled: !!user,
   });
 
-  // Check if user already expressed interest (tentative events)
   const { data: existingInterest } = useQuery({
     queryKey: ['my-interest', event.id, user?.id],
     queryFn: async () => {
@@ -137,6 +156,11 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const selectedType = form.watch('registrationType');
   const towingPergi = form.watch('towingPergi');
   const towingPulang = form.watch('towingPulang');
+  const motorType = form.watch('motorType');
+
+  const motorCategory = useMemo(() => detectMotorCategory(motorType || ''), [motorType]);
+  const motorBrand = useMemo(() => detectMotorBrand(motorType || ''), [motorType]);
+
   const towingEnabled = (event as any).towing_enabled || false;
   const towingPergiPrice = (event as any).towing_pergi_price || 0;
   const towingPulangPrice = (event as any).towing_pulang_price || 0;
@@ -147,7 +171,9 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   };
   const basePrice = priceMap[selectedType] || 0;
   const towingTotal = (towingPergi ? towingPergiPrice : 0) + (towingPulang ? towingPulangPrice : 0);
-  const selectedPrice = basePrice + towingTotal;
+  const rentalsTotal = Object.values(selectedRentals).reduce((s, r) => s + r.subtotal, 0);
+  const rentalsDeposit = Object.values(selectedRentals).reduce((s, r) => s + r.deposit, 0);
+  const selectedPrice = basePrice + towingTotal + rentalsTotal;
 
   const handleOpen = (v: boolean) => {
     if (v && !user) {
@@ -156,14 +182,14 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       return;
     }
     setOpen(v);
-    if (!v) { setSubmitted(false); form.reset(); }
+    if (!v) { setSubmitted(false); form.reset(); setSelectedRentals({}); }
   };
 
   const onSubmit = async (data: FormData) => {
     if (!user) return;
     setLoading(true);
 
-    const { error } = await supabase.from('event_registrations').insert({
+    const { data: regData, error } = await supabase.from('event_registrations').insert({
       event_id: event.id,
       user_id: user.id,
       name: data.name,
@@ -176,11 +202,10 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       towing_pergi: data.towingPergi || false,
       towing_pulang: data.towingPulang || false,
       notes: data.notes || '',
-    });
-
-    setLoading(false);
+    }).select('id').single();
 
     if (error) {
+      setLoading(false);
       if (error.code === '23505') {
         toast({ title: 'Sudah terdaftar', description: 'Email ini sudah terdaftar untuk event ini.', variant: 'destructive' });
       } else {
@@ -189,14 +214,40 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       return;
     }
 
+    // Insert rentals if any
+    const rentalsArr = Object.values(selectedRentals);
+    if (rentalsArr.length > 0 && regData?.id) {
+      const startDate = (event.date as any).split('T')[0];
+      const endDate = ((event as any).end_date || event.date).split('T')[0];
+      const rentalRows = rentalsArr.map(r => ({
+        product_id: r.product_id,
+        user_id: user.id,
+        event_id: event.id,
+        registration_id: regData.id,
+        qty: r.qty,
+        daily_price: r.daily_price,
+        total_days: r.total_days,
+        total_price: r.subtotal,
+        deposit_amount: r.deposit,
+        start_date: startDate,
+        end_date: endDate,
+        status: 'pending',
+      }));
+      const { error: rentalErr } = await (supabase.from('gear_rentals') as any).insert(rentalRows);
+      if (rentalErr) {
+        toast({ title: 'Pendaftaran berhasil, tapi sewa gagal', description: rentalErr.message, variant: 'destructive' });
+      }
+    }
+
+    setLoading(false);
     setSubmitted(true);
     queryClient.invalidateQueries({ queryKey: ['event', event.id] });
     queryClient.invalidateQueries({ queryKey: ['events'] });
     queryClient.invalidateQueries({ queryKey: ['my-registration', event.id, user?.id] });
+    queryClient.invalidateQueries({ queryKey: ['my-rentals'] });
     toast({ title: 'Pendaftaran berhasil! 🎉', description: `Kamu sudah terdaftar untuk ${event.title}` });
   };
 
-  // Tentative event → show interest button
   if (isTentative) {
     if (existingInterest) {
       return (
@@ -206,12 +257,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       );
     }
     return (
-      <Button
-        size="lg"
-        className="w-full text-base font-semibold gap-2"
-        onClick={handleInterest}
-        disabled={interestMutation.isPending}
-      >
+      <Button size="lg" className="w-full text-base font-semibold gap-2" onClick={handleInterest} disabled={interestMutation.isPending}>
         {interestMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Heart className="h-5 w-5" />}
         🙋 Saya Minat Trip Ini!
       </Button>
@@ -305,7 +351,6 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                   <FormMessage />
                 </FormItem>
               )} />
-              {/* Registration Type */}
               <FormField control={form.control} name="registrationType" render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tipe Pendaftaran *</FormLabel>
@@ -315,12 +360,8 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                       { value: 'single', label: 'Single', price: priceMap.single },
                       { value: 'couple', label: 'Couple', price: priceMap.couple },
                     ].filter(t => t.price > 0).map(t => (
-                      <button
-                        key={t.value}
-                        type="button"
-                        onClick={() => field.onChange(t.value)}
-                        className={`p-3 rounded-lg border text-center transition-all ${field.value === t.value ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}
-                      >
+                      <button key={t.value} type="button" onClick={() => field.onChange(t.value)}
+                        className={`p-3 rounded-lg border text-center transition-all ${field.value === t.value ? 'border-primary bg-primary/10 ring-2 ring-primary/20' : 'border-border hover:border-primary/40'}`}>
                         <p className="text-xs font-medium">{t.label}</p>
                         <p className="text-sm font-bold text-primary">{formatPrice(t.price)}</p>
                       </button>
@@ -329,7 +370,16 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                   <FormMessage />
                 </FormItem>
               )} />
-              {/* Towing Options */}
+
+              {/* Rental gear recommendations */}
+              <RentalGearRecommendations
+                eventId={event.id}
+                motorType={motorCategory}
+                motorBrand={motorBrand}
+                selected={selectedRentals}
+                onChange={setSelectedRentals}
+              />
+
               {towingEnabled && (
                 <div className="space-y-2 p-3 rounded-lg border border-border">
                   <p className="text-sm font-medium">Opsi Towing Motor</p>
@@ -347,9 +397,6 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                       <span className="text-sm font-bold text-primary ml-auto">{formatPrice(towingPulangPrice)}</span>
                     </label>
                   )}
-                  {towingTotal > 0 && (
-                    <p className="text-xs text-muted-foreground pt-1 border-t border-border">Tambahan towing: {formatPrice(towingTotal)}</p>
-                  )}
                 </div>
               )}
               <FormField control={form.control} name="notes" render={({ field }) => (
@@ -359,6 +406,16 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                   <FormMessage />
                 </FormItem>
               )} />
+
+              {/* Price breakdown */}
+              <div className="p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
+                <div className="flex justify-between"><span className="text-muted-foreground">Trip ({selectedType})</span><span>{formatPrice(basePrice)}</span></div>
+                {towingTotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Towing</span><span>{formatPrice(towingTotal)}</span></div>}
+                {rentalsTotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Sewa Gear ({Object.keys(selectedRentals).length})</span><span>{formatPrice(rentalsTotal)}</span></div>}
+                {rentalsDeposit > 0 && <div className="flex justify-between text-xs text-muted-foreground"><span>Deposit gear (refundable)</span><span>+ {formatPrice(rentalsDeposit)}</span></div>}
+                <div className="flex justify-between font-bold text-base pt-1 border-t border-border"><span>Total</span><span className="text-primary">{formatPrice(selectedPrice)}</span></div>
+              </div>
+
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {loading ? 'Mendaftar...' : `Kirim Pendaftaran - ${formatPrice(selectedPrice)}`}

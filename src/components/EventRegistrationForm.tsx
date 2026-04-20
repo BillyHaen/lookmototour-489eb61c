@@ -177,54 +177,40 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     if (!user) return;
     setLoading(true);
 
-    const { data: regData, error } = await supabase.from('event_registrations').insert({
-      event_id: event.id,
-      user_id: user.id,
-      name: data.name,
-      email: data.email,
-      phone: data.phone,
-      motor_type: `${data.motorBrand} ${data.motorModel}`.trim(),
-      plate_number: data.plateNumber,
-      emergency_contact: data.emergencyContact,
-      registration_type: data.registrationType,
-      towing_pergi: data.towingPergi || false,
-      towing_pulang: data.towingPulang || false,
-      notes: data.notes || '',
-    }).select('id').single();
+    const rentalsArr = Object.values(selectedRentals).map(r => ({
+      product_id: r.product_id,
+      qty: r.qty,
+      daily_price: r.daily_price,
+      total_days: r.total_days,
+      subtotal: r.subtotal,
+      deposit: r.deposit,
+    }));
+
+    const { error } = await (supabase.rpc as any)('create_registration_with_rentals', {
+      _event_id: event.id,
+      _payload: {
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        motor_type: `${data.motorBrand} ${data.motorModel}`.trim(),
+        plate_number: data.plateNumber,
+        emergency_contact: data.emergencyContact,
+        registration_type: data.registrationType,
+        towing_pergi: data.towingPergi || false,
+        towing_pulang: data.towingPulang || false,
+        notes: data.notes || '',
+      },
+      _rentals: rentalsArr,
+    });
 
     if (error) {
       setLoading(false);
-      if (error.code === '23505') {
-        toast({ title: 'Sudah terdaftar', description: 'Email ini sudah terdaftar untuk event ini.', variant: 'destructive' });
+      if ((error as any).code === '23505' || error.message?.includes('duplicate')) {
+        toast({ title: 'Sudah terdaftar', description: 'Kamu sudah terdaftar untuk event ini.', variant: 'destructive' });
       } else {
         toast({ title: 'Gagal mendaftar', description: error.message, variant: 'destructive' });
       }
       return;
-    }
-
-    // Insert rentals if any
-    const rentalsArr = Object.values(selectedRentals);
-    if (rentalsArr.length > 0 && regData?.id) {
-      const startDate = (event.date as any).split('T')[0];
-      const endDate = ((event as any).end_date || event.date).split('T')[0];
-      const rentalRows = rentalsArr.map(r => ({
-        product_id: r.product_id,
-        user_id: user.id,
-        event_id: event.id,
-        registration_id: regData.id,
-        qty: r.qty,
-        daily_price: r.daily_price,
-        total_days: r.total_days,
-        total_price: r.subtotal,
-        deposit_amount: r.deposit,
-        start_date: startDate,
-        end_date: endDate,
-        status: 'pending',
-      }));
-      const { error: rentalErr } = await (supabase.from('gear_rentals') as any).insert(rentalRows);
-      if (rentalErr) {
-        toast({ title: 'Pendaftaran berhasil, tapi sewa gagal', description: rentalErr.message, variant: 'destructive' });
-      }
     }
 
     setLoading(false);

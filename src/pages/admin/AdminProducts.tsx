@@ -172,6 +172,14 @@ export default function AdminProducts() {
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Inventori: {p.total_inventory || p.stock} • Terjual: {p.sold_count || 0} • Kategori: {p.category}
+                    {p.is_rentable && availabilityMap.get(p.id) && (
+                      <>
+                        {' • '}
+                        <span className="text-orange-600 font-medium">Disewa: {availabilityMap.get(p.id).currently_rented}</span>
+                        {' • '}
+                        <span className="text-green-600 font-medium">Tersedia: {availabilityMap.get(p.id).available_to_rent}</span>
+                      </>
+                    )}
                   </p>
                 </div>
               </div>

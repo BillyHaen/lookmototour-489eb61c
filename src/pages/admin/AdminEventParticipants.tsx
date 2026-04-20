@@ -57,21 +57,30 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
 
       const [{ data: profiles }, { data: rentals }] = await Promise.all([
         supabase.from('profiles').select('user_id, name, avatar_url').in('user_id', userIds),
-        supabase.from('gear_rentals').select('registration_id, total_price').in('registration_id', regIds),
+        (supabase.from('gear_rentals') as any)
+          .select('id, registration_id, qty, total_price, deposit_amount, status, total_days, products(name, image_url)')
+          .in('registration_id', regIds),
       ]);
 
       const profileMap = new Map((profiles || []).map(p => [p.user_id, p]));
-      const rentalMap = new Map<string, number>();
+      const rentalsByReg = new Map<string, any[]>();
       (rentals || []).forEach((r: any) => {
         if (!r.registration_id) return;
-        rentalMap.set(r.registration_id, (rentalMap.get(r.registration_id) || 0) + (r.total_price || 0));
+        const arr = rentalsByReg.get(r.registration_id) || [];
+        arr.push(r);
+        rentalsByReg.set(r.registration_id, arr);
       });
 
-      return (data || []).map(r => ({
-        ...r,
-        profile: profileMap.get(r.user_id) || null,
-        rentals_total: rentalMap.get(r.id) || 0,
-      }));
+      return (data || []).map(r => {
+        const regRentals = rentalsByReg.get(r.id) || [];
+        const rentals_total = regRentals.reduce((s, x) => s + (x.total_price || 0), 0);
+        return {
+          ...r,
+          profile: profileMap.get(r.user_id) || null,
+          rentals: regRentals,
+          rentals_total,
+        };
+      });
     },
     enabled: open,
   });

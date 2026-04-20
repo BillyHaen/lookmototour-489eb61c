@@ -189,20 +189,11 @@ export default function AdminEvents() {
         eventId = data.id;
       }
 
-      // Save itineraries
-      if (eventId) {
+      // Legacy event_itineraries: cleanup once SEO itinerary is in use
+      if (eventId && seoItinerary.length > 0) {
         await supabase.from('event_itineraries' as any).delete().eq('event_id', eventId);
-        if (itineraries.length > 0) {
-          const rows = itineraries.map(it => ({
-            event_id: eventId!,
-            day_number: it.day_number,
-            date: it.date || null,
-            title: it.title,
-            description: it.description,
-          }));
-          await (supabase.from('event_itineraries' as any) as any).insert(rows);
-        }
       }
+
 
       // Notify interested users if date was confirmed
       if (wasConfirmed && eventId) {

@@ -1,102 +1,85 @@
 
-## Fitur "Try First, Buy Later" — Sewa Gear
+## Masalah & Solusi
 
-Sistem persewaan gear terintegrasi dengan pendaftaran trip, rekomendasi cerdas berdasarkan karakter trip + motor, dan inventori real-time.
+**Akar masalah rekomendasi tidak muncul:**
+1. Field "Tipe Motor" sekarang free-text (`Honda CRF250`), lalu di-regex untuk menebak kategori (`adventure`/`sport`/dll) & brand. Heuristik ini sering meleset → `motor_type` yang dikirim ke RPC `recommend_rental_gear` tidak match dengan `suitable_motor_types` produk.
+2. RPC butuh exact string match terhadap array `suitable_motor_types` (`sport`/`touring`/`adventure`/`naked`/`cruiser`/`matic`).
+3. Jika belum ada produk dengan `is_rentable=true` + `daily_rent_price>0` + stok tersedia, hasil tetap kosong (perlu dicek juga).
 
-## Review: yang sudah ada vs baru
+**Solusi: ganti free-text jadi 2 dropdown terstruktur — Merk Motor + Tipe Motor.**
 
-**Sudah ada (REUSE):**
-- ✅ `products` table (name, price, stock, category, image_url, is_active, description)
-- ✅ `Shop.tsx` page + `AdminProducts.tsx` admin
-- ✅ `EventRegistrationForm.tsx` dengan field `motor_type`
-- ✅ Event punya: `touring_style`, `motor_types[]`, `difficulty`, `riding_hours_per_day`, `road_condition`, `distance`
-- ✅ AI infrastructure: Lovable AI Gateway pattern (`ai-trip-match`, `recommend-sponsors`)
+## Perubahan
 
-**Yang perlu dibuat:**
-1. Vendor sebagai entitas terpisah
-2. Field sewa di products (rentable, daily price, deposit)
-3. Inventori real-time (qty for sale vs rent vs in-use)
-4. Tabel rental (booking ↔ event ↔ user)
-5. UI sewa di registration form + rekomendasi
-6. Toko dengan toggle "Sewa / Beli"
-7. Admin: vendor manager, rental config, riwayat sewa
+### 1. Data katalog motor (file baru `src/data/motorcycles.ts`)
+Konstanta lookup brand → daftar model. Setiap model punya `category` (sport/touring/adventure/naked/cruiser/matic) sehingga kategori untuk scoring tidak perlu ditebak.
 
-## Database (1 migration)
+Cakupan brand yang beredar di Indonesia:
+- **Honda**: BeAT, Scoopy, Vario 125/160, PCX 160, ADV 160, Genio, Stylo, Revo, Supra X 125, CRF150L, CRF250 Rally, CB150R, CB150 Verza, CB150X, CBR150R, CBR250RR, CBR500R, CBR600RR, CBR1000RR-R, Rebel 500, X-ADV, Forza 250/750, Africa Twin, Gold Wing.
+- **Yamaha**: Mio, Fino, Gear, Lexi, FreeGo, NMax, Aerox 155, XMax 250, TMax, Vega Force, Jupiter Z1, MX King 150, R15, R25, R1, MT-15, MT-25, MT-09, MT-07, XSR 155, XSR 700/900, Tenere 700, WR155R.
+- **Kawasaki**: Ninja 250/400/650/ZX-6R/ZX-10R, Z250/Z400/Z650/Z900/Z H2, ER-6n, KLX 150/230, W175, W800, Versys 250/650/1000, Vulcan S, Eliminator 400.
+- **Suzuki**: Address, Nex II, Avenis, Burgman Street, Satria F150, GSX-R150, GSX-S150, GSX-R1000, GSX-S1000, V-Strom 250 SX/650/1050, Hayabusa.
+- **Ducati**: Panigale V2/V4, Streetfighter V2/V4, Monster, Multistrada V2/V4, Scrambler, DesertX, Diavel.
+- **BMW Motorrad**: G 310 R/GS, F 750/850/900 GS, R 1250 GS / GS Adventure, R nineT, S 1000 RR/XR, K 1600 GT.
+- **KTM**: Duke 200/250/390/790/890/1290, RC 200/390, Adventure 250/390/790/890/1290, SX-F, EXC.
+- **Royal Enfield**: Hunter 350, Classic 350, Meteor 350, Bullet 350, Himalayan 411/450, Continental GT 650, Interceptor 650, Super Meteor 650.
+- **Harley-Davidson**: Sportster S, Nightster, Street Glide, Road Glide, Road King, Fat Boy, Pan America 1250.
+- **Triumph**: Speed 400, Scrambler 400X, Trident 660, Speed Twin, Bonneville T100/T120, Street Triple, Speed Triple, Tiger 660/900/1200, Rocket 3.
+- **Aprilia**: SR GT 200, RS 660, Tuono 660, Tuareg 660, RSV4, Tuono V4.
+- **CFMOTO**: 250 SR/NK, 300 SR/NK, 450 SR/NK/MT, 650 GT/NK/MT, 800 MT, 700 CL-X.
+- **Benelli**: TNT 135/150/249, 302S, 502C, Leoncino 250/500, TRK 251/502/702, Imperiale 400.
+- **Vespa / Piaggio**: LX, S, Sprint, Primavera, GTS, GTV, Liberty, Medley.
+- **Lainnya**: Lambretta, Italjet Dragster, Husqvarna Vitpilen/Svartpilen, Royal Alloy.
 
-**Tabel baru:**
-- `vendors` (id, name, slug, logo_url, contact_phone, contact_email, description, is_active)
-- `gear_rentals` (id, product_id, user_id, event_id, registration_id nullable, qty, daily_price, total_days, total_price, deposit_amount, start_date, end_date, status enum [pending/confirmed/picked_up/returned/cancelled], pickup_notes, return_notes, created_at)
-- `product_recommendations_log` (id, user_id, event_id, product_id, score, reason jsonb, computed_at) — cache rekomendasi
+(Daftar disusun sebagai array di file untuk kemudahan maintenance; admin bisa menambah lewat update kode.)
 
-**Perubahan `products`:**
-- `vendor_id` (FK ke vendors, nullable awal lalu wajib via UI)
-- `is_rentable` boolean default false
-- `is_purchasable` boolean default true
-- `daily_rent_price` integer default 0
-- `rent_deposit` integer default 0
-- `total_inventory` integer default 0 (replaces simple `stock` semantics; `stock` jadi computed view: `total_inventory - sold - currently_rented`)
-- `gear_type` text (helmet / jacket / gloves / boots / luggage / camera / etc) — untuk matching rekomendasi
-- `suitable_motor_types` text[] (sport/touring/adventure/naked/cruiser/matic)
-- `suitable_trip_styles` text[] (adventure/touring/city)
-- `motor_brands` text[] (honda/yamaha/kawasaki/etc — opsional, untuk merk-spesifik)
-- `min_difficulty` int (1-5) — gear perlu untuk minimal level kesulitan ini
+### 2. EventRegistrationForm
+- Hapus input free-text `motorType`. Schema diganti:
+  - `motorBrand: z.string().min(1)` 
+  - `motorModel: z.string().min(1)` (nama tipe)
+- 2 `<Select>` (Shadcn): Brand (cascading) → Model. Saat brand dipilih, dropdown model di-reset & di-populate dari katalog.
+- Field `motor_type` di DB tetap diisi gabungan: `"Honda CRF250 Rally"` (kompatibel data lama; tidak perlu migrasi schema).
+- `motorCategory` & `motorBrand` untuk RPC diambil **langsung** dari katalog (bukan regex):
+  - `motorCategory = MOTORCYCLES[brand][model].category`
+  - `motorBrand = brand` (lowercase)
+- Hapus helper `detectMotorCategory` & `detectMotorBrand`.
 
-**RPC:**
-- `get_product_availability(_product_id, _start_date, _end_date)` returns `{ available_to_rent, available_to_buy, currently_rented }` — hitung dari `gear_rentals` yang overlap tanggal.
-- `recommend_rental_gear(_event_id, _user_id, _motor_type, _motor_brand)` returns scored list — deterministic scoring berdasar match motor_types / trip_style / difficulty / brand. Cache ke `product_recommendations_log`.
+### 3. Profile (form edit motor) & MemberProfile
+Cek `src/pages/Profile.tsx` — jika ada field motor yang diedit user, ganti pola sama (Brand+Model dropdown). Jika cuma display, biarkan.
 
-**RLS:** vendors public select (active), admin CRUD. `gear_rentals` users SELECT own, admin CRUD, users INSERT own. Recommendations log: own SELECT.
+### 4. Admin — `AdminProducts.tsx`
+- Field `suitable_motor_types` (array kategori) tetap multi-chip: `sport/touring/adventure/naked/cruiser/matic` — selaras dengan kategori di katalog.
+- Field `motor_brands` ubah dari free-text jadi multi-select chips dari brand katalog (konsisten lowercase).
+- Tambahkan helper text: "Pilih kategori motor & merk yang cocok agar muncul di rekomendasi sewa saat user pilih motor sesuai."
 
-## Frontend
+### 5. RPC `recommend_rental_gear` — TIDAK perlu diubah
+Logika scoring sudah kompatibel; cuma sekarang inputnya bersih & deterministik.
 
-### Komponen baru
-- **`RentalGearRecommendations.tsx`** — dipasang di `EventRegistrationForm.tsx`. Memanggil `recommend_rental_gear` setelah user pilih motor_type. Tampilkan grid kartu gear: nama, vendor logo, harga/hari × hari trip = subtotal, badge "Direkomendasikan", checkbox pilih qty. Total update real-time dipassing ke parent form.
-- **`ProductCard.tsx`** (refactor dari Shop) — toggle dual-mode "Sewa | Beli" jika product `is_rentable && is_purchasable`. Tampilkan stok tersedia untuk masing-masing.
-- **`RentalCheckoutDialog.tsx`** — dialog di Shop untuk pilih tanggal sewa standalone (di luar event), hitung total + deposit.
+### 6. Diagnostik tambahan di `RentalGearRecommendations.tsx`
+- Saat hasil kosong tapi `motorType` sudah valid, tampilkan pesan kecil: "Belum ada gear cocok untuk motor & trip ini." (bukan menyembunyikan section sepenuhnya). Sekarang dia `return null` → user mengira fitur tidak ada.
 
-### Updates
-- **`EventRegistrationForm.tsx`** — tambah section "Sewa Gear (Opsional)" antara field motor & towing. Pass selected rentals ke handler simpan. Total harga registrasi ditambah total sewa. Saat submit confirmed, insert ke `gear_rentals` dengan registration_id.
-- **`Shop.tsx`** — filter: "Semua / Beli / Sewa". Card pakai `ProductCard` baru dengan toggle.
-- **`Profile.tsx`** — tab/section baru "Sewa Gear Saya" tampil daftar rental aktif & history dengan status.
+## Implikasi ke sistem sewa
 
-### Admin
-- **`AdminVendors.tsx`** (route `/admin/vendors`) — CRUD vendor (logo upload, kontak).
-- **`AdminProducts.tsx`** — extend existing:
-  - Field baru: vendor_id (Select dari vendors), toggle `is_rentable`/`is_purchasable`, daily_rent_price, deposit, gear_type, suitable_motor_types (multi-select chips), suitable_trip_styles, motor_brands, min_difficulty, total_inventory.
-  - Display "Stok: X tersedia (Y disewa, Z terjual)".
-- **`AdminRentals.tsx`** (route `/admin/rentals`) — list semua rental, filter status, action: confirm / mark picked_up / mark returned / cancel + edit notes.
-- **`AdminLayout.tsx`** — nav baru: "Vendor" + "Sewa Gear".
+| Area | Dampak |
+|---|---|
+| RPC scoring | Lebih akurat — `motor_type_match` & `brand_match` jadi reliable. |
+| Data lama `event_registrations.motor_type` | Tetap kompatibel (string bebas). Tidak butuh migrasi. |
+| Admin produk | Konsistensi data brand/kategori antara katalog motor ↔ produk. |
+| Shop standalone (`RentalCheckoutDialog`) | Tidak terdampak (tidak pakai motor sebagai input). |
+| Stok & availability | Tidak terdampak. |
 
-## Logika rekomendasi (RPC, deterministic, no AI needed dulu)
-```text
-score = 0
-+10 jika motor_type match
-+5  jika motor_brand match
-+8  jika trip_style match
-+5  jika difficulty event >= product.min_difficulty
-+3  jika gear_type "essential" (helmet, jacket) dan trip > 1 hari
-+2  jika multi-day trip dan gear_type = luggage
-filter: only is_rentable && available_qty > 0
-sort by score desc, ambil top 6
-```
-
-## Validation
-1. Admin buat vendor "MotoGear ID" → buat product "Jaket Touring AGV" linked vendor, is_rentable=true, daily_rent_price=50k, total_inventory=5, suitable_motor_types=[touring,adventure].
-2. User registrasi event "Sumatra Adventure 5 hari" pilih motor_type=adventure → section Sewa Gear muncul → Jaket AGV tampil dengan badge "Direkomendasikan", subtotal = 50k×5=250k.
-3. Pilih qty 1 → total registrasi otomatis +250k +deposit.
-4. Submit → record di `gear_rentals` status=pending, registration_id terhubung.
-5. Buka /shop → Jaket AGV muncul dengan toggle "Sewa | Beli" → toggle "Beli" tampil stok beli.
-6. Admin buka `/admin/rentals` → confirm rental → mark picked_up saat user ambil → returned saat kembali.
-7. Setelah picked_up, stok available di Shop berkurang otomatis (cek via `get_product_availability`).
-8. User bisa lihat rental di Profile → "Sewa Gear Saya".
+## Validasi
+1. Buka event detail → Daftar Sekarang.
+2. Pilih Brand: Kawasaki → dropdown Model muncul → pilih `Versys 250` → kategori internal `adventure`.
+3. Section "Sewa Gear" muncul. Jika ada produk rentable dengan `suitable_motor_types: [adventure]` atau `motor_brands: [kawasaki]` → ranking benar.
+4. Jika belum ada produk cocok → muncul pesan ramah, bukan blank.
+5. Submit → `motor_type` di DB tersimpan `"Kawasaki Versys 250"`.
+6. Admin AdminProducts: edit produk, set `motor_brands` ke `kawasaki` & `suitable_motor_types` ke `adventure` → user dengan motor di atas otomatis dapat rekomendasi.
 
 ## Files
-- 1 migration (1 tabel baru + alter products + 2 tabel rental/log + 2 RPC + RLS)
-- New: `RentalGearRecommendations.tsx`, `ProductCard.tsx`, `RentalCheckoutDialog.tsx`, `useVendors.ts`, `useGearRentals.ts`, `useGearRecommendations.ts`, `admin/AdminVendors.tsx`, `admin/AdminRentals.tsx`
-- Edited: `EventRegistrationForm.tsx`, `Shop.tsx`, `Profile.tsx`, `admin/AdminProducts.tsx`, `admin/AdminLayout.tsx`
+- **New**: `src/data/motorcycles.ts`
+- **Edited**: `src/components/EventRegistrationForm.tsx`, `src/components/RentalGearRecommendations.tsx` (empty-state message), `src/pages/admin/AdminProducts.tsx` (brand multi-select dari katalog), `src/pages/Profile.tsx` (jika ada edit motor)
 
 ## Out of scope
-- Pembayaran deposit otomatis (manual via WhatsApp dulu, sama seperti Shop sekarang)
-- Auto-reminder email pengembalian (bisa fase berikutnya pakai email queue yang sudah ada)
-- AI re-rank rekomendasi (skor deterministic cukup; bisa ditambah nanti)
-- Multi-vendor checkout cart (1 rental = 1 vendor untuk simplicity awal)
+- Migrasi data motor lama di `event_registrations` (tidak perlu — field text bebas).
+- CCM/manage daftar motor via admin UI (cukup file konstanta untuk MVP).
+- Auto-detect kategori untuk merk motor custom yang tidak di katalog (user bisa skip dropdown atau pilih "Lainnya" → category default `touring`).

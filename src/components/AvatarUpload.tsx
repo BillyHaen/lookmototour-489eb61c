@@ -61,7 +61,8 @@ export default function AvatarUpload({ userId, currentUrl, name, size = 'lg', va
         .from('profiles').update({ avatar_url: avatarUrl }).eq('user_id', userId);
       if (updateError) throw updateError;
 
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-full', userId] });
+      queryClient.invalidateQueries({ queryKey: ['profile-nav', userId] });
       queryClient.invalidateQueries({ queryKey: ['member-profile'] });
       queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
       queryClient.invalidateQueries({ queryKey: ['approved-testimonials'] });

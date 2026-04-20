@@ -23,6 +23,7 @@ import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
+import { useMyProfile } from '@/hooks/useProfile';
 
 import RecommendedSponsors from '@/components/RecommendedSponsors';
 
@@ -53,15 +54,7 @@ export default function Profile() {
     if (!authLoading && !user) navigate('/login');
   }, [authLoading, user, navigate]);
 
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('user_id', user!.id).single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+  const { data: profile, isLoading: profileLoading } = useMyProfile();
 
   const { data: registrations } = useQuery({
     queryKey: ['my-registrations', user?.id],
@@ -117,8 +110,10 @@ export default function Profile() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-full', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile-nav', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['my-username'] });
+      queryClient.invalidateQueries({ queryKey: ['rider'] });
       toast({ title: 'Profil berhasil diperbarui! ✅' });
     },
     onError: (e: Error) => {

@@ -114,7 +114,7 @@ export function EmailTemplateEditor({ template }: Props) {
   const handlePreview = () => {
     let html = bodyHtml;
     Object.entries(template.sampleData).forEach(([k, v]) => {
-      html = html.replaceAll(`{{${k}}}`, String(v));
+      html = html.split(`{{${k}}}`).join(String(v));
     });
     setPreviewHtml(html);
   };

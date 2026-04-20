@@ -73,15 +73,38 @@ export default function AdminUsers() {
     enabled: !!selectedUser,
   });
 
+  const { data: vendors } = useQuery({
+    queryKey: ['admin-all-vendors-for-link'],
+    queryFn: async () => {
+      const { data, error } = await (supabase.from('vendors') as any).select('id, name, owner_user_id').order('name');
+      if (error) throw error;
+      return data as any[];
+    },
+  });
+
   const setRoleMutation = useMutation({
-    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'user' }) => {
-      await supabase.from('user_roles').delete().eq('user_id', userId);
-      const { error } = await supabase.from('user_roles').insert({ user_id: userId, role });
+    mutationFn: async ({ userId, role }: { userId: string; role: 'admin' | 'user' | 'vendor' }) => {
+      const { error } = await supabase.rpc('admin_set_user_role' as any, { _user_id: userId, _role: role as any });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-role'] });
       toast({ title: 'Role diperbarui ✅' });
+    },
+    onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
+  });
+
+  const linkVendorMutation = useMutation({
+    mutationFn: async ({ vendorId, userId }: { vendorId: string; userId: string | null }) => {
+      const { error } = await supabase.rpc('admin_link_vendor_to_user' as any, { _vendor_id: vendorId, _user_id: userId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-all-vendors-for-link'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-vendors'] });
+      queryClient.invalidateQueries({ queryKey: ['my-vendor'] });
+      toast({ title: 'Vendor link diperbarui ✅' });
     },
     onError: (e: Error) => toast({ title: 'Error', description: e.message, variant: 'destructive' }),
   });
@@ -164,15 +187,30 @@ export default function AdminUsers() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0" onClick={e => e.stopPropagation()}>
-                  <Badge variant={role === 'admin' ? 'default' : 'secondary'}>{role}</Badge>
-                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as 'admin' | 'user' })}>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
+                  <Badge variant={role === 'admin' ? 'default' : role === 'vendor' ? 'outline' : 'secondary'}>{role}</Badge>
+                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as any })}>
                     <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="user">User</SelectItem>
+                      <SelectItem value="vendor">Vendor</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
+                  {role === 'vendor' && (
+                    <Select
+                      value={(vendors?.find((v: any) => v.owner_user_id === profile.user_id)?.id) || 'none'}
+                      onValueChange={(v) => linkVendorMutation.mutate({ vendorId: v, userId: v === 'none' ? null : profile.user_id })}
+                    >
+                      <SelectTrigger className="w-[160px]"><SelectValue placeholder="Link vendor" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">— Tanpa vendor —</SelectItem>
+                        {vendors?.filter((v: any) => !v.owner_user_id || v.owner_user_id === profile.user_id).map((v: any) => (
+                          <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   {stats.total_trips === 0 && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>

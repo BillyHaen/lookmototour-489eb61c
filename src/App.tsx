@@ -16,6 +16,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Shop from "./pages/Shop";
 import MemberProfile from "./pages/MemberProfile";
+import RiderProfile from "./pages/RiderProfile";
+import RiderMeRedirect from "./pages/RiderMeRedirect";
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import TripJournals from "./pages/TripJournals";
@@ -63,6 +65,8 @@ const App = () => (
             <Route path="/jurnal" element={<TripJournals />} />
             <Route path="/jurnal/:slug" element={<TripJournalDetail />} />
             <Route path="/member/:userId" element={<MemberProfile />} />
+            <Route path="/riders/me" element={<RiderMeRedirect />} />
+            <Route path="/riders/:username" element={<RiderProfile />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />

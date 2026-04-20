@@ -35,8 +35,12 @@ const BADGES = [
 
 const schema = z.object({
   name: z.string().min(2, 'Nama minimal 2 karakter'),
+  username: z.string().min(3, 'Username min 3 karakter').regex(/^[a-z0-9-]+$/, 'Hanya huruf kecil, angka, dan tanda hubung').optional().or(z.literal('')),
   phone: z.string().max(20).optional(),
   bio: z.string().max(500).optional(),
+  riding_style: z.string().optional(),
+  location: z.string().max(100).optional(),
+  banner_url: z.string().optional(),
 });
 
 export default function Profile() {
@@ -86,22 +90,29 @@ export default function Profile() {
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', phone: '', bio: '' },
+    defaultValues: { name: '', username: '', phone: '', bio: '', riding_style: '', location: '', banner_url: '' },
   });
 
   useEffect(() => {
     if (profile) {
-      form.reset({ name: profile.name || '', phone: profile.phone || '', bio: profile.bio || '' });
+      const p = profile as any;
+      form.reset({
+        name: p.name || '', username: p.username || '', phone: p.phone || '', bio: p.bio || '',
+        riding_style: p.riding_style || '', location: p.location || '', banner_url: p.banner_url || '',
+      });
     }
   }, [profile, form]);
 
   const updateProfile = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {
-      const { error } = await supabase.from('profiles').update(values).eq('user_id', user!.id);
+      const payload: any = { ...values };
+      if (!payload.username) delete payload.username;
+      const { error } = await supabase.from('profiles').update(payload).eq('user_id', user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['my-username'] });
       toast({ title: 'Profil berhasil diperbarui! ✅' });
     },
     onError: (e: Error) => {
@@ -180,6 +191,18 @@ export default function Profile() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username (URL profil publik)</FormLabel>
+                      <FormControl><Input placeholder="rider-keren" {...field} /></FormControl>
+                      {field.value && (
+                        <Link to={`/riders/${field.value}`} className="text-xs text-primary hover:underline">
+                          → Lihat profil publik: /riders/{field.value}
+                        </Link>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                   <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem>
                       <FormLabel>No. HP</FormLabel>
@@ -187,10 +210,39 @@ export default function Profile() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <FormField control={form.control} name="riding_style" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Riding Style</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih gaya riding" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="santai">Santai</SelectItem>
+                          <SelectItem value="adventure">Adventure</SelectItem>
+                          <SelectItem value="touring">Touring</SelectItem>
+                          <SelectItem value="racing">Racing</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="location" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lokasi</FormLabel>
+                      <FormControl><Input placeholder="Jakarta, Indonesia" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                   <FormField control={form.control} name="bio" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Bio</FormLabel>
                       <FormControl><Textarea placeholder="Ceritakan tentang kamu..." {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="banner_url" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL Banner (opsional)</FormLabel>
+                      <FormControl><Input placeholder="https://..." {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />

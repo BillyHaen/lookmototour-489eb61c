@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          code: string
+          criteria_type: string
+          description: string
+          icon: string
+          name: string
+          sort_order: number
+          threshold: number
+        }
+        Insert: {
+          code: string
+          criteria_type: string
+          description?: string
+          icon?: string
+          name: string
+          sort_order?: number
+          threshold: number
+        }
+        Update: {
+          code?: string
+          criteria_type?: string
+          description?: string
+          icon?: string
+          name?: string
+          sort_order?: number
+          threshold?: number
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -386,6 +416,33 @@ export type Database = {
         }
         Relationships: []
       }
+      endorsements: {
+        Row: {
+          content: string
+          created_at: string
+          from_user_id: string
+          id: string
+          rating: number
+          to_user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          from_user_id: string
+          id?: string
+          rating: number
+          to_user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          rating?: number
+          to_user_id?: string
+        }
+        Relationships: []
+      }
       event_interests: {
         Row: {
           created_at: string
@@ -704,6 +761,93 @@ export type Database = {
         }
         Relationships: []
       }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+        }
+        Relationships: []
+      }
+      garage_bikes: {
+        Row: {
+          brand: string
+          created_at: string
+          description: string | null
+          id: string
+          model: string
+          photo_url: string | null
+          updated_at: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          brand?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          model?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          model?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      garage_gear: {
+        Row: {
+          brand: string
+          category: string
+          created_at: string
+          id: string
+          name: string
+          photo_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gear_rentals: {
         Row: {
           created_at: string
@@ -983,33 +1127,54 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          banner_url: string | null
           bio: string | null
           created_at: string
           id: string
+          location: string | null
           name: string
           phone: string | null
+          riding_style: string | null
+          total_km: number
+          total_trips: number
+          trust_score: number
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
           id?: string
+          location?: string | null
           name?: string
           phone?: string | null
+          riding_style?: string | null
+          total_km?: number
+          total_trips?: number
+          trust_score?: number
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
           id?: string
+          location?: string | null
           name?: string
           phone?: string | null
+          riding_style?: string | null
+          total_km?: number
+          total_trips?: number
+          trust_score?: number
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -1826,6 +1991,32 @@ export type Database = {
           },
         ]
       }
+      user_achievements: {
+        Row: {
+          achievement_code: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_code: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_code?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_code_fkey"
+            columns: ["achievement_code"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["code"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -1911,6 +2102,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_unique_username: { Args: { _seed: string }; Returns: string }
       get_approved_testimonials_with_profiles: {
         Args: never
         Returns: {
@@ -1950,6 +2142,25 @@ export type Database = {
           bio: string
           name: string
           user_id: string
+        }[]
+      }
+      get_rider_public_profile: {
+        Args: { _username: string }
+        Returns: {
+          avatar_url: string
+          banner_url: string
+          bio: string
+          follower_count: number
+          following_count: number
+          location: string
+          member_since: string
+          name: string
+          riding_style: string
+          total_km: number
+          total_trips: number
+          trust_score: number
+          user_id: string
+          username: string
         }[]
       }
       get_sponsor_performance: {
@@ -2030,6 +2241,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recalc_rider_stats: { Args: { _user_id: string }; Returns: undefined }
       recommend_rental_gear: {
         Args: { _event_id: string; _motor_brand?: string; _motor_type?: string }
         Returns: {
@@ -2050,6 +2262,7 @@ export type Database = {
           vendor_name: string
         }[]
       }
+      slugify: { Args: { _input: string }; Returns: string }
       track_sponsor_event: {
         Args: {
           _event_id?: string

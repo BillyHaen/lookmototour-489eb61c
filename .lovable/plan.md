@@ -1,86 +1,170 @@
 
 
-## Bersihkan Tab "Dasar" & Pindahkan Rute ke Itinerary
+## Rider Identity Platform — "LinkedIn for Riders" inside LookMotoTour
 
-### Tujuan
-Hapus duplikasi field di tab **Dasar** yang sudah ada versi SEO-friendly-nya di tab lain. Pindahkan **Rute Touring** dari tab Dasar ke tab **Itinerary**, dan tambahkan **rute per hari** di setiap day itinerary.
+Modular extension. Reuses existing `profiles`, `event_registrations`, `events`, `testimonials`, `useAuth`. New routes live under `/riders/*` (existing `/member/:userId` will redirect to `/riders/:username` for back-compat).
 
-### 1. Field yang DIHAPUS dari tab "Dasar" (admin)
+### 1. Database (migration)
 
-| Field dihapus | Sudah ada di tab |
+**Extend `profiles`:**
+- `username` text UNIQUE (slug, auto-gen from name, editable)
+- `banner_url` text
+- `riding_style` text (`santai|adventure|touring|racing`)
+- `location` text
+- `total_trips` int (denormalized, updated by trigger)
+- `total_km` numeric (denormalized, updated by trigger)
+- `trust_score` int (denormalized)
+
+**New tables (UUID PK, RLS on):**
+
+| Table | Columns | Access |
+|---|---|---|
+| `garage_bikes` | user_id, brand, model, year, description, photo_url | owner CRUD; public SELECT |
+| `garage_gear` | user_id, category (helmet/jacket/gloves/boots/luggage/other), brand, name, photo_url | owner CRUD; public SELECT |
+| `achievements` | code (PK-text), name, description, icon, criteria_type (trips/km), threshold | public SELECT; admin manage |
+| `user_achievements` | user_id, achievement_code, unlocked_at | public SELECT; system insert |
+| `follows` | follower_id, following_id, created_at, PK(follower_id, following_id) | owner CRUD; public SELECT counts |
+| `endorsements` | from_user_id, to_user_id, rating 1-5, content, created_at | author insert/delete; public SELECT; no self-endorse trigger |
+
+Seed `achievements`:
+- `first_ride` (1 trip), `explorer` (3), `road_warrior` (5), `legend` (10), `grand_master` (20)
+- `100km`, `500km`, `1000km_club`, `5000km`
+- `island_rider` (≥3 distinct event locations)
+
+**Triggers / Functions (SECURITY DEFINER):**
+- `recalc_rider_stats(user_id)` — counts confirmed registrations, sums `events.distance` (parsed numeric), computes `trust_score = trips*10 + completion_rate*50 + avg_rating*20`, upserts achievements based on thresholds; updates denormalized cols on `profiles`.
+- Trigger on `event_registrations` (AFTER INSERT/UPDATE of status) → call `recalc_rider_stats(NEW.user_id)`.
+- Trigger on `endorsements` (AFTER INSERT/DELETE) → recalc target's score.
+- `generate_unique_username(name)` helper for backfill + on signup (extend `handle_new_user`).
+
+**RPC for public profile (replaces narrow `get_public_profile`):**
+- `get_rider_public_profile(_username text)` returns name, username, avatar, banner, bio, riding_style, location, total_trips, total_km, trust_score, follower_count, following_count.
+
+### 2. API surface (Supabase client + RPCs, no REST server needed)
+
+All CRUD via existing supabase-js + RLS. Helpers in new hooks:
+- `useRider(username)`, `useMyRider()`
+- `useGarageBikes(userId)`, `useGarageGear(userId)`
+- `useRiderTrips(userId)`
+- `useAchievements(userId)`
+- `useFollow(targetUserId)` → `isFollowing`, counts, toggle
+- `useEndorsements(userId)` → list + create
+
+### 3. Routes
+
+| Route | Page |
 |---|---|
-| `description` (Deskripsi Event - RichText) | **Konten** (Opening Hook + Why Join + Experience + About) |
-| `highlights` (comma input) | **Konten** (Why Join) |
-| `requirements` (comma input) | **Konten** (Target Audience) |
-| `includes` (comma input) | **Include** (ChecklistEditor - SEO friendly) |
-| `excludes` (comma input) | **Include** (ChecklistEditor - SEO friendly) |
-| Card "Itinerary Perhari" lama (table `event_itineraries`) | **Itinerary** (ItineraryEditor SEO) |
-| Card "🗺️ Rute Touring" (RouteEditor) | **Itinerary** (dipindah ke section atas + per-day) |
+| `/riders/:username` | Public rider profile (SEO-friendly) |
+| `/riders/me` | Redirect to `/riders/{my-username}` |
+| `/profile` (existing) | Edit mode — extended with username, banner, riding_style, location |
+| `/member/:userId` | Redirect → `/riders/:username` (back-compat) |
 
-### 2. Field yang DIPERTAHANKAN di tab "Dasar"
-Field operasional non-SEO (tidak duplikat):
-- Title + Slug + Category + Difficulty
-- Tentative toggle + Date / End Date / Tentative month
-- Location + Distance
-- Pricing (Sharing/Single/Couple) + Max Participants
-- Hero Image (`image_url`)
-- Asuransi (toggle + deskripsi)
-- Towing (toggle + deskripsi + harga pergi/pulang)
-- Smart Touring Finder Card (rider_level, motor_types, touring_style, jam riding, fatigue, road_condition, safety preview)
-- Status (draft/upcoming/ongoing/completed)
+### 4. UI (mobile-first, dark accent on existing Navy/Sky-Blue palette)
 
-### 3. Tab "Itinerary" — restruktur
+**`/riders/:username` page sections:**
+1. **Header** — banner image (16:9, fallback gradient), avatar overlay, name + username, **Trust Badge** (New / Trusted ≥100 / Pro ≥300), Follow button (if logged in & not self).
+2. **Stat bar** — 4 cards: Trips, Total KM, Achievements unlocked, Followers.
+3. **Tabs** (Radix Tabs):
+   - **About** — bio, riding_style chip, location, member since.
+   - **Trips** — list of `event_registrations` joined with `events` (image, title, location, date, status badge); link to event.
+   - **Garage** — two grids: Bikes + Gear; owner sees "+ Add" buttons that open dialogs.
+   - **Achievements** — badge grid; locked badges grayscale with progress hint ("4/5 trips").
+   - **Endorsements** — list (avatar, name, rating, content); "Tulis Endorsement" CTA for logged-in non-self.
+4. **JSON-LD `Person` schema** + `useSeoMeta` for SEO.
 
-Tambahkan **dua bagian**:
+**New components** in `src/components/rider/`:
+- `RiderHeader.tsx`, `TrustBadge.tsx`, `StatCard.tsx`, `TripCard.tsx`, `BikeCard.tsx`, `GearCard.tsx`, `AchievementBadge.tsx`, `EndorsementCard.tsx`, `FollowButton.tsx`, `BikeFormDialog.tsx`, `GearFormDialog.tsx`, `EndorsementFormDialog.tsx`.
 
-**A. Rute Touring Keseluruhan** (paling atas)
-- Pindahkan `RouteEditor` (GPX upload + waypoint) ke sini
-- Disimpan di `events.route_data` (tetap)
+**Profile edit (`/profile`) additions:**
+- Username field (with availability check + slug normalize).
+- Banner upload (uses existing `avatars` bucket with `banners/` prefix, or new `banners` bucket — will use `avatars/banners/{uid}/...`).
+- Riding style select, Location input.
+- "Lihat Profil Publik" link → `/riders/{username}`.
 
-**B. Itinerary Per Hari + Rute Per Hari**
-- `ItineraryEditor` extended → tiap day dapat field route opsional:
-  - `route_data?: RouteData` (GPX upload mini per hari)
-  - atau minimal `start_location`, `end_location`, `distance_km`, `gmaps_url`
-- Disimpan di `events.itinerary` JSONB dengan struktur:
-  ```ts
-  { day, title, description, image_url, image_alt,
-    route?: { start, end, distance_km, gmaps_url, polyline?, waypoints? } }
-  ```
+**Bonus widgets (trip page):**
+- "Riders yang ikut trip ini" — list participants (avatar + name + trust badge) on `EventDetail.tsx` (only confirmed, only public profiles).
+- "Recommended trips for you" — already covered by `useRecommendedEvents`; surface a strip on `/riders/me`.
 
-### 4. Rendering frontend (`EventDetail.tsx` + `ItinerarySection.tsx`)
+### 5. Auto-update logic (server-side via triggers)
 
-Pastikan SEO-friendly:
-- **Hapus** rendering field lama (description WYSIWYG generik, highlights chips, requirements, legacy itinerary table) — sekarang konten datang dari section SEO (opening_hook, why_join, experience, about, target_audience, trust, included/excluded checklist, itinerary baru, faq).
-- **Itinerary per hari**: tiap card day tampilkan judul (H3 dengan keyword "Day N – {title}"), gambar dengan alt SEO, deskripsi, dan jika ada `route` → mini-section "Rute Hari Ini": start → end, distance, link Google Maps, mini-map (Leaflet) + Street View link.
-- **Rute keseluruhan**: tetap di `RoutePreview` component, tapi posisinya sekarang inline di section Route & Itinerary (bukan section terpisah).
-- Heading hierarchy tetap H1 (hero) → H2 per section → H3 per day → semua image punya `alt` keyword-rich.
+```
+event_registrations change ─▶ recalc_rider_stats(user_id):
+  trips = count(status='confirmed')
+  km    = sum(parsed events.distance)
+  rate  = completed / total
+  avg_r = avg(testimonials.rating where user_id)
+  score = trips*10 + rate*50 + avg_r*20
+  ▶ UPDATE profiles SET total_trips, total_km, trust_score
+  ▶ For each achievement where threshold met → INSERT user_achievements (ON CONFLICT DO NOTHING)
+```
 
-### 5. Migrasi data lama (graceful)
+Trust badge tier (client side from `trust_score`):
+- 0–99 → "New Rider"
+- 100–299 → "Trusted Rider"
+- 300+ → "Pro Rider"
 
-- Tabel `event_itineraries` lama → tetap dibaca sekali saat openEdit untuk **konversi otomatis** ke `seoItinerary` jika `events.itinerary` JSONB masih kosong, lalu disimpan ke field baru. Setelah migrasi, hapus baris lama.
-- Field `description`, `highlights`, `requirements`, `includes`, `excludes` di DB **tidak di-drop** (back-compat & data lama tidak hilang), hanya tidak lagi di-edit/render di frontend baru.
+### 6. RLS summary
 
-### 6. Files yang diubah
+- `garage_bikes` / `garage_gear`: SELECT public; INSERT/UPDATE/DELETE only `user_id = auth.uid()`.
+- `follows`: SELECT public; INSERT/DELETE only `follower_id = auth.uid()`; constraint `follower_id <> following_id`.
+- `endorsements`: SELECT public; INSERT only `from_user_id = auth.uid()` AND `from <> to`; DELETE only own; admin can delete any.
+- `user_achievements`: SELECT public; INSERT/UPDATE only via SECURITY DEFINER function; no client write.
 
-| File | Perubahan |
-|---|---|
-| `src/pages/admin/AdminEvents.tsx` | Hapus block field duplikat dari TabsContent "dasar"; pindahkan RouteEditor ke "itinerary"; hapus legacy itinerary card; bersihkan state itineraries lama |
-| `src/components/admin/ItineraryEditor.tsx` | Tambah field route per-day (start, end, distance_km, gmaps_url, optional GPX) |
-| `src/components/EventLanding/ItinerarySection.tsx` | Render route mini per day + heading SEO |
-| `src/pages/EventDetail.tsx` | Hapus rendering description/highlights/requirements lama; pastikan RoutePreview muncul dalam Itinerary section, bukan terpisah; pastikan H2/H3 hierarchy benar |
-| `src/components/admin/RouteEditor.tsx` | (opsional) varian "compact" untuk per-day |
+### 7. Storage
 
-### 7. Validasi
+Add `garage` public bucket for bike/gear photos with RLS: anyone read; only owner write to `{uid}/...`. Use existing `avatars` bucket for banners under `{uid}/banner.*`.
 
-1. Buka admin → edit event → tab **Dasar** hanya berisi field operasional (no description/highlights/requirements/includes/excludes/itinerary lama/route).
-2. Tab **Itinerary** menampilkan: (a) Route Editor keseluruhan di atas, (b) list day dengan field rute per-hari.
-3. Frontend EventDetail: tidak ada lagi blok deskripsi generik / chip highlights / list requirements lama. Konten 100% dari section SEO.
-4. Setiap day itinerary di frontend tampilkan rute mini jika diisi (start→end, distance, link GMaps).
-5. JSON-LD `Event` + `FAQPage` tetap valid; tambahkan `subEvent` per day jika ada (bonus SEO).
-6. Existing event tanpa data SEO tetap render (graceful — section tersembunyi jika kosong).
-7. Lighthouse SEO ≥ 95.
+### 8. SEO
 
-### Out of scope
-- Drop kolom DB lama (dilakukan nanti setelah verifikasi data tidak terpakai).
-- Multi-language.
+- `/riders/:username` uses `useSeoMeta`: title `{name} (@{username}) – Rider Profile | LookMotoTour`; description from bio + stats.
+- JSON-LD `Person` with `image`, `description`, `knowsAbout: [riding_style]`, `address.addressLocality: location`.
+- Add to Cloudflare prerender allowlist (per existing seo-prerendering memory).
+
+### 9. Files to create / modify
+
+**Migrations:** 1 file — schema + triggers + seed achievements + backfill usernames + storage bucket.
+
+**New pages:** `src/pages/RiderProfile.tsx`, `src/pages/RiderMeRedirect.tsx`.
+
+**New hooks:** `src/hooks/useRider.ts`, `useGarage.ts`, `useFollow.ts`, `useEndorsements.ts`, `useAchievements.ts`.
+
+**New components:** `src/components/rider/*` (10 files listed above).
+
+**Modified:**
+- `src/App.tsx` — add `/riders/:username`, `/riders/me`; redirect `/member/:userId`.
+- `src/pages/Profile.tsx` — username/banner/riding_style/location fields + link to public profile.
+- `src/pages/MemberProfile.tsx` — replace body with redirect to `/riders/{username}`.
+- `src/pages/EventDetail.tsx` — add "Riders yang ikut" section.
+- `src/integrations/supabase/types.ts` — auto-regen.
+- Memory file `mem://features/rider-identity` (new) + update `mem://index.md`.
+
+### 10. MVP build order (matches your priority)
+
+1. DB + triggers + RLS + storage.
+2. Profile fields (username/banner/riding_style/location) + `/riders/:username` shell.
+3. Trips tab (reuses existing data).
+4. Trust score + Trust badge.
+5. Garage (bikes + gear CRUD).
+6. Achievements (engine + UI grid).
+7. Follow system.
+8. Endorsements.
+9. Bonus: "Riders on this trip" + "Recommended trips for you" strip.
+
+### Validation
+1. Signup → username auto-generated unique; visiting `/riders/{username}` shows fresh profile with 0 stats.
+2. Confirm a registration → trips count, km, trust_score auto-updated; "First Ride" badge unlocks.
+3. Add bike + gear → appears in Garage tab; only owner sees Edit/Delete.
+4. Follow another rider → counts update; double-click toggles correctly.
+5. Endorse another rider → appears on their profile; cannot self-endorse; rating affects trust_score.
+6. `/member/{uuid}` (old links) → 301 to `/riders/{username}`.
+7. View source on `/riders/{username}` → meta + JSON-LD `Person` valid.
+8. Mobile (375px): tabs scroll horizontally, stat bar wraps 2x2, all CTAs reachable.
+9. RLS: non-owner cannot insert garage rows for someone else; cannot self-endorse.
+
+### Out of scope (phase 2)
+- Real GPS-based KM tracking (currently parsed from `events.distance`).
+- Direct messaging between riders.
+- Activity feed / posts.
+- Verified rider badge (manual admin grant).
+- Notifications when followed/endorsed (can plug into existing `notifications` table later).
 

@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
 import { Loader2, Trash2, Search, Calendar } from 'lucide-react';
+import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
 import UserAvatar from '@/components/UserAvatar';
 import UserBadge, { getHighestBadge } from '@/components/UserBadge';
 
@@ -26,6 +27,8 @@ export default function AdminUsers() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [selectedUser, setSelectedUser] = useState<any | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data: profiles, isLoading } = useQuery({
     queryKey: ['admin-profiles'],
@@ -137,7 +140,7 @@ export default function AdminUsers() {
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : (
         <div className="space-y-3">
-          {filtered?.map((profile) => {
+          {paginate(filtered ?? [], page, pageSize).map((profile) => {
             const role = getUserRole(profile.user_id);
             const stats = getStats(profile.user_id);
             return (
@@ -197,6 +200,16 @@ export default function AdminUsers() {
             );
           })}
           {!filtered?.length && <p className="text-muted-foreground text-center py-8">Tidak ada user ditemukan.</p>}
+          {!!filtered?.length && (
+            <DataPagination
+              page={page}
+              pageSize={pageSize}
+              total={filtered.length}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              className="pt-2"
+            />
+          )}
         </div>
       )}
 

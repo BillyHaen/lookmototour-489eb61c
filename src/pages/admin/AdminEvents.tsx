@@ -61,6 +61,18 @@ interface EventForm {
   fatigue_level: number;
   tentative_month: string;
   road_condition: number;
+  // ===== SEO landing fields =====
+  meta_title: string;
+  meta_description: string;
+  hero_subheadline: string;
+  cta_primary_label: string;
+  opening_hook: string;
+  why_join: string;
+  experience_section: string;
+  about_destination: string;
+  target_audience: string;
+  trust_section: string;
+  internal_link_blog_tag: string;
 }
 
 function generateSlug(title: string): string {
@@ -81,6 +93,9 @@ const emptyForm: EventForm = {
   towing_enabled: false, towing_description: '', towing_pergi_price: 0, towing_pulang_price: 0,
   rider_level: 'all', motor_types: [], touring_style: 'adventure', riding_hours_per_day: 0, fatigue_level: 1,
   tentative_month: '', road_condition: 3,
+  meta_title: '', meta_description: '', hero_subheadline: '', cta_primary_label: '🔥 Secure Your Slot Now – Limited Riders Only',
+  opening_hook: '', why_join: '', experience_section: '', about_destination: '',
+  target_audience: '', trust_section: '', internal_link_blog_tag: '',
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }

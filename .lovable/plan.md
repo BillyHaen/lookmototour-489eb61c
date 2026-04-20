@@ -1,106 +1,84 @@
 
 
-## Share Profil Rider ke Sosial Media
+## Admin Override: Badge, Jumlah Trip, dan Jumlah KM
 
-Menambahkan kemampuan untuk membagikan halaman `/riders/:username` ke sosial media (WhatsApp, FB, IG, X, dll) dengan preview kartu yang menampilkan **foto profil rider**, **nama + badge**, dan **excerpt ajakan bergabung**.
+Memberi admin kemampuan untuk meng-override stat rider (`total_trips`, `total_km`, `trust_score` / badge tier) tanpa harus mengikuti trip. Tetap aman: hanya admin, dan auto-recalc biasa tidak menimpa nilai override.
 
-### Yang akan dibangun
+### Konsep
+Tambahkan "manual override" di tabel `profiles`. Saat override aktif, fungsi `recalc_rider_stats` akan **menghormati** nilai override dan tidak menimpanya. Admin juga bisa unlock achievement (badge) secara manual.
 
-#### 1. Tombol "Bagikan" di header rider
-Tambah tombol share di `RiderHeader.tsx`, sejajar dengan tombol Edit Profil / Follow.
+### Perubahan database
 
-Perilaku tombol:
-- Di perangkat yang mendukung Web Share API (mobile) → buka native share sheet (WA, IG, FB, X, Telegram, dll)
-- Di desktop → fallback dropdown berisi:
-  - Salin Link
-  - WhatsApp
-  - Facebook
-  - X (Twitter)
-  - Telegram
-- Setelah salin link → toast "Link profil berhasil disalin"
-- Hitung share count via RPC `increment_share_count` yang sudah ada (extend untuk `content_type = 'rider'`)
+**1. Tambah kolom override di `profiles`:**
+- `override_total_trips` (int, nullable)
+- `override_total_km` (numeric, nullable)
+- `override_trust_score` (int, nullable)
+- `override_updated_by` (uuid, nullable) — admin yang terakhir mengubah
+- `override_updated_at` (timestamptz, nullable)
 
-URL yang dibagikan:
+Logikanya: jika kolom override tidak NULL → nilai itulah yang tampil. Jika NULL → pakai hasil hitung otomatis.
+
+**2. Update `recalc_rider_stats(_user_id)`** agar:
+- hanya menulis `total_trips`, `total_km`, `trust_score` jika kolom override-nya NULL
+- jika override aktif, nilai override dipakai untuk evaluasi unlock achievement (sehingga admin bisa "memberikan" Road Warrior, dst.)
+
+**3. Update `get_rider_public_profile`** agar mengembalikan nilai final (override jika ada, else nilai hitung) — agar `/riders/:username`, share-meta, dan badge tampil benar.
+
+**4. RLS profiles**: kolom override hanya bisa diubah admin. Karena policy update existing `(user_id = auth.uid())` membolehkan user edit profil sendiri, kita tambah trigger `BEFORE UPDATE` yang menolak perubahan kolom `override_*` jika bukan admin. User biasa tetap bisa edit nama/bio/dll seperti biasa.
+
+**5. RPC `admin_set_rider_overrides`** (security definer, admin-only):
 ```
-https://lookmototour.com/riders/{username}
+admin_set_rider_overrides(
+  _user_id uuid,
+  _trips int,            -- null = clear override
+  _km numeric,           -- null = clear override
+  _trust_score int,      -- null = clear override
+  _achievement_codes text[]  -- list achievement yang ingin diunlock manual
+)
 ```
+- set kolom override
+- insert ke `user_achievements` untuk kode yang dipilih (ON CONFLICT DO NOTHING)
+- panggil `recalc_rider_stats(_user_id)` untuk sinkron
+- catat audit log
 
-Pakai prefix share `s.lookmototour.com/s/rider/{username}` agar konsisten dengan pola `ShareButton.tsx` existing dan supaya Cloudflare Worker prerender meta tag untuk crawler sosial media.
+**6. RPC `admin_revoke_achievement(_user_id, _code)`** untuk hapus achievement yang salah diberikan.
 
-#### 2. Meta tag (Open Graph & Twitter Card) untuk preview sosmed
-Update `useSeoMeta` call di `RiderProfile.tsx` agar saat di-share menghasilkan kartu kaya:
+### Perubahan UI Admin
 
-- **og:title / twitter:title**: `Riders {nama} – {badge utama} | LOOKMOTOTOUR`
-- **og:description / twitter:description**:
-  > Riders {nama} – {badge} ada di LOOKMOTOTOUR. Ayo gabung di platform ekosistem motor terbesar di Indonesia bersama ratusan ribu riders!
-- **og:image / twitter:image**: `avatar_url` rider (fallback ke `banner_url`, fallback ke logo LookMotoTour)
-- **og:image:width / height**: pastikan square 1200×1200 untuk avatar atau 1200×630 untuk banner
-- **og:type**: `profile`
-- **og:url**: URL kanonik `/riders/{username}`
-- **twitter:card**: `summary_large_image`
+**File:** `src/pages/admin/AdminUsers.tsx` (dialog detail user yang sudah ada)
 
-Karena sebagian besar crawler sosmed tidak mengeksekusi JS, manfaatkan **Cloudflare Worker prerender** existing (`share-meta` edge function pattern) untuk meng-inject meta tag server-side saat User-Agent terdeteksi sebagai bot (FB, WA, Twitter, LinkedIn, Telegram, Slack).
+Tambah section baru di dalam dialog detail: **"Override Rider Stats (Admin)"**, hanya tampil jika user login adalah admin (sudah dijamin oleh route admin):
 
-#### 3. Penentuan "badge" rider untuk excerpt
-Excerpt menampilkan badge utama rider. Logika prioritas:
-1. Achievement tertinggi yang sudah unlocked (mis. "Veteran Touring", "1000 KM Club")
-2. Jika belum ada achievement → fallback ke `riding_style` ter-label ("Adventure", "Touring", dll)
-3. Jika tidak ada → fallback ke "Rider"
+- Input "Jumlah Trip (override)" — kosong = pakai otomatis
+- Input "Jumlah KM (override)" — kosong = pakai otomatis
+- Input "Trust Score (override)" — kosong = pakai otomatis, dengan helper text "0–99 New Rider, 100–299 Trusted, 300+ Pro"
+- Multi-select achievement (badge) dari katalog `achievements` table — admin bisa centang badge yang ingin diberikan secara manual
+- Tombol **Simpan Override** → panggil `admin_set_rider_overrides`
+- Tombol **Reset ke Otomatis** → panggil RPC dengan semua param NULL & `_achievement_codes = '{}'`
+- Daftar achievement aktif user dengan tombol "Hapus" (panggil `admin_revoke_achievement`)
+- Indikator visual jika nilai sedang dalam mode override (badge "Manual" di samping angka)
 
-Diambil dari data yang sudah ada (`useUserAchievements`, `riding_style`).
-
-#### 4. Tracking share count
-- Extend tabel `share_counts` agar mendukung `content_type = 'rider'` (kolom `content_id` = `user_id` rider)
-- Tampilkan jumlah share kecil di samping tombol (opsional, mengikuti pola `ShareButton.tsx`)
-- RPC `increment_share_count` sudah generic, hanya perlu memastikan nilai content_type baru diterima
-
-### File yang akan diubah / dibuat
+### Perubahan frontend lain
 
 | File | Perubahan |
 |---|---|
-| `src/components/rider/RiderShareButton.tsx` (baru) | Tombol share khusus rider: Web Share API + dropdown fallback (Salin, WA, FB, X, Telegram) |
-| `src/components/rider/RiderHeader.tsx` | Pasang `RiderShareButton` di area actions, tampil untuk semua user (owner & visitor) |
-| `src/pages/RiderProfile.tsx` | Update `useSeoMeta` dengan title/description/image kartu sosmed sesuai format excerpt |
-| `src/hooks/useRider.ts` | Tambah util `buildRiderShareCopy(rider, badge)` untuk konsistensi teks share |
-| `supabase/functions/share-meta/index.ts` | Tambah handler untuk path `/s/rider/{username}` agar crawler dapat meta tag yang benar (judul, deskripsi, og:image avatar) |
-| Migration SQL | Pastikan CHECK constraint `share_counts.content_type` mengizinkan nilai `'rider'` |
-
-### Detail teknis
-
-**Format share text (untuk WA/Telegram/Twitter yang pakai text body):**
-```
-Riders {nama} – {badge} ada di LOOKMOTOTOUR.
-Ayo gabung di platform ekosistem motor terbesar di Indonesia bersama ratusan ribu riders!
-
-{shareUrl}
-```
-
-**Web Share API payload:**
-```ts
-navigator.share({
-  title: `Riders ${rider.name} – ${badge}`,
-  text: shareText,
-  url: shareUrl,
-});
-```
-
-**Deep link sosmed (fallback desktop):**
-- WhatsApp: `https://wa.me/?text={encoded text + url}`
-- Facebook: `https://www.facebook.com/sharer/sharer.php?u={url}`
-- X/Twitter: `https://twitter.com/intent/tweet?text={text}&url={url}`
-- Telegram: `https://t.me/share/url?url={url}&text={text}`
+| `src/hooks/useRider.ts` | Tidak perlu — RPC `get_rider_public_profile` sudah disesuaikan di DB |
+| `supabase/functions/share-meta/index.ts` | Tidak perlu — sudah memakai data dari profiles via RPC |
+| `src/components/UserBadge.tsx` | Tidak perlu — badge dihitung dari `total_trips` (yang sekarang sudah merefleksikan override) |
+| `src/integrations/supabase/types.ts` | Auto-generate setelah migration |
 
 ### Validasi
-1. Klik tombol Bagikan di mobile → muncul native share sheet
-2. Klik di desktop → muncul dropdown 5 opsi (Salin, WA, FB, X, Telegram)
-3. Salin link → toast sukses, link berformat `https://lookmototour.com/riders/{username}`
-4. Tempel link di WA/Telegram → muncul preview dengan avatar rider, nama + badge, dan excerpt ajakan
-5. Tempel link di Facebook debugger → kartu OG benar (judul, deskripsi, gambar)
-6. Share count bertambah di tombol setelah aksi share berhasil
-7. Tombol responsif di mobile (full-width di stack actions, bersanding dengan Follow/Edit di desktop)
+1. Login sebagai admin → buka `/admin/users` → klik user → muncul section "Override Rider Stats"
+2. Set override trips=20, km=5000, trust=350, centang badge "Road Warrior" → Simpan
+3. Buka `/riders/{username}` user tsb → angka & badge tampil sesuai override (tanpa user pernah ikut trip)
+4. Login sebagai user biasa → coba PATCH kolom `override_*` via Supabase client → ditolak oleh trigger
+5. Klik "Reset ke Otomatis" di admin → nilai kembali ke hasil kalkulasi otomatis
+6. Tambah/hapus achievement manual → langsung tampil/hilang di profil rider
+7. Audit log mencatat siapa admin yang melakukan override dan kapan
 
-### Dampak
-- Tidak mengubah skema data utama; hanya menambah `'rider'` sebagai content_type valid di `share_counts`
-- Tidak mengganggu RLS — profil rider sudah publik via RPC `get_rider_public_profile`
-- Cloudflare Worker prerender sudah ada → cukup tambah route handler untuk rider
+### Dampak & keamanan
+- Hanya admin yang bisa mengubah override (dijaga 2 lapis: trigger DB + RPC security definer)
+- User biasa tetap bisa edit field profil mereka sendiri seperti sebelumnya
+- Trigger auto-recalc dari registrasi event tidak lagi menimpa override
+- Tidak mengubah skema yang dipakai komponen existing — angka tetap diambil dari kolom yang sama (`total_trips`, `total_km`, `trust_score`)
 

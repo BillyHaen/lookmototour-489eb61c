@@ -21,8 +21,8 @@ export default function RiderHeader({ rider }: { rider: RiderProfile }) {
         )}
       </div>
       {/* Avatar + Info */}
-      <div className="container -mt-12 sm:-mt-16 relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+      <div className="container px-4 sm:px-6 -mt-12 sm:-mt-16 relative z-10">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3 sm:gap-4">
           <div className="rounded-full ring-4 ring-background bg-background w-fit shrink-0">
             <UserAvatar
               src={rider.avatar_url}
@@ -30,9 +30,9 @@ export default function RiderHeader({ rider }: { rider: RiderProfile }) {
               className="h-24 w-24 sm:h-32 sm:w-32 text-3xl [&_img]:object-cover"
             />
           </div>
-          <div className="flex-1 pt-3 sm:pt-0 sm:pb-3">
+          <div className="flex-1 pt-4 sm:pt-0 sm:pb-3 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="font-heading font-bold text-2xl sm:text-3xl leading-tight">{rider.name}</h1>
+              <h1 className="font-heading font-bold text-xl sm:text-3xl leading-tight break-words">{rider.name}</h1>
               <TrustBadge score={rider.trust_score} />
             </div>
             <p className="text-sm text-muted-foreground mt-1">@{rider.username}</p>

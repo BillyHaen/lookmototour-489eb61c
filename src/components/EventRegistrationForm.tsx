@@ -17,12 +17,15 @@ import { Loader2, CheckCircle2, Heart } from 'lucide-react';
 import type { DbEvent } from '@/hooks/useEvents';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import RentalGearRecommendations, { SelectedRental } from '@/components/RentalGearRecommendations';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { MOTORCYCLES, MOTOR_BRANDS, getModelCategory } from '@/data/motorcycles';
 
 const schema = z.object({
   name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),
   email: z.string().trim().email('Email tidak valid').max(255),
   phone: z.string().trim().min(10, 'Nomor HP minimal 10 digit').max(15).regex(/^[0-9+\-\s]+$/, 'Format nomor tidak valid'),
-  motorType: z.string().trim().min(2, 'Masukkan tipe motor').max(100),
+  motorBrand: z.string().trim().min(1, 'Pilih merk motor'),
+  motorModel: z.string().trim().min(1, 'Pilih tipe motor'),
   plateNumber: z.string().trim().min(3, 'Masukkan plat nomor').max(15),
   emergencyContact: z.string().trim().min(10, 'Masukkan kontak darurat').max(100),
   registrationType: z.enum(['sharing', 'single', 'couple']),
@@ -32,25 +35,6 @@ const schema = z.object({
 });
 
 type FormData = z.infer<typeof schema>;
-
-// Detect motor category from free-text input (e.g. "Honda CRF250" -> adventure)
-const detectMotorCategory = (text: string): string => {
-  const t = text.toLowerCase();
-  if (/crf|klx|wr|adv|x.?adv|himalayan|tenere|africa|gs|versys/.test(t)) return 'adventure';
-  if (/ninja|cbr|r\d|gsx.?r|panigale|rsv|zx/.test(t)) return 'sport';
-  if (/nmax|aerox|pcx|vario|beat|scoopy|lexi|adv\s*150/.test(t)) return 'matic';
-  if (/mt|cb\d|z\d|svartpilen|duke|svart/.test(t)) return 'naked';
-  if (/harley|sportster|rebel|bonneville|vulcan/.test(t)) return 'cruiser';
-  return 'touring';
-};
-
-const detectMotorBrand = (text: string): string => {
-  const t = text.toLowerCase();
-  for (const b of ['honda', 'yamaha', 'kawasaki', 'suzuki', 'ducati', 'bmw', 'ktm', 'harley', 'royal enfield', 'triumph', 'aprilia']) {
-    if (t.includes(b)) return b;
-  }
-  return '';
-};
 
 export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const [open, setOpen] = useState(false);

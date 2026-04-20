@@ -36,7 +36,7 @@ const empty: ProductForm = {
 };
 
 const PRODUCT_CATEGORIES = ['aksesoris', 'apparel', 'sparepart', 'merchandise', 'lainnya'];
-const GEAR_TYPES = ['', 'helmet', 'jacket', 'gloves', 'boots', 'luggage', 'camera', 'tent', 'other'];
+const GEAR_TYPES = ['none', 'helmet', 'jacket', 'gloves', 'boots', 'luggage', 'camera', 'tent', 'other'];
 const MOTOR_TYPES = ['sport', 'touring', 'adventure', 'naked', 'cruiser', 'matic'];
 const TRIP_STYLES = ['adventure', 'touring', 'city'];
 const MOTOR_BRANDS = ['honda', 'yamaha', 'kawasaki', 'suzuki', 'ducati', 'bmw', 'ktm', 'harley', 'royal enfield'];
@@ -200,9 +200,9 @@ export default function AdminProducts() {
               </div>
               <div>
                 <Label className="text-xs">Tipe Gear</Label>
-                <Select value={form.gear_type} onValueChange={(v) => setForm({ ...form, gear_type: v })}>
+                <Select value={form.gear_type || 'none'} onValueChange={(v) => setForm({ ...form, gear_type: v === 'none' ? '' : v })}>
                   <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
-                  <SelectContent>{GEAR_TYPES.map(g => <SelectItem key={g || 'none'} value={g}>{g || '—'}</SelectItem>)}</SelectContent>
+                  <SelectContent>{GEAR_TYPES.map(g => <SelectItem key={g} value={g}>{g === 'none' ? '—' : g}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
             </div>

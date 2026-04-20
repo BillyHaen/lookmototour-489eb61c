@@ -186,7 +186,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       deposit: r.deposit,
     }));
 
-    const { error } = await (supabase.rpc as any)('create_registration_with_rentals', {
+    const { data: regId, error } = await (supabase.rpc as any)('create_registration_with_rentals', {
       _event_id: event.id,
       _payload: {
         name: data.name,
@@ -213,13 +213,62 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       return;
     }
 
+    // Send confirmation emails (non-blocking — don't fail registration if email fails)
+    try {
+      const eventDateStr = new Date(event.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+      const tierLabel = data.registrationType === 'sharing' ? 'Sharing' : data.registrationType === 'couple' ? 'Couple' : 'Single';
+      const eventUrl = `${window.location.origin}/events/${(event as any).slug || event.id}`;
+
+      await supabase.functions.invoke('send-transactional-email', {
+        body: {
+          templateName: 'event-registration-confirmation',
+          recipientEmail: data.email,
+          idempotencyKey: `reg-confirm-${regId}`,
+          templateData: {
+            name: data.name,
+            eventTitle: event.title,
+            eventDate: eventDateStr,
+            eventLocation: event.location,
+            totalAmount: formatPrice(selectedPrice),
+            registrationType: tierLabel,
+            eventUrl,
+          },
+        },
+      });
+
+      // Per-rental confirmation
+      const rentalEntries = Object.values(selectedRentals);
+      for (let i = 0; i < rentalEntries.length; i++) {
+        const r = rentalEntries[i];
+        await supabase.functions.invoke('send-transactional-email', {
+          body: {
+            templateName: 'gear-rental-confirmation',
+            recipientEmail: data.email,
+            idempotencyKey: `rental-confirm-${regId}-${i}`,
+            templateData: {
+              name: data.name,
+              productName: r.product_name || 'Gear',
+              qty: r.qty,
+              startDate: eventDateStr,
+              endDate: event.end_date ? new Date(event.end_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : eventDateStr,
+              totalDays: r.total_days,
+              totalPrice: formatPrice(r.subtotal),
+              deposit: formatPrice(r.deposit),
+            },
+          },
+        });
+      }
+    } catch (emailErr) {
+      console.warn('Email confirmation failed (non-fatal):', emailErr);
+    }
+
     setLoading(false);
     setSubmitted(true);
     queryClient.invalidateQueries({ queryKey: ['event', event.id] });
     queryClient.invalidateQueries({ queryKey: ['events'] });
     queryClient.invalidateQueries({ queryKey: ['my-registration', event.id, user?.id] });
     queryClient.invalidateQueries({ queryKey: ['my-rentals'] });
-    toast({ title: 'Pendaftaran berhasil! 🎉', description: `Kamu sudah terdaftar untuk ${event.title}` });
+    toast({ title: 'Pendaftaran berhasil! 🎉', description: `Detail dikirim ke email ${data.email}` });
   };
 
   if (isTentative) {

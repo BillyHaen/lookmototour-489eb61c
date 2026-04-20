@@ -416,10 +416,6 @@ export default function AdminEvents() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">Otomatis dari judul. Bisa diedit manual.</p>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Deskripsi Event</label>
-              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Deskripsi event..." />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>

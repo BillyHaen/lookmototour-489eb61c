@@ -190,11 +190,11 @@ export default function AdminUsers() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
                   <Badge variant={role === 'admin' ? 'default' : role === 'vendor' ? 'outline' : 'secondary'}>{role}</Badge>
-                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as any })}>
+                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as any })} disabled={isProtectedAdmin}>
                     <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="vendor">Vendor</SelectItem>
+                      {!isProtectedAdmin && <SelectItem value="user">User</SelectItem>}
+                      {!isProtectedAdmin && <SelectItem value="vendor">Vendor</SelectItem>}
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>

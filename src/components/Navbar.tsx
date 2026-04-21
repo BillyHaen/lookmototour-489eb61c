@@ -81,7 +81,7 @@ export default function Navbar() {
                   <Link to="/admin" className="gap-2"><Shield className="h-4 w-4" /> Admin</Link>
                 </Button>
               )}
-              {(isVendor || isAdmin) && (
+              {isVendor && !isAdmin && (
                 <Button variant="default" size="sm" asChild className="gap-2">
                   <Link to="/vendor"><Building2 className="h-4 w-4" /> Vendor</Link>
                 </Button>

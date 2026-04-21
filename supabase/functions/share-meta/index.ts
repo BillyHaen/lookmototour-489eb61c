@@ -81,14 +81,13 @@ Deno.serve(async (req) => {
       .eq("username", slug)
       .single();
     if (data) {
+      const score = data.trust_score ?? 0;
       const trustLabel =
-        (data.trust_score ?? 0) >= 300
-          ? "Pro Rider"
-          : (data.trust_score ?? 0) >= 100
-          ? "Trusted Rider"
-          : "New Rider";
-      title = `Riders ${data.name} – ${trustLabel}`;
-      description = `Riders ${data.name} – ${trustLabel} ada di LOOKMOTOTOUR. Ayo gabung di platform ekosistem motor terbesar di Indonesia bersama ratusan ribu riders!`;
+        score >= 300 ? "Pro Rider" : score >= 100 ? "Trusted Rider" : "New Rider";
+      const displayName = data.name || data.username || "Rider";
+      title = `Riders ${displayName} – ${trustLabel}`;
+      description = `Riders ${displayName} – ${trustLabel} ada di LOOKMOTOTOUR. Ayo gabung di platform ekosistem motor terbesar di Indonesia bersama ratusan ribu riders!`;
+      // Prioritize avatar (square, recognizable face) over banner
       imageUrl = data.avatar_url || data.banner_url || "";
       pageUrl = `${siteUrl}/riders/${data.username}`;
       ogType = "website";
@@ -168,7 +167,7 @@ ${publishedAt ? `<meta property="article:published_time" content="${esc(publishe
     headers: {
       ...corsHeaders,
       "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=3600",
+      "Cache-Control": "public, max-age=300, s-maxage=300",
     },
   });
 });

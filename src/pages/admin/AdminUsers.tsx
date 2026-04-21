@@ -167,6 +167,7 @@ export default function AdminUsers() {
           {paginate(filtered ?? [], page, pageSize).map((profile) => {
             const role = getUserRole(profile.user_id);
             const stats = getStats(profile.user_id);
+            const isProtectedAdmin = profile.user_id === 'ab0d93f1-342a-486d-98e4-3a31c591c607';
             return (
               <div
                 key={profile.id}

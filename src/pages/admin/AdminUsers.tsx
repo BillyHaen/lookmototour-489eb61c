@@ -212,7 +212,7 @@ export default function AdminUsers() {
                       </SelectContent>
                     </Select>
                   )}
-                  {stats.total_trips === 0 && (
+                  {stats.total_trips === 0 && !isProtectedAdmin && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">

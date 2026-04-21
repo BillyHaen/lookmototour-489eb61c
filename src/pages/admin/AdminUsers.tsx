@@ -167,6 +167,7 @@ export default function AdminUsers() {
           {paginate(filtered ?? [], page, pageSize).map((profile) => {
             const role = getUserRole(profile.user_id);
             const stats = getStats(profile.user_id);
+            const isProtectedAdmin = profile.user_id === 'ab0d93f1-342a-486d-98e4-3a31c591c607';
             return (
               <div
                 key={profile.id}
@@ -189,11 +190,11 @@ export default function AdminUsers() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
                   <Badge variant={role === 'admin' ? 'default' : role === 'vendor' ? 'outline' : 'secondary'}>{role}</Badge>
-                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as any })}>
+                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as any })} disabled={isProtectedAdmin}>
                     <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="user">User</SelectItem>
-                      <SelectItem value="vendor">Vendor</SelectItem>
+                      {!isProtectedAdmin && <SelectItem value="user">User</SelectItem>}
+                      {!isProtectedAdmin && <SelectItem value="vendor">Vendor</SelectItem>}
                       <SelectItem value="admin">Admin</SelectItem>
                     </SelectContent>
                   </Select>
@@ -211,7 +212,7 @@ export default function AdminUsers() {
                       </SelectContent>
                     </Select>
                   )}
-                  {stats.total_trips === 0 && (
+                  {stats.total_trips === 0 && !isProtectedAdmin && (
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                         <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">

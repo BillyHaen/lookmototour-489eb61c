@@ -81,7 +81,7 @@ export default function Navbar() {
                   <Link to="/admin" className="gap-2"><Shield className="h-4 w-4" /> Admin</Link>
                 </Button>
               )}
-              {(isVendor || isAdmin) && (
+              {isVendor && !isAdmin && (
                 <Button variant="default" size="sm" asChild className="gap-2">
                   <Link to="/vendor"><Building2 className="h-4 w-4" /> Vendor</Link>
                 </Button>
@@ -145,7 +145,7 @@ export default function Navbar() {
                     Admin CMS
                   </Link>
                 )}
-                {(isVendor || isAdmin) && (
+                {isVendor && !isAdmin && (
                   <Link to="/vendor" onClick={() => setOpen(false)} className="px-4 py-3 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2">
                     <Building2 className="h-4 w-4" /> Vendor Dashboard
                   </Link>

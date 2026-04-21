@@ -1,98 +1,93 @@
 
+## Perbaiki preview share rider yang masih gagal
 
-## Tambah Role "Vendor" — Akses Khusus Produk & Sewa Gear
+### Diagnosis
+Masalah utamanya bukan di data rider. Data profil untuk `billyhn` sudah ada lengkap (nama, avatar, trust score). Yang gagal adalah jalur prerender untuk crawler sosial:
 
-Memperluas sistem role dari `user`/`admin` menjadi `user`/`admin`/`vendor`. Vendor login mendapat dashboard khusus untuk mengelola produk & sewa gear miliknya saja.
+- URL publik masih mengembalikan **HTML SPA biasa**, bukan HTML dengan OG tags rider
+- `share-meta` sudah punya logic untuk rider, tetapi **request produksi belum benar-benar melewati jalur itu**
+- `s.lookmototour.com/s/rider/...` juga belum memberi hasil preview yang andal
+- Akibatnya WhatsApp tetap membaca meta default/logo website
 
-### Perubahan Database
+### Yang akan diperbaiki
 
-**1. Tambah enum value `vendor`** ke type `app_role`:
-```sql
-ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'vendor';
-```
+#### 1. Pastikan request crawler benar-benar diproses server-side
+Rapikan jalur prerender agar **dua URL ini sama-sama didukung**:
+- `https://lookmototour.com/riders/:username`
+- `https://s.lookmototour.com/s/rider/:username`
 
-**2. Link vendor ke user account** — tambah kolom di `vendors`:
-```sql
-ALTER TABLE public.vendors ADD COLUMN owner_user_id uuid;
-CREATE UNIQUE INDEX ON public.vendors(owner_user_id) WHERE owner_user_id IS NOT NULL;
-```
-Satu user vendor terkait ke satu vendor record.
+Worker akan:
+- deteksi crawler (`WhatsApp`, `facebookexternalhit`, `Facebot`, `TelegramBot`, `Twitterbot`, dll)
+- untuk path rider, ambil HTML dari `share-meta`
+- kembalikan response `text/html` dengan OG meta rider
+- untuk user biasa, tetap lanjut ke app seperti biasa
 
-**3. Helper RPC `get_my_vendor_id()`** (security definer):
-```sql
-SELECT id FROM public.vendors WHERE owner_user_id = auth.uid() LIMIT 1
-```
+#### 2. Tambah dukungan route share domain yang konsisten
+Saat ini tombol share memakai `s.lookmototour.com/s/rider/:username`, tapi alur ini belum cukup kuat. Akan dibuat konsisten:
 
-**4. RLS baru:**
-- `products`: vendor bisa SELECT/INSERT/UPDATE/DELETE produk **hanya jika** `vendor_id = get_my_vendor_id()`. Saat INSERT, `vendor_id` di-force ke vendor-nya via trigger `BEFORE INSERT` jika role vendor.
-- `gear_rentals`: vendor bisa SELECT semua sewa di mana `product.vendor_id = get_my_vendor_id()`, dan UPDATE status (confirmed/picked_up/returned/cancelled + notes).
-- `vendors`: vendor bisa SELECT & UPDATE record sendiri (kecuali kolom `owner_user_id`, dijaga trigger).
-- `profiles`: vendor bisa SELECT profil renter pada sewa miliknya (untuk nama+phone) — pakai SECURITY DEFINER RPC `get_renter_contact_for_vendor(_rental_id)`.
+- Worker menangani `/s/rider/:username`
+- Untuk non-crawler, route share ini akan **redirect 302** ke `/riders/:username`
+- Untuk crawler, route share ini akan langsung mengembalikan HTML OG rider
 
-**5. Update trigger `handle_new_user`** tetap sama — vendor di-assign role manual oleh admin via UI.
+Dengan ini:
+- tombol share tetap bisa pakai short/share URL
+- user yang buka link tetap masuk ke halaman rider normal
+- crawler mendapat meta yang benar
 
-### Perubahan UI
+#### 3. Keras-kan `share-meta` untuk rider
+Perbaiki output `share-meta` agar lebih aman untuk WhatsApp/FB:
 
-**Admin:**
-- `AdminUsers.tsx` → di dialog detail user, tambah dropdown role: `user / admin / vendor`. Jika dipilih `vendor`, muncul dropdown "Link ke Vendor" (list vendor yang `owner_user_id IS NULL` + vendor yang sedang terkait user ini). Simpan via 2 RPC: `admin_set_user_role(_user_id, _role)` + `admin_link_vendor_to_user(_vendor_id, _user_id)`.
-- `AdminVendors.tsx` → tampilkan kolom "Owner" (nama user terkait) dengan tombol link/unlink.
+- title: `Riders {nama} – {badge}`
+- description: `Riders {nama} – {badge} ada di LOOKMOTOTOUR...`
+- image: prioritaskan `avatar_url`, fallback `banner_url`, fallback logo
+- tambahkan `og:image:secure_url`
+- gunakan `twitter:card=summary_large_image`
+- pastikan URL absolut HTTPS
+- set cache singkat agar update avatar/nama cepat ikut berubah
 
-**Hook baru:** `useMyVendor()` — return vendor record milik user login (atau null).
+#### 4. Sinkronkan tombol share rider
+Rapikan `RiderShareButton` supaya:
+- copy link dan native share memakai URL yang benar-benar didukung worker
+- teks share konsisten dengan preview
+- tidak ada mismatch antara URL yang dishare vs URL yang diprerender
 
-**Hook baru:** `useUserRole()` — return `'admin' | 'vendor' | 'user'` berbasis check `has_role` berurutan.
+#### 5. Tambahkan fallback route yang aman di app
+Agar share URL tidak terasa rusak untuk manusia:
+- buat route React khusus `/s/rider/:username`
+- route ini cukup redirect ke `/riders/:username`
 
-**Layout vendor baru:** `src/pages/vendor/VendorLayout.tsx` — sidebar minimal dengan 2 menu: **Produk Saya** & **Sewa Gear Saya**. Guard: redirect ke `/` jika bukan vendor.
+Ini jadi lapisan cadangan kalau ada request yang lolos tanpa worker.
 
-**Halaman vendor:**
-- `src/pages/vendor/VendorProducts.tsx` — clone `AdminProducts` tapi:
-  - Query produk pakai filter `vendor_id = my_vendor_id`
-  - Form **tanpa** dropdown Vendor (vendor_id di-set otomatis ke `my_vendor_id` sebelum insert)
-  - Tetap punya semua field produk (beli/sewa/inventori/dll)
-- `src/pages/vendor/VendorRentals.tsx` — clone `AdminRentals` tapi:
-  - Pakai hook baru `useVendorRentals()` yang query `gear_rentals` join `products` dengan filter `products.vendor_id = my_vendor_id`
-  - Tombol aksi sama (Konfirmasi, Mark Diambil, Mark Dikembalikan, Batal)
-  - Tambah tombol **Chat WhatsApp Penyewa** → buka `https://wa.me/{phone}?text=Halo {name}, terkait sewa gear {product.name}...`. Phone diambil dari RPC `get_renter_contact_for_vendor`.
-
-**Routing (`App.tsx`):**
-```
-/vendor             → VendorLayout > VendorProducts (default)
-/vendor/products    → VendorProducts
-/vendor/rentals     → VendorRentals
-```
-
-**Navbar (`Navbar.tsx`):**
-- Jika `useUserRole() === 'vendor'`: tampilkan tombol "Vendor" → `/vendor` (mirip tombol Admin existing). Sembunyikan tombol Admin.
-- User biasa & admin: tidak ada perubahan.
-
-**Login redirect:** Setelah login, kalau user adalah vendor (bukan admin), redirect ke `/vendor`.
-
-### Validasi
-1. Admin set seorang user jadi `vendor` & link ke vendor "Bengkel A" → user logout/login → navbar tampilkan tombol "Vendor".
-2. User vendor buka `/vendor/products` → hanya lihat produk milik Bengkel A. Buat produk baru → form tidak ada field Vendor → produk tersimpan dengan `vendor_id = Bengkel A`.
-3. Coba akses `/admin` sebagai vendor → di-redirect ke `/`.
-4. User vendor buka `/vendor/rentals` → hanya lihat sewa untuk produk Bengkel A. Klik **Konfirmasi** → status berubah. **Mark Diambil**/**Dikembalikan** → status berubah. Klik tombol WhatsApp → buka chat ke penyewa.
-5. Vendor coba PATCH produk vendor lain via Supabase client → ditolak RLS.
-6. Admin tetap punya akses penuh ke semua produk & semua sewa.
-
-### File yang dibuat / diubah
+### File yang akan diubah
 
 | File | Perubahan |
 |---|---|
-| Migration baru | enum value, kolom `owner_user_id`, RLS produk/rentals/vendors, trigger force vendor_id, RPC `get_my_vendor_id`, `admin_link_vendor_to_user`, `admin_set_user_role`, `get_renter_contact_for_vendor` |
-| `src/hooks/useUserRole.ts` (baru) | Return role efektif |
-| `src/hooks/useMyVendor.ts` (baru) | Vendor terkait user login |
-| `src/hooks/useVendorRentals.ts` (baru) | Query rentals filter vendor |
-| `src/pages/vendor/VendorLayout.tsx` (baru) | Layout sidebar vendor |
-| `src/pages/vendor/VendorProducts.tsx` (baru) | CRUD produk milik vendor |
-| `src/pages/vendor/VendorRentals.tsx` (baru) | Manajemen sewa + WA chat |
-| `src/pages/admin/AdminUsers.tsx` | Dropdown role + link vendor |
-| `src/pages/admin/AdminVendors.tsx` | Kolom owner + link/unlink |
-| `src/components/Navbar.tsx` | Tombol "Vendor" untuk role vendor |
-| `src/App.tsx` | Routes `/vendor/*` |
-| `src/pages/Login.tsx` | Redirect vendor ke `/vendor` |
+| `worker/index.ts` | Perluas routing crawler untuk `/riders/:username` dan `/s/rider/:username`, plus redirect untuk non-crawler |
+| `wrangler.jsonc` | Rapikan config worker/assets bila perlu agar binding dan deployment sesuai |
+| `supabase/functions/share-meta/index.ts` | Keras-kan output OG/Twitter untuk rider |
+| `src/components/rider/RiderShareButton.tsx` | Sinkronkan URL share yang dipakai tombol |
+| `src/App.tsx` | Tambah route fallback `/s/rider/:username` |
+| `src/pages/...` (route redirect sederhana) | Redirect human traffic dari short share URL ke profil rider |
 
-### Dampak & keamanan
-- Role enforcement 2 lapis: RLS + RPC security definer. Vendor tidak bisa lihat/ubah data vendor lain meski memanggil API langsung.
-- Admin tetap berhak penuh.
-- User biasa tidak terdampak sama sekali.
+### Validasi yang akan dilakukan
+1. Buka:
+   - `/riders/billyhn`
+   - `/s/rider/billyhn`
+   untuk user biasa → tetap masuk ke halaman rider normal
+2. Simulasi crawler ke kedua URL → response HTML harus berisi:
+   - `og:title` rider
+   - `og:description` rider
+   - `og:image` avatar rider
+3. Pastikan image yang keluar adalah avatar Billy, bukan logo default
+4. Tempel URL ke WhatsApp lagi → preview harus menampilkan:
+   - avatar rider
+   - nama rider
+   - badge
+   - excerpt
+5. Uji juga share via tombol Bagikan dan copy URL langsung
 
+### Hasil akhir
+Setelah perbaikan ini, preview rider akan konsisten baik saat:
+- link disalin langsung dari address bar `/riders/:username`
+- link dibagikan dari tombol share
+- link short share `/s/rider/:username` dipakai di WhatsApp / sosial media

@@ -2159,6 +2159,7 @@ export type Database = {
           user_avatar_url: string
           user_id: string
           user_name: string
+          user_username: string
         }[]
       }
       get_event_interest_counts: {

@@ -51,7 +51,8 @@ export default function TestimonialSection() {
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{t.content}</p>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </section>

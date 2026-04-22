@@ -550,7 +550,7 @@
 
     "@tiptap/extension-horizontal-rule": ["@tiptap/extension-horizontal-rule@3.22.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-horizontal-rule/-/extension-horizontal-rule-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4", "@tiptap/pm": "3.22.4" } }, "sha512-cCI1HekGQwhY/MbgaKQ0R/7HcH5ZM1oFAyI/J72QGLC0XnF403S/OXoHMuBWr1mCu8hNiQWCzeNRJUty0iytNw=="],
 
-    "@tiptap/extension-image": ["@tiptap/extension-image@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-image/-/extension-image-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4" } }, "sha512-ZDc+fLaratTQ4IgnKcJJwfUgUgpcHjbZSBi6UQAILJwkflMy1Zxj8mpbma5P934nLSI+uDnR5ret6ZZLNITKhA=="],
+    "@tiptap/extension-image": ["@tiptap/extension-image@3.22.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-image/-/extension-image-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4" } }, "sha512-ZDc+fLaratTQ4IgnKcJJwfUgUgpcHjbZSBi6UQAILJwkflMy1Zxj8mpbma5P934nLSI+uDnR5ret6ZZLNITKhA=="],
 
     "@tiptap/extension-italic": ["@tiptap/extension-italic@3.22.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-italic/-/extension-italic-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4" } }, "sha512-fVSDx5AYXgDI3v2zZIqb7V8EewthwM2NJ/ZCX+XaxRsqNEpnjVhgHs7UlvDqK1wj2OJ6zmUNjPtVlAFRxwT+HQ=="],
 
@@ -576,7 +576,7 @@
 
     "@tiptap/extension-underline": ["@tiptap/extension-underline@3.22.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-underline/-/extension-underline-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4" } }, "sha512-08kGdbhIrA6h10GWXqOkqIveaBj5tmxclK208/nUIAlonI9hPd739vu7fmVtpnmqCnSSNpoRtU4u6Gj5at0ZpA=="],
 
-    "@tiptap/extension-youtube": ["@tiptap/extension-youtube@3.22.4", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-youtube/-/extension-youtube-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4" } }, "sha512-H5dKDEdVhGeE2JZ4z6AvurN9GNwZQBNige8wjUie3R+hkwX/0DDql0oqvNM8lO5WM1M90Sq/AwyPQ2K9auSbbw=="],
+    "@tiptap/extension-youtube": ["@tiptap/extension-youtube@3.22.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extension-youtube/-/extension-youtube-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4" } }, "sha512-H5dKDEdVhGeE2JZ4z6AvurN9GNwZQBNige8wjUie3R+hkwX/0DDql0oqvNM8lO5WM1M90Sq/AwyPQ2K9auSbbw=="],
 
     "@tiptap/extensions": ["@tiptap/extensions@3.22.4", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/@tiptap/extensions/-/extensions-3.22.4.tgz", { "peerDependencies": { "@tiptap/core": "3.22.4", "@tiptap/pm": "3.22.4" } }, "sha512-fOe8VptJvLPs32bNdUYo8SRyljwqKNQVXWW056VoXIc5en/59OdJlJQVeHI0jRRciH3MtrqODi/gfJR0VHNZ8A=="],
 
@@ -1066,7 +1066,7 @@
 
     "normalize-range": ["normalize-range@0.1.2", "", {}, "sha512-bdok/XvKII3nUpklnV6P2hxtMNrCboOjAcyBuQnWEhO665FwrSNRxU+AqpsyvO6LgGYPspN+lu5CLtw4jPRKNA=="],
 
-    "normalize-wheel": ["normalize-wheel@1.0.1", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/normalize-wheel/-/normalize-wheel-1.0.1.tgz", {}, "sha512-1OnlAPZ3zgrk8B91HyRj+eVv+kS5u+Z0SCsak6Xil/kmgEia50ga7zfkumayonZrImffAxPU/5WcyGhzetHNPA=="],
+    "normalize-wheel": ["normalize-wheel@1.0.1", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/normalize-wheel/-/normalize-wheel-1.0.1.tgz", {}, "sha512-1OnlAPZ3zgrk8B91HyRj+eVv+kS5u+Z0SCsak6Xil/kmgEia50ga7zfkumayonZrImffAxPU/5WcyGhzetHNPA=="],
 
     "nwsapi": ["nwsapi@2.2.23", "", {}, "sha512-7wfH4sLbt4M0gCDzGE6vzQBo0bfTKjU7Sfpqy/7gs1qBfYz2vEJH6vXcBKpO3+6Yu1telwd0t9HpyOoLEQQbIQ=="],
 
@@ -1172,7 +1172,7 @@
 
     "react-dom": ["react-dom@18.3.1", "", { "dependencies": { "loose-envify": "^1.1.0", "scheduler": "^0.23.2" }, "peerDependencies": { "react": "^18.3.1" } }, "sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw=="],
 
-    "react-easy-crop": ["react-easy-crop@5.5.7", "https://europe-west4-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/react-easy-crop/-/react-easy-crop-5.5.7.tgz", { "dependencies": { "normalize-wheel": "^1.0.1", "tslib": "^2.0.1" }, "peerDependencies": { "react": ">=16.4.0", "react-dom": ">=16.4.0" } }, "sha512-kYo4NtMeXFQB7h1U+h5yhUkE46WQbQdq7if54uDlbMdZHdRgNehfvaFrXnFw5NR1PNoUOJIfTwLnWmEx/MaZnA=="],
+    "react-easy-crop": ["react-easy-crop@5.5.7", "https://europe-west1-npm.pkg.dev/lovable-core-prod/sandbox-npm-cache/react-easy-crop/-/react-easy-crop-5.5.7.tgz", { "dependencies": { "normalize-wheel": "^1.0.1", "tslib": "^2.0.1" }, "peerDependencies": { "react": ">=16.4.0", "react-dom": ">=16.4.0" } }, "sha512-kYo4NtMeXFQB7h1U+h5yhUkE46WQbQdq7if54uDlbMdZHdRgNehfvaFrXnFw5NR1PNoUOJIfTwLnWmEx/MaZnA=="],
 
     "react-hook-form": ["react-hook-form@7.61.1", "", { "peerDependencies": { "react": "^16.8.0 || ^17 || ^18 || ^19" } }, "sha512-2vbXUFDYgqEgM2RcXcAT2PwDW/80QARi+PKmHy5q2KhuKvOlG8iIYgf7eIlIANR5trW9fJbP4r5aub3a4egsew=="],
 

@@ -16,6 +16,7 @@ import { formatPrice } from '@/data/events';
 import { Loader2, Plus, Pencil, Trash2 } from 'lucide-react';
 import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
 import { MOTOR_BRANDS as CATALOG_BRANDS } from '@/data/motorcycles';
+import ImageUpload from '@/components/ImageUpload';
 
 interface ProductForm {
   name: string; description: string; price: number; stock: number;
@@ -217,7 +218,13 @@ export default function VendorProducts() {
               <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Deskripsi produk..." />
             </div>
 
-            <Input placeholder="URL Gambar" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+            <ImageUpload
+              value={form.image_url}
+              onChange={(url) => setForm({ ...form, image_url: url })}
+              bucket="media-library"
+              pathPrefix="products"
+              label="Gambar Produk"
+            />
 
             <div className="grid grid-cols-2 gap-3">
               <div>

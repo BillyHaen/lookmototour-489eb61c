@@ -79,7 +79,7 @@ export default function Index() {
         </div>
       </section>
 
-      {/* AI Trip Match CTA OK */}
+      {/* AI Trip Match CTA OK 1 */}
       <section className="py-12 bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10">
         <div className="container">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">

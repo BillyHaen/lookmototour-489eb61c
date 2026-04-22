@@ -2268,6 +2268,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_vendor_access: { Args: never; Returns: boolean }
       increment_share_count: {
         Args: { _content_id: string; _content_type: string }
         Returns: number

@@ -7,8 +7,15 @@ import { cloudflare } from "@cloudflare/vite-plugin";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
+const BUILD_TIMESTAMP = new Date().toISOString();
+const BUILD_ID = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+
 // https://vitejs.dev/config/
 export default defineConfig({
+  define: {
+    __BUILD_TIMESTAMP__: JSON.stringify(BUILD_TIMESTAMP),
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
+  },
   server: {
     host: "::",
     port: 8080,

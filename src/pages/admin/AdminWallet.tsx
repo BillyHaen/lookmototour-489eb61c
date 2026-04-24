@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from './AdminLayout';
@@ -39,11 +39,7 @@ export default function AdminWallet() {
   const { data: termsHtml = '' } = useCreditTerms();
   const updateTerms = useUpdateCreditTerms();
   const [termsDraft, setTermsDraft] = useState<string>('');
-  const [termsLoaded, setTermsLoaded] = useState(false);
-  if (!termsLoaded && termsHtml) {
-    setTermsDraft(termsHtml);
-    setTermsLoaded(true);
-  }
+  useEffect(() => { setTermsDraft(termsHtml || ''); }, [termsHtml]);
 
   const saveSettings = useMutation({
     mutationFn: async () => {

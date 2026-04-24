@@ -112,7 +112,9 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
       r.registration_type === 'couple' ? (event.price_couple || 0) :
       (event.price_single || event.price || 0);
     const towing = (r.towing_pergi ? (event.towing_pergi_price || 0) : 0) + (r.towing_pulang ? (event.towing_pulang_price || 0) : 0);
-    return tierPrice + towing + (r.rentals_total || 0);
+    const gross = tierPrice + towing + (r.rentals_total || 0);
+    const credit = Math.max(0, Number((r as any).credit_redeemed) || 0);
+    return Math.max(0, gross - credit);
   };
 
   const updatePayment = async (regId: string, status: string, amount: number) => {

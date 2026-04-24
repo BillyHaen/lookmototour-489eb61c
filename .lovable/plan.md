@@ -1,46 +1,104 @@
 
-# Aksi semi-otomatis "Reattach mapping check"
+# Revamp Halaman Profile → Dashboard Bento-Grid Modern
 
 ## Tujuan
-Memicu refresh mapping published deployment ke `lookmototour-dev2.lovable.app`, `lookmototour.com`, dan `www.lookmototour.com` menggunakan tool yang tersedia di editor, lalu memverifikasi hasilnya via polling HTTP.
+Mengubah `src/pages/Profile.tsx` dari layout single-column panjang menjadi dashboard 2-kolom (70/30) dengan hero header, stat cards, tabs system, dan sidebar — aesthetic putih + slate-gray + deep blue (primary brand).
 
-## Langkah eksekusi (default mode)
+## Struktur Baru
 
-1. **Baca state awal**
-   - `publish_settings--get_publish_settings` untuk konfirmasi published + visibility saat ini.
-   - `project_urls--get_urls` untuk konfirmasi daftar URL aktif.
+### A. Hero Header (full width)
+- Avatar besar (96px) di kiri dengan `AvatarUpload` (tetap pakai komponen yang ada).
+- Nama user + badge "Verified" (kalau ada `username` valid) atau "Pro Member" (kalau confirmed events ≥ 5).
+- Username `@handle` + tombol "Lihat Profil Publik" → `/riders/{username}`.
+- Stat cards horizontal di kanan (3 kotak `rounded-xl shadow-sm`):
+  - **Kredit Saya** (Wallet icon) → balance dari `useWalletBalance`.
+  - **Total Events** (CalendarDays icon) → `confirmedCount`.
+  - **Live Tracking** (Navigation icon) → jumlah `activeSessions`, dengan dot pulse hijau bila > 0.
+- Tombol "Logout" di pojok kanan atas (ghost variant).
 
-2. **Toggle visibility sebagai trigger refresh mapping** (satu-satunya tuas yang tersedia dari editor)
-   - `publish_settings--update_visibility('private')` — minta approval user.
-   - `project_debug--sleep(15)` untuk beri waktu propagasi.
-   - `publish_settings--update_visibility('public')` — minta approval user.
-   - `project_debug--sleep(10)` setelah balik public.
+### B. Layout 2 Kolom
+- Container `max-w-6xl` (lebih lebar dari current 3xl).
+- Grid: `lg:grid-cols-[1fr_340px] gap-6`.
 
-3. **Polling HTTP status** via `code--exec` (curl)
-   - Target:
-     - `https://lookmototour-dev2.lovable.app`
-     - `https://lookmototour.com`
-     - `https://www.lookmototour.com`
-   - Maksimum 10 percobaan, jeda 10 detik antar percobaan.
-   - Berhenti lebih awal jika ketiga URL HTTP **200** dan body BUKAN halaman "Project not found".
+### C. Kolom Kiri (Main, 70%) — Tabs System
+Pakai `@/components/ui/tabs`. 4 tab:
 
-4. **Tampilkan hasil akhir** dalam tabel:
-   - URL → status code → keterangan (OK / "Project not found" / error) → timestamp.
+1. **Aktivitas** (default)
+   - Card "Badge Saya" (kalau ada) — pakai logic `BADGES` existing.
+   - Card "Sponsor untuk Saya" → `<RecommendedSponsors limit={4} />`.
 
-5. **Branching hasil**
-   - Jika ketiga URL kembali 200 → reattach dianggap berhasil, selesai.
-   - Jika minimal satu URL masih 404 → otomatis generate paket laporan support terbaru:
-     - URL + status code per percobaan
-     - Timestamp percobaan
-     - Daftar tindakan yang sudah dicoba (toggle visibility, unpublish/republish sebelumnya)
-     - Catatan DNS sudah benar mengarah ke `185.158.133.1`
-   - Sertakan rekomendasi kirim laporan ke Lovable Support karena rebind hosting nyata hanya bisa dilakukan tim infra Lovable.
+2. **Sewa Gear**
+   - Grid `sm:grid-cols-2` rental cards.
+   - Komponen baru `RentalCard` (inline atau file terpisah `src/components/profile/RentalCard.tsx`):
+     - Image kiri (64px square `rounded-lg`).
+     - Nama produk + vendor.
+     - Status badge berwarna (pending=outline, confirmed=secondary, picked_up=default biru, returned=hijau muted, cancelled=destructive).
+     - Tanggal sewa + qty + total price.
+     - Tombol "Detail" (ghost sm) → buka dialog atau link ke event/produk.
+   - Empty state ramah bila kosong.
 
-## Yang TIDAK akan diubah
+3. **Riwayat Pendaftaran**
+   - List bersih (bukan card tebal): row dengan border-bottom, tanggal kiri, judul event tengah, status + payment badge kanan, tombol "View Ticket" (link ke `/events/{slug}`).
+   - Update query `my-registrations` untuk `select` field `slug` dari `events` agar bisa link.
+   - Tetap support tombol "Tulis Testimoni" untuk completed events (logic existing dipindah ke sini).
 
-- Tidak ada perubahan di `src/`, `index.html`, routing, atau `NotFound.tsx` — preview app sehat, masalah murni di hosting binding.
-- Tidak ubah DNS — sudah benar mengarah ke IP Lovable.
+4. **Pengaturan**
+   - Form profil existing (name, username, phone, riding_style, location, bio) dipindah ke sini.
+   - Tombol "Simpan" high-contrast `bg-primary` deep blue.
+   - Tambah link kecil "Ganti banner / avatar" mengarah ke field upload (avatar di hero, banner di pengaturan).
 
-## Catatan jujur
+### D. Kolom Kanan (Sidebar, 30%)
+Stack vertical, sticky `lg:sticky lg:top-24`:
 
-Toggle visibility + polling adalah satu-satunya yang benar-benar otomatis dari sisi editor. Tidak ada tool `rebind_domain` / `reattach_deployment` yang publik. Jika setelah polling masih 404, jalur akhirnya tetap Lovable Support.
+1. **Live Tracking Widget**
+   - Card `rounded-xl shadow-sm` border-primary/20.
+   - Icon Navigation dengan pulse dot bila ada sesi aktif (`relative` + `animate-ping`).
+   - Teks "{n} sesi aktif" atau "Belum ada sesi tracking".
+   - Tombol primary "Kelola Sesi" → `/tracking/manage`.
+
+2. **Wallet Compact**
+   - Versi ringkas `WalletCard`: hanya saldo besar + tombol "Lihat Riwayat" yang expand inline (atau buka Dialog).
+   - Bisa reuse `WalletCard` apa adanya untuk simplicity (komponen sudah self-contained).
+
+3. **Sponsor Deals Highlight**
+   - Card dengan `bg-gradient-to-br from-primary/10 via-accent/10 to-background`.
+   - Icon Gift, judul "Deals Eksklusif", subtitle 1 baris, tombol "Lihat Semua" → `/sponsor-deals`.
+
+## Komponen Baru (file terpisah, kecil & focused)
+- `src/components/profile/ProfileHero.tsx` — header + stat cards.
+- `src/components/profile/StatCard.tsx` — reusable kotak stat (icon, label, value, optional pulse).
+- `src/components/profile/RentalCard.tsx` — kartu rental.
+- `src/components/profile/RegistrationRow.tsx` — row pendaftaran.
+- `src/components/profile/LiveTrackingWidget.tsx` — sidebar tracking.
+- `src/components/profile/SponsorDealsCard.tsx` — sidebar deals card.
+
+`Profile.tsx` di-rewrite menjadi shell yang merangkai komponen-komponen di atas + form di tab Pengaturan. Form logic (react-hook-form + zod + mutation) **dipertahankan persis** seperti sekarang, hanya dipindah lokasi render-nya.
+
+## Data & Hooks
+- Tetap pakai: `useMyProfile`, `useAuth`, `useMyTrackingSessions`, `useMyRentals`, `useWalletBalance`, query `my-registrations`.
+- Update query `my-registrations` untuk include `slug` di select events.
+- Tidak ada perubahan database / RLS / migration.
+
+## Styling Rules
+- Semua card: `rounded-xl shadow-sm border border-border bg-card`.
+- Spacing antar section: `space-y-6` di main, `space-y-4` di sidebar.
+- Stat cards: `rounded-xl bg-gradient-to-br from-primary/5 to-transparent` border-primary/20.
+- Badge status rental pakai class warna eksplisit (emerald/amber/blue/red).
+- Tetap mobile-first: di mobile, sidebar pindah ke bawah main (`grid-cols-1`), tabs scroll horizontal bila perlu (`overflow-x-auto`).
+- Pakai Lucide icons: User, Wallet, Package, Map/Navigation, Gift, CalendarDays, Award, Settings, Ticket.
+
+## Yang TIDAK Diubah
+- `useMyProfile`, `useWallet*`, `useGearRentals`, `useTrackingSession`, `WalletCard`, `RecommendedSponsors`, `AvatarUpload`, `BannerUpload`.
+- Schema database, RLS, edge functions.
+- Routing — tetap `/profile`.
+- Header `Navbar` / `Footer` global.
+
+## QA Checklist Sesudah Build
+- Tabs aktif dengan keyboard.
+- Mobile (<768px): single column, hero stack vertical, stat cards jadi 3 kolom kecil 1 baris.
+- Desktop (≥1024px): 2 kolom 70/30, sidebar sticky.
+- Empty states untuk: no rentals, no registrations, no tracking sessions.
+- Form Pengaturan tetap save & invalidate query yang sama.
+- Tidak ada regression pada link ke `/riders/:username`, `/tracking/manage`, `/sponsor-deals`.
+
+Setelah plan ini disetujui, implementasi dilakukan dalam 1 batch edit (rewrite `Profile.tsx` + create 6 file komponen baru).

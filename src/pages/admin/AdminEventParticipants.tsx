@@ -73,7 +73,7 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
 
       return (data || []).map(r => {
         const regRentals = rentalsByReg.get(r.id) || [];
-        const rentals_total = regRentals.reduce((s, x) => s + (x.total_price || 0), 0);
+        const rentals_total = regRentals.reduce((s, x) => s + (x.total_price || 0) + (x.deposit_amount || 0), 0);
         return {
           ...r,
           profile: profileMap.get(r.user_id) || null,
@@ -499,7 +499,12 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                                       </span>
                                     </div>
                                   </div>
-                                  <span className="text-xs font-medium flex-shrink-0">{formatPrice(gr.total_price || 0)}</span>
+                                  <div className="text-right flex-shrink-0">
+                                    <span className="text-xs font-medium block">{formatPrice(gr.total_price || 0)}</span>
+                                    {gr.deposit_amount > 0 && (
+                                      <span className="text-[10px] text-muted-foreground block">+ deposit {formatPrice(gr.deposit_amount)}</span>
+                                    )}
+                                  </div>
                                 </div>
                               ))}
                             </div>

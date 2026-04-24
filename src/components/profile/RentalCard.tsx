@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge';
-import { Package } from 'lucide-react';
+import { Package, MapPin } from 'lucide-react';
 import { formatDate, formatPrice } from '@/data/events';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -34,6 +34,12 @@ export default function RentalCard({ rental }: { rental: any }) {
           </div>
           {rental.products?.vendors?.name && (
             <p className="text-xs text-muted-foreground">oleh {rental.products.vendors.name}</p>
+          )}
+          {rental.events?.title && (
+            <p className="text-xs text-primary mt-0.5 inline-flex items-center gap-1 truncate max-w-full">
+              <MapPin className="h-3 w-3 shrink-0" />
+              <span className="truncate">{rental.events.title}</span>
+            </p>
           )}
           <p className="text-xs text-muted-foreground mt-1">
             {formatDate(rental.start_date)} → {formatDate(rental.end_date)} · {rental.total_days}h · Qty {rental.qty}

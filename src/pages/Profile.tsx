@@ -16,7 +16,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Star, MessageSquare, Award, Shield, Flame, Trophy, Package, CalendarDays, Settings, Sparkles } from 'lucide-react';
+import { Loader2, Star, MessageSquare, Award, Shield, Flame, Trophy, Package, CalendarDays, Settings, Sparkles, Wallet } from 'lucide-react';
 import { formatDate } from '@/data/events';
 import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
 import { useMyRentals } from '@/hooks/useGearRentals';
@@ -33,6 +33,7 @@ import RegistrationRow from '@/components/profile/RegistrationRow';
 import LiveTrackingWidget from '@/components/profile/LiveTrackingWidget';
 import SponsorDealsCard from '@/components/profile/SponsorDealsCard';
 import ProfilePageSkeleton from '@/components/profile/ProfileSkeleton';
+import CreditHistoryList from '@/components/profile/CreditHistoryList';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },
@@ -173,10 +174,11 @@ export default function Profile() {
             {/* Main */}
             <div className="min-w-0">
               <Tabs defaultValue="aktivitas" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-card border border-border h-auto p-1 gap-1">
+                <TabsList className="grid w-full grid-cols-5 bg-card border border-border h-auto p-1 gap-1">
                   <TabsTrigger value="aktivitas" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Sparkles className="h-4 w-4 shrink-0" /><span className="truncate">Aktivitas</span></TabsTrigger>
                   <TabsTrigger value="sewa" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Package className="h-4 w-4 shrink-0" /><span className="truncate">Sewa</span></TabsTrigger>
                   <TabsTrigger value="riwayat" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><CalendarDays className="h-4 w-4 shrink-0" /><span className="truncate">Riwayat</span></TabsTrigger>
+                  <TabsTrigger value="kredit" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Wallet className="h-4 w-4 shrink-0" /><span className="truncate">Kredit</span></TabsTrigger>
                   <TabsTrigger value="settings" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Settings className="h-4 w-4 shrink-0" /><span className="truncate">Setelan</span></TabsTrigger>
                 </TabsList>
 
@@ -286,6 +288,20 @@ export default function Profile() {
                           {registrations.map((r) => <RegistrationRow key={r.id} reg={r} />)}
                         </div>
                       )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Riwayat Kredit */}
+                <TabsContent value="kredit" className="mt-4">
+                  <Card className="rounded-xl shadow-sm">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Wallet className="h-5 w-5 text-primary" /> Riwayat Kredit
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <CreditHistoryList />
                     </CardContent>
                   </Card>
                 </TabsContent>

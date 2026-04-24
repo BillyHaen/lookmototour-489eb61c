@@ -287,6 +287,9 @@ export default function AdminEvents() {
       target_audience: event.target_audience || '',
       trust_section: event.trust_section || '',
       internal_link_blog_tag: event.internal_link_blog_tag || '',
+      credit_reward_mode: (event as any).credit_reward_mode || 'none',
+      credit_reward_value: (event as any).credit_reward_value || 0,
+      credit_expiry_days: (event as any).credit_expiry_days ?? null,
     });
     setRouteData((event as any).route_data || null);
     const existingSeo: ItineraryDay[] = Array.isArray(event.itinerary) ? event.itinerary : [];

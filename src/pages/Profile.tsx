@@ -388,64 +388,165 @@ function TestimonialButton({ eventId, userId }: { eventId: string; userId: strin
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: existing } = useQuery({
+  const { data: existing, isLoading: existingLoading } = useQuery({
     queryKey: ['my-testimonial', eventId, userId],
     queryFn: async () => {
-      const { data } = await (supabase.from('testimonials') as any)
+      const { data, error } = await (supabase.from('testimonials') as any)
         .select('*').eq('event_id', eventId).eq('user_id', userId).maybeSingle();
+      if (error) throw error;
       return data;
     },
+    enabled: !!eventId && !!userId,
   });
 
+  // Prefill saat dialog dibuka untuk testimoni pending (boleh edit per RLS)
+  useEffect(() => {
+    if (open) {
+      if (existing && existing.status === 'pending') {
+        setRating(String(existing.rating ?? 5));
+        setContent(existing.content ?? '');
+      } else if (!existing) {
+        setRating('5');
+        setContent('');
+      }
+    }
+  }, [open, existing]);
+
   const submit = async () => {
-    setLoading(true);
-    const { error } = await (supabase.from('testimonials') as any).insert({
-      user_id: userId, event_id: eventId, rating: Number(rating), content,
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
+    const trimmed = content.trim();
+    if (trimmed.length < 10) {
+      toast({ title: 'Testimoni terlalu pendek', description: 'Minimal 10 karakter.', variant: 'destructive' });
       return;
     }
-    toast({ title: 'Testimoni terkirim! ✅', description: 'Testimoni kamu akan ditampilkan setelah disetujui admin.' });
+    setLoading(true);
+    let error;
+    if (existing && existing.status === 'pending') {
+      // Update existing pending testimonial
+      ({ error } = await (supabase.from('testimonials') as any)
+        .update({ rating: Number(rating), content: trimmed, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .eq('user_id', userId));
+    } else {
+      ({ error } = await (supabase.from('testimonials') as any).insert({
+        user_id: userId, event_id: eventId, rating: Number(rating), content: trimmed,
+      }));
+    }
+    setLoading(false);
+    if (error) {
+      toast({ title: 'Gagal mengirim testimoni', description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({
+      title: existing ? 'Testimoni diperbarui ✅' : 'Testimoni terkirim ✅',
+      description: 'Akan ditampilkan publik setelah disetujui admin.',
+    });
     setOpen(false);
     queryClient.invalidateQueries({ queryKey: ['my-testimonial', eventId, userId] });
   };
 
+  if (existingLoading) {
+    return <Badge variant="outline" className="text-[10px]">Memuat…</Badge>;
+  }
+
+  // Status badge variants
   if (existing) {
-    return <Badge variant={existing.status === 'approved' ? 'default' : 'secondary'}>{existing.status === 'approved' ? 'Disetujui' : existing.status === 'pending' ? 'Menunggu' : 'Ditolak'}</Badge>;
+    const statusMeta: Record<string, { label: string; variant: any; className: string }> = {
+      approved: { label: 'Disetujui', variant: 'default', className: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' },
+      pending: { label: 'Menunggu Review', variant: 'secondary', className: 'bg-amber-500/15 text-amber-700 border-amber-500/30' },
+      rejected: { label: 'Ditolak', variant: 'destructive', className: '' },
+    };
+    const meta = statusMeta[existing.status] || statusMeta.pending;
+
+    return (
+      <div className="flex items-center gap-2">
+        <Badge variant="outline" className={`text-[10px] ${meta.className}`}>{meta.label}</Badge>
+        {existing.status === 'pending' && (
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+                <MessageSquare className="h-3 w-3" /> Edit
+              </Button>
+            </DialogTrigger>
+            <TestimonialDialogContent
+              rating={rating} setRating={setRating}
+              content={content} setContent={setContent}
+              loading={loading} onSubmit={submit}
+              isEdit
+            />
+          </Dialog>
+        )}
+      </div>
+    );
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1"><MessageSquare className="h-3 w-3" /> Tulis</Button>
+        <Button variant="outline" size="sm" className="gap-1">
+          <MessageSquare className="h-3 w-3" /> Tulis Testimoni
+        </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader><DialogTitle>Tulis Testimoni</DialogTitle></DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <label className="text-sm text-muted-foreground">Rating</label>
-            <Select value={rating} onValueChange={setRating}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {[5, 4, 3, 2, 1].map(v => (
-                  <SelectItem key={v} value={String(v)}>{'⭐'.repeat(v)} ({v})</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <label className="text-sm text-muted-foreground">Testimoni</label>
-            <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Ceritakan pengalaman kamu..." rows={4} />
-          </div>
-          <Button className="w-full" onClick={submit} disabled={loading || !content.trim()}>
-            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-            Kirim Testimoni
-          </Button>
-          <p className="text-xs text-muted-foreground text-center">Testimoni akan ditampilkan setelah disetujui oleh admin.</p>
-        </div>
-      </DialogContent>
+      <TestimonialDialogContent
+        rating={rating} setRating={setRating}
+        content={content} setContent={setContent}
+        loading={loading} onSubmit={submit}
+      />
     </Dialog>
   );
 }
+
+function TestimonialDialogContent({
+  rating, setRating, content, setContent, loading, onSubmit, isEdit = false,
+}: {
+  rating: string; setRating: (v: string) => void;
+  content: string; setContent: (v: string) => void;
+  loading: boolean; onSubmit: () => void; isEdit?: boolean;
+}) {
+  const charCount = content.trim().length;
+  const tooShort = charCount > 0 && charCount < 10;
+
+  return (
+    <DialogContent>
+      <DialogHeader>
+        <DialogTitle>{isEdit ? 'Edit Testimoni' : 'Tulis Testimoni'}</DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Rating</label>
+          <Select value={rating} onValueChange={setRating}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {[5, 4, 3, 2, 1].map(v => (
+                <SelectItem key={v} value={String(v)}>{'⭐'.repeat(v)} ({v})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5">
+          <label className="text-sm font-medium">Cerita kamu</label>
+          <Textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Bagaimana pengalaman trip kamu? Cerita rute, suasana, dan kesan keseluruhan…"
+            rows={5}
+            maxLength={500}
+          />
+          <div className="flex items-center justify-between text-xs">
+            <span className={tooShort ? 'text-destructive' : 'text-muted-foreground'}>
+              Min 10 karakter
+            </span>
+            <span className="text-muted-foreground">{charCount}/500</span>
+          </div>
+        </div>
+        <Button className="w-full bg-primary hover:bg-primary/90" onClick={onSubmit} disabled={loading || charCount < 10}>
+          {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {isEdit ? 'Simpan Perubahan' : 'Kirim Testimoni'}
+        </Button>
+        <p className="text-xs text-muted-foreground text-center">
+          Testimoni akan ditampilkan publik setelah disetujui oleh admin.
+        </p>
+      </div>
+    </DialogContent>
+  );
+}
+

@@ -1,62 +1,46 @@
 
-## Pulihkan published site yang menampilkan “Project not found”
+# Aksi semi-otomatis "Reattach mapping check"
 
-### Diagnosis
-Masalah ini bukan berasal dari routing React atau halaman `NotFound.tsx`.
+## Tujuan
+Memicu refresh mapping published deployment ke `lookmototour-dev2.lovable.app`, `lookmototour.com`, dan `www.lookmototour.com` menggunakan tool yang tersedia di editor, lalu memverifikasi hasilnya via polling HTTP.
 
-Temuan dari pengecekan:
-- URL published `https://lookmototour-dev2.lovable.app` mengembalikan placeholder hosting: “Publish or update your Lovable project for it to appear here.”
-- Custom domain `https://lookmototour.com` dan `https://www.lookmototour.com` juga mengembalikan placeholder yang sama.
-- Status publish project sudah `published` dan visibility sudah `public`.
-- Artinya, problem ada di layer publish/deployment frontend, bukan di source app yang sedang dirender browser.
+## Langkah eksekusi (default mode)
 
-### Yang akan dilakukan
-1. Verifikasi bahwa masalah benar-benar ada di published deployment, bukan di app code
-2. Paksa refresh published deployment frontend agar build terbaru benar-benar terpasang
-3. Verifikasi ulang domain `.lovable.app` dan custom domain setelah publish ulang
-4. Jika placeholder masih muncul, treat sebagai mismatch hosting/publish state dan lakukan recovery ringan di pengaturan publish
-5. Hanya jika proses publish baru gagal, lanjut audit source yang bisa menghambat build frontend
+1. **Baca state awal**
+   - `publish_settings--get_publish_settings` untuk konfirmasi published + visibility saat ini.
+   - `project_urls--get_urls` untuk konfirmasi daftar URL aktif.
 
-### Implementasi
-#### 1) Konfirmasi sumber masalah
-- Gunakan published URL sebagai patokan utama
-- Abaikan `NotFound.tsx`, karena placeholder yang muncul berasal dari hosting layer sebelum React app dimuat
-- Catat bahwa preview URL memang berbeda perilakunya karena membutuhkan akses project/login
+2. **Toggle visibility sebagai trigger refresh mapping** (satu-satunya tuas yang tersedia dari editor)
+   - `publish_settings--update_visibility('private')` — minta approval user.
+   - `project_debug--sleep(15)` untuk beri waktu propagasi.
+   - `publish_settings--update_visibility('public')` — minta approval user.
+   - `project_debug--sleep(10)` setelah balik public.
 
-#### 2) Force refresh deployment frontend
-- Trigger publish/update ulang untuk frontend
-- Pastikan hasil publish terbaru benar-benar membuat root route `/` menampilkan app, bukan placeholder
-- Karena gejalanya terjadi di semua domain, fokus recovery ada pada published artifact, bukan router atau page component
+3. **Polling HTTP status** via `code--exec` (curl)
+   - Target:
+     - `https://lookmototour-dev2.lovable.app`
+     - `https://lookmototour.com`
+     - `https://www.lookmototour.com`
+   - Maksimum 10 percobaan, jeda 10 detik antar percobaan.
+   - Berhenti lebih awal jika ketiga URL HTTP **200** dan body BUKAN halaman "Project not found".
 
-#### 3) Verifikasi domain hasil publish
-Setelah publish ulang:
-- cek `lookmototour-dev2.lovable.app`
-- cek `lookmototour.com`
-- cek `www.lookmototour.com`
+4. **Tampilkan hasil akhir** dalam tabel:
+   - URL → status code → keterangan (OK / "Project not found" / error) → timestamp.
 
-Ekspektasi:
-- ketiganya memuat HTML app yang benar
-- bukan lagi placeholder “Publish or update your Lovable project…”
+5. **Branching hasil**
+   - Jika ketiga URL kembali 200 → reattach dianggap berhasil, selesai.
+   - Jika minimal satu URL masih 404 → otomatis generate paket laporan support terbaru:
+     - URL + status code per percobaan
+     - Timestamp percobaan
+     - Daftar tindakan yang sudah dicoba (toggle visibility, unpublish/republish sebelumnya)
+     - Catatan DNS sudah benar mengarah ke `185.158.133.1`
+   - Sertakan rekomendasi kirim laporan ke Lovable Support karena rebind hosting nyata hanya bisa dilakukan tim infra Lovable.
 
-#### 4) Recovery jika masih gagal
-Jika setelah republish placeholder tetap muncul:
-- refresh konfigurasi publish visibility/public state
-- cek apakah binding custom domain mengikuti deployment aktif
-- identifikasi kasus “published=true tetapi published artifact kosong/tidak aktif”
+## Yang TIDAK akan diubah
 
-#### 5) Fallback audit build bila diperlukan
-Kalau publish baru ternyata gagal atau tidak menghasilkan artifact:
-- audit entry app (`src/main.tsx`, `src/App.tsx`, `index.html`) untuk error build
-- audit perubahan terbaru yang bisa mengganggu bundling frontend
-- perbaiki source hanya jika ditemukan kegagalan build nyata
+- Tidak ada perubahan di `src/`, `index.html`, routing, atau `NotFound.tsx` — preview app sehat, masalah murni di hosting binding.
+- Tidak ubah DNS — sudah benar mengarah ke IP Lovable.
 
-### Hasil akhir yang diharapkan
-- Published subdomain kembali menampilkan website LookMotoTour
-- Custom domain ikut pulih karena mengarah ke deployment aktif
-- Tidak lagi muncul placeholder “Project not found” / “Publish or update your Lovable project…”
+## Catatan jujur
 
-### Detail teknis
-- Status publish saat ini sudah public, jadi ini bukan masalah akses private
-- Placeholder yang tampil berasal dari hosting/deployment layer, bukan dari React route `*`
-- Karena root domain, custom domain, dan asset path sama-sama gagal, kemungkinan terbesar adalah published frontend artifact belum aktif atau tidak sinkron
-- Kemungkinan perubahan code sangat kecil menjadi penyebab utama sampai terbukti ada kegagalan build pada publish berikutnya
+Toggle visibility + polling adalah satu-satunya yang benar-benar otomatis dari sisi editor. Tidak ada tool `rebind_domain` / `reattach_deployment` yang publik. Jika setelah polling masih 404, jalur akhirnya tetap Lovable Support.

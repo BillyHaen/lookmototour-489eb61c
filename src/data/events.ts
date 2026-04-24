@@ -272,8 +272,8 @@ export function getEventStatus(event: MotoEvent): 'upcoming' | 'ongoing' | 'comp
 }
 
 export function formatPrice(price: number): string {
-  if (price === 0) return 'GRATIS';
-  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(price);
+  const value = Number.isFinite(price) ? price : 0;
+  return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
 }
 
 export function formatDate(dateStr: string): string {

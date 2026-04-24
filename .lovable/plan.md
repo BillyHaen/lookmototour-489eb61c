@@ -1,70 +1,62 @@
 
-## Perbaiki dropdown role vendor yang tidak muncul di Admin Users
+## Pulihkan published site yang menampilkan “Project not found”
 
 ### Diagnosis
-Masalah utamanya bukan di tabel role. Dari source saat ini, `src/pages/admin/AdminUsers.tsx` memang masih punya opsi:
+Masalah ini bukan berasal dari routing React atau halaman `NotFound.tsx`.
 
-- `User`
-- `Vendor`
-- `Admin`
+Temuan dari pengecekan:
+- URL published `https://lookmototour-dev2.lovable.app` mengembalikan placeholder hosting: “Publish or update your Lovable project for it to appear here.”
+- Custom domain `https://lookmototour.com` dan `https://www.lookmototour.com` juga mengembalikan placeholder yang sama.
+- Status publish project sudah `published` dan visibility sudah `public`.
+- Artinya, problem ada di layer publish/deployment frontend, bukan di source app yang sedang dirender browser.
 
-untuk semua user non-admin-terproteksi.
-
-Jadi jika di UI yang tampil hanya `User` dan `Admin`, berarti ada ketidaksesuaian antara source saat ini dan bundle frontend yang sedang terbuka/published, atau ada regresi render di komponen role selector yang belum dipaksa sinkron.
-
-Tambahan temuan:
-- tabel `user_roles` saat ini memang hanya berisi `admin` dan `user`, tetapi itu **tidak seharusnya menghilangkan** opsi `Vendor` dari dropdown
-- user yang sudah terhubung ke record vendor ada di tabel `vendors.owner_user_id`, jadi jalur vendor di backend memang sudah ada
-- tidak ada service worker di project, jadi masalah lebih condong ke bundle/render path, bukan cache PWA
-
-### Yang akan diperbaiki
-1. Pastikan dropdown role di halaman `/admin/users` selalu menampilkan:
-   - `Admin` saja untuk admin yang diproteksi
-   - `User`, `Vendor`, `Admin` untuk semua user lain
-2. Rapikan logika opsi role supaya tidak bergantung implisit pada data yang datang dari query role
-3. Pastikan kondisi “admin tidak punya fitur vendor” hanya berlaku untuk user yang memang role-nya admin, bukan menghilangkan opsi vendor untuk user lain
-4. Force refresh pada bagian frontend terkait agar perubahan benar-benar masuk ke bundle yang dipublish
-5. Verifikasi langsung di preview dan site publish bahwa opsi `Vendor` muncul lagi
+### Yang akan dilakukan
+1. Verifikasi bahwa masalah benar-benar ada di published deployment, bukan di app code
+2. Paksa refresh published deployment frontend agar build terbaru benar-benar terpasang
+3. Verifikasi ulang domain `.lovable.app` dan custom domain setelah publish ulang
+4. Jika placeholder masih muncul, treat sebagai mismatch hosting/publish state dan lakukan recovery ringan di pengaturan publish
+5. Hanya jika proses publish baru gagal, lanjut audit source yang bisa menghambat build frontend
 
 ### Implementasi
-#### 1) Rapikan role selector di `AdminUsers`
-- Ubah render dropdown menjadi helper yang eksplisit, misalnya:
-  - protected admin → `['admin']`
-  - user lain → `['user', 'vendor', 'admin']`
-- Pisahkan aturan:
-  - “admin tidak punya fitur vendor”
-  - “non-admin boleh dipromosikan ke vendor”
-- Jika perlu, gunakan identifier admin terproteksi yang sama seperti sekarang agar perilaku untuk akun utama tetap aman
+#### 1) Konfirmasi sumber masalah
+- Gunakan published URL sebagai patokan utama
+- Abaikan `NotFound.tsx`, karena placeholder yang muncul berasal dari hosting layer sebelum React app dimuat
+- Catat bahwa preview URL memang berbeda perilakunya karena membutuhkan akses project/login
 
-#### 2) Cegah regresi dari state/render
-- Pastikan nilai `Select` tetap valid walau role yang tersimpan saat ini adalah `user`
-- Hindari kondisi yang bisa menyaring item `vendor` hanya karena role user sekarang belum `vendor`
-- Tambahkan fallback render yang konsisten walau query `roles` belum selesai
+#### 2) Force refresh deployment frontend
+- Trigger publish/update ulang untuk frontend
+- Pastikan hasil publish terbaru benar-benar membuat root route `/` menampilkan app, bukan placeholder
+- Karena gejalanya terjadi di semua domain, fokus recovery ada pada published artifact, bukan router atau page component
 
-#### 3) Sinkronkan publish output
-- Touch/update file frontend yang relevan supaya menghasilkan bundle baru
-- Publish ulang frontend setelah perubahan, karena gejalanya menunjukkan source dan UI live tidak sinkron
+#### 3) Verifikasi domain hasil publish
+Setelah publish ulang:
+- cek `lookmototour-dev2.lovable.app`
+- cek `lookmototour.com`
+- cek `www.lookmototour.com`
 
-#### 4) Verifikasi end-to-end
-Akan diuji:
-- login admin
-- buka `/admin/users`
-- buka dropdown untuk user biasa → harus muncul `User`, `Vendor`, `Admin`
-- buka dropdown untuk admin terproteksi → hanya `Admin`
-- ubah 1 user ke `Vendor` → tidak error
-- pastikan link vendor selector tetap muncul hanya saat role user adalah `vendor`
+Ekspektasi:
+- ketiganya memuat HTML app yang benar
+- bukan lagi placeholder “Publish or update your Lovable project…”
+
+#### 4) Recovery jika masih gagal
+Jika setelah republish placeholder tetap muncul:
+- refresh konfigurasi publish visibility/public state
+- cek apakah binding custom domain mengikuti deployment aktif
+- identifikasi kasus “published=true tetapi published artifact kosong/tidak aktif”
+
+#### 5) Fallback audit build bila diperlukan
+Kalau publish baru ternyata gagal atau tidak menghasilkan artifact:
+- audit entry app (`src/main.tsx`, `src/App.tsx`, `index.html`) untuk error build
+- audit perubahan terbaru yang bisa mengganggu bundling frontend
+- perbaiki source hanya jika ditemukan kegagalan build nyata
 
 ### Hasil akhir yang diharapkan
-- opsi `Vendor` muncul kembali di menu role untuk user biasa
-- akun admin utama tetap tidak bisa diubah ke role lain
-- aturan “admin tidak punya fitur vendor” tetap berjalan
-- tampilan preview dan published konsisten
+- Published subdomain kembali menampilkan website LookMotoTour
+- Custom domain ikut pulih karena mengarah ke deployment aktif
+- Tidak lagi muncul placeholder “Project not found” / “Publish or update your Lovable project…”
 
 ### Detail teknis
-File utama yang akan disentuh:
-- `src/pages/admin/AdminUsers.tsx`
-
-Kemungkinan penyesuaian kecil tambahan bila diperlukan:
-- helper role di area admin agar aturan opsi lebih eksplisit dan tidak ambigu saat build/publish
-
-Tidak perlu perubahan database untuk bug spesifik ini, karena gejalanya ada di layer frontend/render dropdown, bukan di schema atau RLS.
+- Status publish saat ini sudah public, jadi ini bukan masalah akses private
+- Placeholder yang tampil berasal dari hosting/deployment layer, bukan dari React route `*`
+- Karena root domain, custom domain, dan asset path sama-sama gagal, kemungkinan terbesar adalah published frontend artifact belum aktif atau tidak sinkron
+- Kemungkinan perubahan code sangat kecil menjadi penyebab utama sampai terbukti ada kegagalan build pada publish berikutnya

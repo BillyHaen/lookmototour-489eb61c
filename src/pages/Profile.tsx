@@ -32,6 +32,7 @@ import RentalCard from '@/components/profile/RentalCard';
 import RegistrationRow from '@/components/profile/RegistrationRow';
 import LiveTrackingWidget from '@/components/profile/LiveTrackingWidget';
 import SponsorDealsCard from '@/components/profile/SponsorDealsCard';
+import ProfilePageSkeleton from '@/components/profile/ProfileSkeleton';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },

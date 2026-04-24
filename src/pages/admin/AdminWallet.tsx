@@ -167,6 +167,33 @@ export default function AdminWallet() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Syarat & Ketentuan Kredit</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Konten ini muncul sebagai pop-up info di samping nilai kredit user.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <RichTextEditor
+              value={termsDraft}
+              onChange={setTermsDraft}
+              placeholder="Tulis syarat & ketentuan penggunaan kredit (masa berlaku, batas pemakaian, dsb.)"
+              minHeight="180px"
+            />
+            <Button
+              onClick={() => updateTerms.mutate(termsDraft, {
+                onSuccess: () => toast({ title: 'Syarat & Ketentuan tersimpan' }),
+                onError: (e: Error) => toast({ title: 'Gagal', description: e.message, variant: 'destructive' }),
+              })}
+              disabled={updateTerms.isPending}
+            >
+              {updateTerms.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Simpan T&C
+            </Button>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <Card className="lg:col-span-1">
             <CardHeader><CardTitle>User</CardTitle></CardHeader>

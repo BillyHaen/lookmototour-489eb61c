@@ -23,7 +23,7 @@ import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useMyProfile } from '@/hooks/useProfile';
-import { useWalletBalance } from '@/hooks/useWallet';
+import { useWalletLedger } from '@/hooks/useWallet';
 
 import RecommendedSponsors from '@/components/RecommendedSponsors';
 import WalletCard from '@/components/WalletCard';
@@ -63,7 +63,8 @@ export default function Profile() {
   }, [authLoading, user, navigate]);
 
   const { data: profile, isLoading: profileLoading } = useMyProfile();
-  const { data: walletBalance = 0 } = useWalletBalance();
+  const { data: walletLedger = [] } = useWalletLedger(500);
+  const walletBalance = walletLedger.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
 
   const { data: registrations } = useQuery({
     queryKey: ['my-registrations', user?.id],

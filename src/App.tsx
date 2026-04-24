@@ -42,6 +42,7 @@ import AdminVendors from "./pages/admin/AdminVendors";
 import AdminRentals from "./pages/admin/AdminRentals";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
+import AdminWallet from "./pages/admin/AdminWallet";
 import VendorProducts from "./pages/vendor/VendorProducts";
 import VendorRentals from "./pages/vendor/VendorRentals";
 import ShareRedirect from "./pages/ShareRedirect";
@@ -95,6 +96,7 @@ const App = () => (
             <Route path="/admin/rentals" element={<AdminRentals />} />
             <Route path="/admin/emails" element={<AdminEmails />} />
             <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+            <Route path="/admin/wallet" element={<AdminWallet />} />
             <Route path="/vendor" element={<VendorProducts />} />
             <Route path="/vendor/products" element={<VendorProducts />} />
             <Route path="/vendor/rentals" element={<VendorRentals />} />

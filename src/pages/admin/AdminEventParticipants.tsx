@@ -511,6 +511,12 @@ export default function AdminEventParticipants({ eventId, eventTitle, open, onOp
                               ))}
                             </div>
                           )}
+                          {((r as any).credit_redeemed || 0) > 0 && (
+                            <div className="flex justify-between pt-1.5 mt-1.5 border-t border-border text-emerald-600">
+                              <span className="flex items-center gap-1"><Wallet className="h-3 w-3" /> Pakai Kredit</span>
+                              <span>− {formatPrice((r as any).credit_redeemed || 0)}</span>
+                            </div>
+                          )}
                           <div className="flex justify-between pt-1.5 mt-1.5 border-t border-border font-bold">
                             <span>Total</span>
                             <span className="text-primary">{formatPrice(total)}</span>

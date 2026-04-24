@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from '@/hooks/use-toast';
 import { Wallet, Search, Plus, Minus, RefreshCw, Loader2 } from 'lucide-react';
 import { formatPrice } from '@/data/events';
+import RichTextEditor from '@/components/RichTextEditor';
+import { useCreditTerms, useUpdateCreditTerms } from '@/hooks/useCreditTerms';
 
 export default function AdminWallet() {
   const qc = useQueryClient();
@@ -33,6 +35,15 @@ export default function AdminWallet() {
   });
   const [defExp, setDefExp] = useState<number | ''>('');
   const [maxPct, setMaxPct] = useState<number | ''>('');
+
+  const { data: termsHtml = '' } = useCreditTerms();
+  const updateTerms = useUpdateCreditTerms();
+  const [termsDraft, setTermsDraft] = useState<string>('');
+  const [termsLoaded, setTermsLoaded] = useState(false);
+  if (!termsLoaded && termsHtml) {
+    setTermsDraft(termsHtml);
+    setTermsLoaded(true);
+  }
 
   const saveSettings = useMutation({
     mutationFn: async () => {

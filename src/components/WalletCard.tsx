@@ -29,7 +29,7 @@ export default function WalletCard() {
         <div className="rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 p-6 text-center">
           <p className="text-xs text-muted-foreground mb-1">Saldo aktif</p>
           <p className="font-heading text-3xl font-bold text-primary">
-            {isLoading ? '…' : formatPrice(balance)}
+            {formatPrice(balance)}
           </p>
           <p className="text-[11px] text-muted-foreground mt-1">
             Bisa dipakai sebagai potongan harga trip atau gear

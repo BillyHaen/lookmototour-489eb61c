@@ -32,6 +32,7 @@ import RentalCard from '@/components/profile/RentalCard';
 import RegistrationRow from '@/components/profile/RegistrationRow';
 import LiveTrackingWidget from '@/components/profile/LiveTrackingWidget';
 import SponsorDealsCard from '@/components/profile/SponsorDealsCard';
+import ProfilePageSkeleton from '@/components/profile/ProfileSkeleton';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },
@@ -134,10 +135,10 @@ export default function Profile() {
 
   if (authLoading || (user && profileLoading)) {
     return (
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-muted/30 overflow-x-hidden">
         <Navbar />
-        <div className="pt-24 pb-20 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <div className="pt-24 pb-20">
+          <ProfilePageSkeleton />
         </div>
         <Footer />
       </div>

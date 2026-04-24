@@ -1062,6 +1062,152 @@ export type Database = {
         }
         Relationships: []
       }
+      popup_campaigns: {
+        Row: {
+          ab_enabled: boolean
+          ab_group_key: string | null
+          ab_variant: string | null
+          created_at: string
+          end_at: string | null
+          force_show_logged_in: boolean
+          frequency: string
+          id: string
+          is_active: boolean
+          name: string
+          priority: number
+          start_at: string | null
+          target_device: string
+          updated_at: string
+        }
+        Insert: {
+          ab_enabled?: boolean
+          ab_group_key?: string | null
+          ab_variant?: string | null
+          created_at?: string
+          end_at?: string | null
+          force_show_logged_in?: boolean
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          priority?: number
+          start_at?: string | null
+          target_device?: string
+          updated_at?: string
+        }
+        Update: {
+          ab_enabled?: boolean
+          ab_group_key?: string | null
+          ab_variant?: string | null
+          created_at?: string
+          end_at?: string | null
+          force_show_logged_in?: boolean
+          frequency?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          priority?: number
+          start_at?: string | null
+          target_device?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      popup_events: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          device: string | null
+          event_type: string
+          id: string
+          session_id: string | null
+          slide_id: string | null
+          user_id: string | null
+          variant: string | null
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          device?: string | null
+          event_type: string
+          id?: string
+          session_id?: string | null
+          slide_id?: string | null
+          user_id?: string | null
+          variant?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          device?: string | null
+          event_type?: string
+          id?: string
+          session_id?: string | null
+          slide_id?: string | null
+          user_id?: string | null
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "popup_events_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "popup_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "popup_events_slide_id_fkey"
+            columns: ["slide_id"]
+            isOneToOne: false
+            referencedRelation: "popup_slides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      popup_slides: {
+        Row: {
+          campaign_id: string
+          content_html: string
+          created_at: string
+          cta_label: string | null
+          cta_url: string | null
+          id: string
+          image_url: string | null
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          campaign_id: string
+          content_html?: string
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          campaign_id?: string
+          content_html?: string
+          created_at?: string
+          cta_label?: string | null
+          cta_url?: string | null
+          id?: string
+          image_url?: string | null
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "popup_slides_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "popup_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       product_recommendations_log: {
         Row: {
           computed_at: string

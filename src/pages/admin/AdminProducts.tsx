@@ -15,6 +15,7 @@ import { toast } from '@/hooks/use-toast';
 import { formatPrice } from '@/data/events';
 import { Loader2, Plus, Pencil, Trash2 } from 'lucide-react';
 import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
+import CreditRewardConfig from '@/components/admin/CreditRewardConfig';
 
 interface ProductForm {
   name: string; description: string; price: number; stock: number;
@@ -26,6 +27,9 @@ interface ProductForm {
   gear_type: string;
   suitable_motor_types: string[]; suitable_trip_styles: string[]; motor_brands: string[];
   min_difficulty: number;
+  credit_reward_mode: 'none' | 'fixed' | 'percent';
+  credit_reward_value: number;
+  credit_expiry_days: number | null;
 }
 
 const empty: ProductForm = {
@@ -34,6 +38,7 @@ const empty: ProductForm = {
   daily_rent_price: 0, rent_deposit: 0, total_inventory: 0,
   gear_type: '', suitable_motor_types: [], suitable_trip_styles: [], motor_brands: [],
   min_difficulty: 1,
+  credit_reward_mode: 'none', credit_reward_value: 0, credit_expiry_days: null,
 };
 
 const PRODUCT_CATEGORIES = ['aksesoris', 'apparel', 'sparepart', 'merchandise', 'lainnya'];
@@ -141,6 +146,9 @@ export default function AdminProducts() {
       suitable_trip_styles: p.suitable_trip_styles || [],
       motor_brands: p.motor_brands || [],
       min_difficulty: p.min_difficulty || 1,
+      credit_reward_mode: (p.credit_reward_mode as any) || 'none',
+      credit_reward_value: Number(p.credit_reward_value) || 0,
+      credit_expiry_days: p.credit_expiry_days ?? null,
     });
     setOpen(true);
   };
@@ -304,6 +312,13 @@ export default function AdminProducts() {
                 </>
               )}
             </div>
+
+            <CreditRewardConfig
+              mode={form.credit_reward_mode}
+              value={form.credit_reward_value}
+              expiryDays={form.credit_expiry_days}
+              onChange={(c) => setForm({ ...form, credit_reward_mode: c.mode, credit_reward_value: c.value, credit_expiry_days: c.expiryDays })}
+            />
 
             <div className="flex items-center gap-3">
               <Switch checked={form.is_active} onCheckedChange={(v) => setForm({ ...form, is_active: v })} />

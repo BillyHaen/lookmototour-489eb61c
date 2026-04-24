@@ -293,6 +293,51 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          created_by: string | null
+          description: string
+          entry_type: Database["public"]["Enums"]["credit_entry_type"]
+          expires_at: string | null
+          id: string
+          reference_id: string | null
+          reference_table: string | null
+          remaining: number
+          source_type: Database["public"]["Enums"]["credit_source_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          entry_type: Database["public"]["Enums"]["credit_entry_type"]
+          expires_at?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_table?: string | null
+          remaining?: number
+          source_type: Database["public"]["Enums"]["credit_source_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          entry_type?: Database["public"]["Enums"]["credit_entry_type"]
+          expires_at?: string | null
+          id?: string
+          reference_id?: string | null
+          reference_table?: string | null
+          remaining?: number
+          source_type?: Database["public"]["Enums"]["credit_source_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
@@ -522,6 +567,8 @@ export type Database = {
       event_registrations: {
         Row: {
           created_at: string
+          credit_awarded: number
+          credit_redeemed: number
           email: string
           emergency_contact: string
           event_id: string
@@ -542,6 +589,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credit_awarded?: number
+          credit_redeemed?: number
           email: string
           emergency_contact?: string
           event_id: string
@@ -562,6 +611,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credit_awarded?: number
+          credit_redeemed?: number
           email?: string
           emergency_contact?: string
           event_id?: string
@@ -595,6 +646,9 @@ export type Database = {
           about_destination: string | null
           category: string
           created_at: string
+          credit_expiry_days: number | null
+          credit_reward_mode: Database["public"]["Enums"]["credit_reward_mode"]
+          credit_reward_value: number
           cta_primary_label: string | null
           current_participants: number
           date: string
@@ -651,6 +705,9 @@ export type Database = {
           about_destination?: string | null
           category?: string
           created_at?: string
+          credit_expiry_days?: number | null
+          credit_reward_mode?: Database["public"]["Enums"]["credit_reward_mode"]
+          credit_reward_value?: number
           cta_primary_label?: string | null
           current_participants?: number
           date: string
@@ -707,6 +764,9 @@ export type Database = {
           about_destination?: string | null
           category?: string
           created_at?: string
+          credit_expiry_days?: number | null
+          credit_reward_mode?: Database["public"]["Enums"]["credit_reward_mode"]
+          credit_reward_value?: number
           cta_primary_label?: string | null
           current_participants?: number
           date?: string
@@ -851,6 +911,8 @@ export type Database = {
       gear_rentals: {
         Row: {
           created_at: string
+          credit_awarded: number
+          credit_redeemed: number
           daily_price: number
           deposit_amount: number
           end_date: string
@@ -870,6 +932,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          credit_awarded?: number
+          credit_redeemed?: number
           daily_price?: number
           deposit_amount?: number
           end_date: string
@@ -889,6 +953,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          credit_awarded?: number
+          credit_redeemed?: number
           daily_price?: number
           deposit_amount?: number
           end_date?: string
@@ -1045,6 +1111,9 @@ export type Database = {
         Row: {
           category: string
           created_at: string
+          credit_expiry_days: number | null
+          credit_reward_mode: Database["public"]["Enums"]["credit_reward_mode"]
+          credit_reward_value: number
           daily_rent_price: number
           description: string
           gear_type: string | null
@@ -1069,6 +1138,9 @@ export type Database = {
         Insert: {
           category?: string
           created_at?: string
+          credit_expiry_days?: number | null
+          credit_reward_mode?: Database["public"]["Enums"]["credit_reward_mode"]
+          credit_reward_value?: number
           daily_rent_price?: number
           description?: string
           gear_type?: string | null
@@ -1093,6 +1165,9 @@ export type Database = {
         Update: {
           category?: string
           created_at?: string
+          credit_expiry_days?: number | null
+          credit_reward_mode?: Database["public"]["Enums"]["credit_reward_mode"]
+          credit_reward_value?: number
           daily_rent_price?: number
           description?: string
           gear_type?: string | null
@@ -2095,11 +2170,41 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_settings: {
+        Row: {
+          default_expiry_days: number
+          id: number
+          max_redeem_percent: number
+          updated_at: string
+        }
+        Insert: {
+          default_expiry_days?: number
+          id?: number
+          max_redeem_percent?: number
+          updated_at?: string
+        }
+        Update: {
+          default_expiry_days?: number
+          id?: number
+          max_redeem_percent?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_credit: {
+        Args: {
+          _amount: number
+          _expiry_days?: number
+          _reason?: string
+          _user_id: string
+        }
+        Returns: string
+      }
       admin_link_vendor_to_user: {
         Args: { _user_id: string; _vendor_id: string }
         Returns: undefined
@@ -2125,6 +2230,18 @@ export type Database = {
         }
         Returns: undefined
       }
+      award_credit: {
+        Args: {
+          _amount: number
+          _description?: string
+          _expiry_days?: number
+          _reference_id?: string
+          _reference_table?: string
+          _source: Database["public"]["Enums"]["credit_source_type"]
+          _user_id: string
+        }
+        Returns: string
+      }
       claim_sponsor_benefit: {
         Args: { _benefit_id: string; _event_id?: string }
         Returns: {
@@ -2132,8 +2249,40 @@ export type Database = {
           claim_id: string
         }[]
       }
-      create_registration_with_rentals: {
-        Args: { _event_id: string; _payload: Json; _rentals?: Json }
+      compute_credit_reward: {
+        Args: {
+          _base_amount: number
+          _mode: Database["public"]["Enums"]["credit_reward_mode"]
+          _value: number
+        }
+        Returns: number
+      }
+      create_registration_with_rentals:
+        | {
+            Args: { _event_id: string; _payload: Json; _rentals?: Json }
+            Returns: string
+          }
+        | {
+            Args: {
+              _credit_redeem?: number
+              _event_id: string
+              _payload: Json
+              _rentals?: Json
+            }
+            Returns: string
+          }
+      create_rental_with_credit: {
+        Args: {
+          _credit_redeem?: number
+          _daily_price: number
+          _deposit: number
+          _end_date: string
+          _product_id: string
+          _qty: number
+          _start_date: string
+          _total_days: number
+          _total_price: number
+        }
         Returns: string
       }
       delete_email: {
@@ -2145,6 +2294,7 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      expire_credits: { Args: never; Returns: number }
       generate_unique_username: { Args: { _seed: string }; Returns: string }
       get_approved_testimonials_with_profiles: {
         Args: never
@@ -2262,6 +2412,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      get_wallet_balance: { Args: { _user_id: string }; Returns: number }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2317,6 +2468,17 @@ export type Database = {
           vendor_name: string
         }[]
       }
+      redeem_credit: {
+        Args: {
+          _amount: number
+          _description?: string
+          _reference_id?: string
+          _reference_table?: string
+          _source: Database["public"]["Enums"]["credit_source_type"]
+          _user_id: string
+        }
+        Returns: number
+      }
       slugify: { Args: { _input: string }; Returns: string }
       track_sponsor_event: {
         Args: {
@@ -2332,6 +2494,15 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "vendor"
+      credit_entry_type: "earn" | "redeem" | "expire" | "adjust" | "refund"
+      credit_reward_mode: "none" | "fixed" | "percent"
+      credit_source_type:
+        | "trip"
+        | "product_rental"
+        | "product_purchase"
+        | "manual"
+        | "redemption"
+        | "expiry"
       gear_rental_status:
         | "pending"
         | "confirmed"
@@ -2483,6 +2654,16 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "vendor"],
+      credit_entry_type: ["earn", "redeem", "expire", "adjust", "refund"],
+      credit_reward_mode: ["none", "fixed", "percent"],
+      credit_source_type: [
+        "trip",
+        "product_rental",
+        "product_purchase",
+        "manual",
+        "redemption",
+        "expiry",
+      ],
       gear_rental_status: [
         "pending",
         "confirmed",

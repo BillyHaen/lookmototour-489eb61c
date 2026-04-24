@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import AdminLayout from './AdminLayout';
@@ -12,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { toast } from '@/hooks/use-toast';
 import { Wallet, Search, Plus, Minus, RefreshCw, Loader2 } from 'lucide-react';
 import { formatPrice } from '@/data/events';
+import RichTextEditor from '@/components/RichTextEditor';
+import { useCreditTerms, useUpdateCreditTerms } from '@/hooks/useCreditTerms';
 
 export default function AdminWallet() {
   const qc = useQueryClient();
@@ -33,6 +35,11 @@ export default function AdminWallet() {
   });
   const [defExp, setDefExp] = useState<number | ''>('');
   const [maxPct, setMaxPct] = useState<number | ''>('');
+
+  const { data: termsHtml = '' } = useCreditTerms();
+  const updateTerms = useUpdateCreditTerms();
+  const [termsDraft, setTermsDraft] = useState<string>('');
+  useEffect(() => { setTermsDraft(termsHtml || ''); }, [termsHtml]);
 
   const saveSettings = useMutation({
     mutationFn: async () => {
@@ -157,6 +164,33 @@ export default function AdminWallet() {
               </div>
             </div>
             <Button onClick={() => saveSettings.mutate()} disabled={saveSettings.isPending}>Simpan Pengaturan</Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Syarat & Ketentuan Kredit</CardTitle>
+            <p className="text-xs text-muted-foreground">
+              Konten ini muncul sebagai pop-up info di samping nilai kredit user.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <RichTextEditor
+              value={termsDraft}
+              onChange={setTermsDraft}
+              placeholder="Tulis syarat & ketentuan penggunaan kredit (masa berlaku, batas pemakaian, dsb.)"
+              minHeight="180px"
+            />
+            <Button
+              onClick={() => updateTerms.mutate(termsDraft, {
+                onSuccess: () => toast({ title: 'Syarat & Ketentuan tersimpan' }),
+                onError: (e: Error) => toast({ title: 'Gagal', description: e.message, variant: 'destructive' }),
+              })}
+              disabled={updateTerms.isPending}
+            >
+              {updateTerms.isPending && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+              Simpan T&C
+            </Button>
           </CardContent>
         </Card>
 

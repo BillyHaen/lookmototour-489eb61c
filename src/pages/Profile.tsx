@@ -26,6 +26,7 @@ import AvatarUpload from '@/components/AvatarUpload';
 import { useMyProfile } from '@/hooks/useProfile';
 
 import RecommendedSponsors from '@/components/RecommendedSponsors';
+import WalletCard from '@/components/WalletCard';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },
@@ -248,6 +249,9 @@ export default function Profile() {
               </Form>
             </CardContent>
           </Card>
+
+          {/* Wallet Kredit */}
+          <WalletCard />
 
           {/* Personalized Sponsor Recommendations */}
           <RecommendedSponsors limit={6} />

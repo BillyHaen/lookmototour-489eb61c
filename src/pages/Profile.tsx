@@ -172,11 +172,11 @@ export default function Profile() {
             {/* Main */}
             <div className="min-w-0">
               <Tabs defaultValue="aktivitas" className="w-full">
-                <TabsList className="w-full justify-start overflow-x-auto bg-card border border-border h-auto p-1">
-                  <TabsTrigger value="aktivitas" className="gap-1.5"><Sparkles className="h-4 w-4" />Aktivitas</TabsTrigger>
-                  <TabsTrigger value="sewa" className="gap-1.5"><Package className="h-4 w-4" />Sewa Gear</TabsTrigger>
-                  <TabsTrigger value="riwayat" className="gap-1.5"><CalendarDays className="h-4 w-4" />Riwayat</TabsTrigger>
-                  <TabsTrigger value="settings" className="gap-1.5"><Settings className="h-4 w-4" />Pengaturan</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-4 bg-card border border-border h-auto p-1 gap-1">
+                  <TabsTrigger value="aktivitas" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Sparkles className="h-4 w-4 shrink-0" /><span className="truncate">Aktivitas</span></TabsTrigger>
+                  <TabsTrigger value="sewa" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Package className="h-4 w-4 shrink-0" /><span className="truncate">Sewa</span></TabsTrigger>
+                  <TabsTrigger value="riwayat" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><CalendarDays className="h-4 w-4 shrink-0" /><span className="truncate">Riwayat</span></TabsTrigger>
+                  <TabsTrigger value="settings" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Settings className="h-4 w-4 shrink-0" /><span className="truncate">Setelan</span></TabsTrigger>
                 </TabsList>
 
                 {/* Aktivitas */}

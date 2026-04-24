@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Wallet, TrendingUp, TrendingDown, Clock } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useWalletLedger } from '@/hooks/useWallet';
 import { formatPrice } from '@/data/events';
 import { format } from 'date-fns';
 import { id as idLocale } from 'date-fns/locale';
-import DataPagination from '@/components/admin/DataPagination';
 
 const TYPE_LABEL: Record<string, { label: string; tone: 'pos' | 'neg' | 'neu'; icon: any }> = {
   earn: { label: 'Diterima', tone: 'pos', icon: TrendingUp },
@@ -18,13 +18,13 @@ const TYPE_LABEL: Record<string, { label: string; tone: 'pos' | 'neg' | 'neu'; i
 const PAGE_SIZE = 5;
 
 export default function CreditHistoryList() {
-  const { data: ledger = [], isLoading } = useWalletLedger(200);
+  const { data: ledger = [], isLoading } = useWalletLedger(500);
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(PAGE_SIZE);
 
   const total = ledger.length;
-  const start = (page - 1) * pageSize;
-  const items = ledger.slice(start, start + pageSize);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const start = (page - 1) * PAGE_SIZE;
+  const items = ledger.slice(start, start + PAGE_SIZE);
 
   if (isLoading) {
     return <p className="text-xs text-muted-foreground text-center py-6">Memuat…</p>;
@@ -66,13 +66,33 @@ export default function CreditHistoryList() {
           );
         })}
       </div>
-      <DataPagination
-        page={page}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={setPage}
-        onPageSizeChange={setPageSize}
-      />
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between text-xs pt-1">
+          <span className="text-muted-foreground">
+            Hal {page} / {totalPages} · {total} aktivitas
+          </span>
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 w-7 p-0"
+              onClick={() => setPage(Math.max(1, page - 1))}
+              disabled={page <= 1}
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 w-7 p-0"
+              onClick={() => setPage(Math.min(totalPages, page + 1))}
+              disabled={page >= totalPages}
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

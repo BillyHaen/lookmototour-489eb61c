@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Wallet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useWalletBalance, useWalletSettings } from '@/hooks/useWallet';
+import { useWalletLedger, useWalletSettings } from '@/hooks/useWallet';
 import { formatPrice } from '@/data/events';
 
 interface Props {
@@ -15,16 +15,26 @@ interface Props {
 /**
  * Reusable input untuk pakai kredit saat checkout (trip / rental).
  * Hanya tampil jika user punya saldo > 0.
+ * Saldo dihitung dari penjumlahan ledger (positif - negatif), konsisten dengan WalletCard.
  */
 export default function CreditRedeemInput({ totalPrice, value, onChange }: Props) {
-  const { data: balance = 0 } = useWalletBalance();
+  const { data: ledger = [] } = useWalletLedger(500);
   const { data: settings } = useWalletSettings();
+  const balance = useMemo(
+    () => ledger.reduce((sum: number, row: any) => sum + (Number(row.amount) || 0), 0),
+    [ledger]
+  );
   const maxPercent = settings?.max_redeem_percent ?? 100;
   const cap = Math.floor(totalPrice * maxPercent / 100);
-  const maxRedeem = Math.min(balance, cap);
+  const maxRedeem = Math.max(0, Math.min(balance, cap));
   const [input, setInput] = useState(value || 0);
 
   useEffect(() => { setInput(value || 0); }, [value]);
+
+  // Auto-clamp jika total trip berubah (mis. ganti tipe pendaftaran)
+  useEffect(() => {
+    if (value > maxRedeem) onChange(maxRedeem);
+  }, [maxRedeem, value, onChange]);
 
   if (balance <= 0) return null;
 

@@ -151,10 +151,10 @@ export default function Profile() {
   const p: any = profile || {};
 
   return (
-    <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30 overflow-x-hidden">
       <Navbar />
       <div className="pt-24 pb-20">
-        <div className="container max-w-6xl">
+        <div className="container max-w-6xl px-3 sm:px-4">
           {/* Hero */}
           <ProfileHero
             userId={user.id}

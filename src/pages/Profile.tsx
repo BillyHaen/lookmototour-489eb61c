@@ -298,7 +298,7 @@ export default function Profile() {
                   <Card className="rounded-xl shadow-sm">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Wallet className="h-5 w-5 text-primary" /> Riwayat Kredit
+                        <Wallet className="h-5 w-5 text-primary" /> Riwayat Wallet
                       </CardTitle>
                     </CardHeader>
                     <CardContent>

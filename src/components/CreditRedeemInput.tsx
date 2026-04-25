@@ -3,7 +3,7 @@ import { Wallet } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useWalletLedger, useWalletSettings } from '@/hooks/useWallet';
+import { useWalletBalance, useWalletLedger, useWalletSettings } from '@/hooks/useWallet';
 import { formatPrice } from '@/data/events';
 
 interface Props {
@@ -18,12 +18,16 @@ interface Props {
  * Saldo dihitung dari penjumlahan ledger (positif - negatif), konsisten dengan WalletCard.
  */
 export default function CreditRedeemInput({ totalPrice, value, onChange }: Props) {
-  const { data: ledger = [] } = useWalletLedger(500);
+  const { data: ledger = [], isLoading: ledgerLoading } = useWalletLedger(500);
+  const { data: rpcBalance, isLoading: rpcLoading } = useWalletBalance();
   const { data: settings } = useWalletSettings();
-  const balance = useMemo(
+  const ledgerSum = useMemo(
     () => ledger.reduce((sum: number, row: any) => sum + (Number(row.amount) || 0), 0),
     [ledger]
   );
+  // Pakai nilai terbesar dari RPC vs sum ledger agar tahan terhadap salah-satu-gagal
+  const balance = Math.max(Number(rpcBalance) || 0, ledgerSum);
+  const isLoading = ledgerLoading || rpcLoading;
   const maxPercent = settings?.max_redeem_percent ?? 100;
   const cap = Math.floor(totalPrice * maxPercent / 100);
   const maxRedeem = Math.max(0, Math.min(balance, cap));
@@ -36,7 +40,8 @@ export default function CreditRedeemInput({ totalPrice, value, onChange }: Props
     if (value > maxRedeem) onChange(maxRedeem);
   }, [maxRedeem, value, onChange]);
 
-  if (balance <= 0) return null;
+  // Tampilkan komponen meskipun loading agar user tidak salah paham. Sembunyikan hanya jika sudah pasti tidak ada saldo.
+  if (!isLoading && balance <= 0) return null;
 
   const apply = (n: number) => {
     const safe = Math.max(0, Math.min(n, maxRedeem));

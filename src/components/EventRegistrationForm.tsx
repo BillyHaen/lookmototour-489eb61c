@@ -13,18 +13,20 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/events';
-import { Loader2, CheckCircle2, Heart } from 'lucide-react';
+import { Loader2, CheckCircle2, Heart, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { DbEvent } from '@/hooks/useEvents';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import RentalGearRecommendations, { SelectedRental } from '@/components/RentalGearRecommendations';
 import CreditRedeemInput from '@/components/CreditRedeemInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MOTORCYCLES, MOTOR_BRANDS, getModelCategory } from '@/data/motorcycles';
+import { useProfileComplete } from '@/hooks/useProfileComplete';
+import { Link } from 'react-router-dom';
 
+// Note: name/email/phone are NOT in the schema — they come from the user's profile
+// (read-only) and are enforced server-side by an RLS trigger.
 const schema = z.object({
-  name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),
-  email: z.string().trim().email('Email tidak valid').max(255),
-  phone: z.string().trim().min(10, 'Nomor HP minimal 10 digit').max(15).regex(/^[0-9+\-\s]+$/, 'Format nomor tidak valid'),
   motorBrand: z.string().trim().min(1, 'Pilih merk motor'),
   motorModel: z.string().trim().min(1, 'Pilih tipe motor'),
   plateNumber: z.string().trim().min(3, 'Masukkan plat nomor').max(15),

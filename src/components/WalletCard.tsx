@@ -41,12 +41,12 @@ export default function WalletCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5 text-primary" /> Kredit Saya
+          <Wallet className="h-5 w-5 text-primary" /> Wallet Saya
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 p-6 text-center relative">
-          <p className="text-xs text-muted-foreground mb-1">Total kredit</p>
+          <p className="text-xs text-muted-foreground mb-1">Total saldo wallet</p>
           <div className="flex items-center justify-center gap-1.5">
             <p className="font-heading text-3xl font-bold text-primary">
               {formatPrice(totalBalance)}

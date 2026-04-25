@@ -64,11 +64,11 @@ const App = () => (
           <PopupSlider />
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/events/:id" element={<EventDetail />} />
-            <Route path="/calendar" element={<CalendarPage />} />
+            <Route path="/events" element={<RequireCompleteProfile><Events /></RequireCompleteProfile>} />
+            <Route path="/events/:id" element={<RequireCompleteProfile><EventDetail /></RequireCompleteProfile>} />
+            <Route path="/calendar" element={<RequireCompleteProfile><CalendarPage /></RequireCompleteProfile>} />
             <Route path="/about" element={<About />} />
-            <Route path="/shop" element={<Shop />} />
+            <Route path="/shop" element={<RequireCompleteProfile><Shop /></RequireCompleteProfile>} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/blog/:slug" element={<BlogDetail />} />
             <Route path="/jurnal" element={<TripJournals />} />
@@ -90,12 +90,12 @@ const App = () => (
             <Route path="/admin/blog" element={<RequireAdmin><AdminBlog /></RequireAdmin>} />
             <Route path="/admin/trip-journals" element={<RequireAdmin><AdminTripJournals /></RequireAdmin>} />
             <Route path="/admin/media" element={<RequireAdmin><AdminMedia /></RequireAdmin>} />
-            <Route path="/trip-match" element={<TripMatch />} />
-            <Route path="/tracking/start/:eventId" element={<TrackingStart />} />
-            <Route path="/tracking/manage" element={<TrackingManage />} />
+            <Route path="/trip-match" element={<RequireCompleteProfile><TripMatch /></RequireCompleteProfile>} />
+            <Route path="/tracking/start/:eventId" element={<RequireCompleteProfile><TrackingStart /></RequireCompleteProfile>} />
+            <Route path="/tracking/manage" element={<RequireCompleteProfile><TrackingManage /></RequireCompleteProfile>} />
             <Route path="/track/:token" element={<TrackPublic />} />
-            <Route path="/sponsor/:slug" element={<SponsorDetail />} />
-            <Route path="/dashboard/sponsor-deals" element={<SponsorDeals />} />
+            <Route path="/sponsor/:slug" element={<RequireCompleteProfile><SponsorDetail /></RequireCompleteProfile>} />
+            <Route path="/dashboard/sponsor-deals" element={<RequireCompleteProfile><SponsorDeals /></RequireCompleteProfile>} />
             <Route path="/admin/sponsors" element={<RequireAdmin><AdminSponsors /></RequireAdmin>} />
             <Route path="/admin/vendors" element={<RequireAdmin><AdminVendors /></RequireAdmin>} />
             <Route path="/admin/rentals" element={<RequireAdmin><AdminRentals /></RequireAdmin>} />

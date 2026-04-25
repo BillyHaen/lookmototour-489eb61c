@@ -195,17 +195,29 @@ export default function Profile() {
             onLogout={handleLogout}
           />
 
+          {showIncompleteWarning && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Lengkapi profil kamu dulu</AlertTitle>
+              <AlertDescription>
+                {isComplete
+                  ? 'Profil kamu sudah lengkap! Silakan jelajahi fitur lainnya.'
+                  : `Untuk bisa daftar trip & akses fitur lain, lengkapi: ${missing.join(', ')}.`}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* 2-col layout */}
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
             {/* Main */}
             <div className="min-w-0">
-              <Tabs defaultValue="aktivitas" className="w-full">
+              <Tabs defaultValue={isComplete ? 'aktivitas' : 'settings'} className="w-full">
                 <TabsList className="grid w-full grid-cols-5 bg-card border border-border h-auto p-1 gap-1">
                   <TabsTrigger value="aktivitas" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Sparkles className="h-4 w-4 shrink-0" /><span className="truncate">Aktivitas</span></TabsTrigger>
                   <TabsTrigger value="sewa" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Package className="h-4 w-4 shrink-0" /><span className="truncate">Sewa</span></TabsTrigger>
                   <TabsTrigger value="riwayat" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><CalendarDays className="h-4 w-4 shrink-0" /><span className="truncate">Riwayat</span></TabsTrigger>
                   <TabsTrigger value="kredit" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Wallet className="h-4 w-4 shrink-0" /><span className="truncate">Wallet</span></TabsTrigger>
-                  <TabsTrigger value="settings" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Settings className="h-4 w-4 shrink-0" /><span className="truncate">Setelan</span></TabsTrigger>
+                  <TabsTrigger value="settings" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Settings className="h-4 w-4 shrink-0" /><span className="truncate">Profil</span></TabsTrigger>
                 </TabsList>
 
                 {/* Aktivitas */}

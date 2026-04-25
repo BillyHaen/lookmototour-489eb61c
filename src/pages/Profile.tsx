@@ -59,6 +59,9 @@ export default function Profile() {
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const { isComplete, missing } = useProfileComplete();
+  const showIncompleteWarning = searchParams.get('incomplete') === '1' || searchParams.get('welcome') === '1' || !isComplete;
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login');

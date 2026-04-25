@@ -38,6 +38,21 @@ export default function Login() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return navigate('/');
+      // Check profile completeness first — incomplete users always go to profile.
+      const [{ data: prof }, { data: priv }] = await Promise.all([
+        supabase.from('profiles').select('name, username, location, riding_style').eq('user_id', user.id).maybeSingle(),
+        (supabase.from('profile_private') as any).select('phone').eq('user_id', user.id).maybeSingle(),
+      ]);
+      const required = [
+        (prof as any)?.name,
+        (prof as any)?.username,
+        (prof as any)?.location,
+        (prof as any)?.riding_style,
+        (priv as any)?.phone,
+      ];
+      const incomplete = required.some((v) => !String(v || '').trim());
+      if (incomplete) return navigate('/profile?incomplete=1');
+
       const role = await resolveUserRole(user.id);
       if (role === 'vendor') return navigate('/vendor');
       navigate('/');

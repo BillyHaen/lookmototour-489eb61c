@@ -40,7 +40,8 @@ export default function CreditRedeemInput({ totalPrice, value, onChange }: Props
     if (value > maxRedeem) onChange(maxRedeem);
   }, [maxRedeem, value, onChange]);
 
-  if (balance <= 0) return null;
+  // Tampilkan komponen meskipun loading agar user tidak salah paham. Sembunyikan hanya jika sudah pasti tidak ada saldo.
+  if (!isLoading && balance <= 0) return null;
 
   const apply = (n: number) => {
     const safe = Math.max(0, Math.min(n, maxRedeem));

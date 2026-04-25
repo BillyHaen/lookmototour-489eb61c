@@ -2289,10 +2289,37 @@ export type Database = {
         }
         Relationships: []
       }
-      vendors: {
+      vendor_private: {
         Row: {
           contact_email: string | null
           contact_phone: string | null
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_private_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: true
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendors: {
+        Row: {
           created_at: string
           description: string | null
           id: string
@@ -2304,8 +2331,6 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          contact_email?: string | null
-          contact_phone?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -2317,8 +2342,6 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          contact_email?: string | null
-          contact_phone?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -2566,6 +2589,13 @@ export type Database = {
           total_payments: number
           total_trips: number
           user_id: string
+        }[]
+      }
+      get_vendor_contact_for_renter: {
+        Args: { _vendor_id: string }
+        Returns: {
+          contact_email: string
+          contact_phone: string
         }[]
       }
       get_wallet_balance: { Args: { _user_id: string }; Returns: number }

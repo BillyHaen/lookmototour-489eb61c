@@ -8,11 +8,32 @@ export function useMyRentals() {
     queryKey: ['my-rentals', user?.id],
     queryFn: async () => {
       const { data, error } = await (supabase.from('gear_rentals') as any)
-        .select('*, products(name, image_url, vendor_id, vendors(name, logo_url, contact_phone)), events(title, date)')
+        .select('*, products(name, image_url, vendor_id, vendors(id, name, logo_url)), events(title, date)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as any[];
+      const rentals = (data || []) as any[];
+
+      // Fetch vendor contact info via secured RPC (only returns when caller has rental for vendor)
+      const vendorIds = Array.from(new Set(
+        rentals.map(r => r.products?.vendors?.id).filter(Boolean)
+      ));
+      if (vendorIds.length === 0) return rentals;
+      const contactResults = await Promise.all(
+        vendorIds.map(async (vid: string) => {
+          const { data: c } = await (supabase as any).rpc('get_vendor_contact_for_renter', { _vendor_id: vid });
+          return [vid, c?.[0] || null] as const;
+        })
+      );
+      const contactMap = new Map(contactResults);
+      return rentals.map(r => {
+        const vid = r.products?.vendors?.id;
+        const contact = vid ? contactMap.get(vid) : null;
+        if (vid && r.products?.vendors) {
+          r.products.vendors = { ...r.products.vendors, contact_phone: contact?.contact_phone || '' };
+        }
+        return r;
+      });
     },
     enabled: !!user,
   });

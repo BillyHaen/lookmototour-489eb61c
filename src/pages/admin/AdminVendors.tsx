@@ -36,20 +36,38 @@ export default function AdminVendors() {
     queryFn: async () => {
       const { data, error } = await (supabase.from('vendors') as any).select('*').order('name');
       if (error) throw error;
-      return data as any[];
+      const vendorList = (data || []) as any[];
+      const ids = vendorList.map(v => v.id);
+      if (ids.length === 0) return vendorList;
+      const { data: privates } = await (supabase.from('vendor_private') as any)
+        .select('vendor_id, contact_phone, contact_email')
+        .in('vendor_id', ids);
+      const pmap = new Map(((privates as any[]) || []).map(p => [p.vendor_id, p]));
+      return vendorList.map(v => ({
+        ...v,
+        contact_phone: pmap.get(v.id)?.contact_phone || '',
+        contact_email: pmap.get(v.id)?.contact_email || '',
+      }));
     },
   });
 
   const save = useMutation({
     mutationFn: async () => {
-      const payload = { ...form, slug: form.slug || slugify(form.name) };
+      const { contact_phone, contact_email, ...rest } = form;
+      const payload = { ...rest, slug: form.slug || slugify(form.name) };
+      let vendorId = editId;
       if (editId) {
         const { error } = await (supabase.from('vendors') as any).update(payload).eq('id', editId);
         if (error) throw error;
       } else {
-        const { error } = await (supabase.from('vendors') as any).insert(payload);
+        const { data: inserted, error } = await (supabase.from('vendors') as any).insert(payload).select('id').single();
         if (error) throw error;
+        vendorId = inserted.id;
       }
+      // Upsert private contact info (admin policy allows)
+      const { error: pErr } = await (supabase.from('vendor_private') as any)
+        .upsert({ vendor_id: vendorId, contact_phone, contact_email, updated_at: new Date().toISOString() }, { onConflict: 'vendor_id' });
+      if (pErr) throw pErr;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['admin-vendors'] });

@@ -49,6 +49,7 @@ import VendorProducts from "./pages/vendor/VendorProducts";
 import VendorRentals from "./pages/vendor/VendorRentals";
 import ShareRedirect from "./pages/ShareRedirect";
 import NotFound from "./pages/NotFound";
+import RequireAdmin from "./components/RequireAdmin";
 
 const queryClient = new QueryClient();
 
@@ -79,28 +80,28 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/admin/events" element={<AdminEvents />} />
-            <Route path="/admin/users" element={<AdminUsers />} />
-            <Route path="/admin/products" element={<AdminProducts />} />
-            <Route path="/admin/testimonials" element={<AdminTestimonials />} />
-            <Route path="/admin/settings" element={<AdminSettings />} />
-            <Route path="/admin/blog" element={<AdminBlog />} />
-            <Route path="/admin/trip-journals" element={<AdminTripJournals />} />
-            <Route path="/admin/media" element={<AdminMedia />} />
+            <Route path="/admin" element={<RequireAdmin><AdminDashboard /></RequireAdmin>} />
+            <Route path="/admin/events" element={<RequireAdmin><AdminEvents /></RequireAdmin>} />
+            <Route path="/admin/users" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
+            <Route path="/admin/products" element={<RequireAdmin><AdminProducts /></RequireAdmin>} />
+            <Route path="/admin/testimonials" element={<RequireAdmin><AdminTestimonials /></RequireAdmin>} />
+            <Route path="/admin/settings" element={<RequireAdmin><AdminSettings /></RequireAdmin>} />
+            <Route path="/admin/blog" element={<RequireAdmin><AdminBlog /></RequireAdmin>} />
+            <Route path="/admin/trip-journals" element={<RequireAdmin><AdminTripJournals /></RequireAdmin>} />
+            <Route path="/admin/media" element={<RequireAdmin><AdminMedia /></RequireAdmin>} />
             <Route path="/trip-match" element={<TripMatch />} />
             <Route path="/tracking/start/:eventId" element={<TrackingStart />} />
             <Route path="/tracking/manage" element={<TrackingManage />} />
             <Route path="/track/:token" element={<TrackPublic />} />
             <Route path="/sponsor/:slug" element={<SponsorDetail />} />
             <Route path="/dashboard/sponsor-deals" element={<SponsorDeals />} />
-            <Route path="/admin/sponsors" element={<AdminSponsors />} />
-            <Route path="/admin/vendors" element={<AdminVendors />} />
-            <Route path="/admin/rentals" element={<AdminRentals />} />
-            <Route path="/admin/emails" element={<AdminEmails />} />
-            <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
-            <Route path="/admin/wallet" element={<AdminWallet />} />
-            <Route path="/admin/popups" element={<AdminPopups />} />
+            <Route path="/admin/sponsors" element={<RequireAdmin><AdminSponsors /></RequireAdmin>} />
+            <Route path="/admin/vendors" element={<RequireAdmin><AdminVendors /></RequireAdmin>} />
+            <Route path="/admin/rentals" element={<RequireAdmin><AdminRentals /></RequireAdmin>} />
+            <Route path="/admin/emails" element={<RequireAdmin><AdminEmails /></RequireAdmin>} />
+            <Route path="/admin/audit-logs" element={<RequireAdmin><AdminAuditLogs /></RequireAdmin>} />
+            <Route path="/admin/wallet" element={<RequireAdmin><AdminWallet /></RequireAdmin>} />
+            <Route path="/admin/popups" element={<RequireAdmin><AdminPopups /></RequireAdmin>} />
             <Route path="/vendor" element={<VendorProducts />} />
             <Route path="/vendor/products" element={<VendorProducts />} />
             <Route path="/vendor/rentals" element={<VendorRentals />} />

@@ -63,6 +63,15 @@ export default function Profile() {
   }, [authLoading, user, navigate]);
 
   const { data: profile, isLoading: profileLoading } = useMyProfile();
+  const { data: privateProfile } = useQuery({
+    queryKey: ['profile-private', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await (supabase.from('profile_private') as any).select('phone').eq('user_id', user.id).maybeSingle();
+      return data as { phone: string } | null;
+    },
+    enabled: !!user,
+  });
   const { data: walletLedger = [] } = useWalletLedger(500);
   const walletBalance = walletLedger.reduce((s: number, r: any) => s + (Number(r.amount) || 0), 0);
 
@@ -102,21 +111,26 @@ export default function Profile() {
     form.reset({
       name: p.name ?? '',
       username: p.username ?? '',
-      phone: p.phone ?? '',
+      phone: privateProfile?.phone ?? '',
       bio: p.bio ?? '',
       riding_style: p.riding_style ?? '',
       location: p.location ?? '',
       banner_url: p.banner_url ?? '',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
+  }, [profile, privateProfile]);
 
   const updateProfile = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {
-      const payload: any = { ...values };
+      const { phone, ...profileFields } = values;
+      const payload: any = { ...profileFields };
       if (!payload.username) delete payload.username;
       const { error } = await supabase.from('profiles').update(payload).eq('user_id', user!.id);
       if (error) throw error;
+      // Upsert phone in profile_private
+      const { error: pErr } = await (supabase.from('profile_private') as any)
+        .upsert({ user_id: user!.id, phone: phone ?? '' }, { onConflict: 'user_id' });
+      if (pErr) throw pErr;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile-full', user?.id] });

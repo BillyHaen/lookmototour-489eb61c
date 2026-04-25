@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Navigate, Link } from 'react-router-dom';
+import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +16,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Star, MessageSquare, Award, Shield, Flame, Trophy, Package, CalendarDays, Settings, Sparkles, Wallet } from 'lucide-react';
+import { Loader2, Star, MessageSquare, Award, Shield, Flame, Trophy, Package, CalendarDays, Settings, Sparkles, Wallet, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useProfileComplete } from '@/hooks/useProfileComplete';
 import { formatDate } from '@/data/events';
 import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
 import { useMyRentals } from '@/hooks/useGearRentals';
@@ -44,12 +46,12 @@ const BADGES = [
 ];
 
 const schema = z.object({
-  name: z.string().min(2, 'Nama minimal 2 karakter'),
-  username: z.string().min(3, 'Username min 3 karakter').regex(/^[a-z0-9-]+$/, 'Hanya huruf kecil, angka, dan tanda hubung').optional().or(z.literal('')),
-  phone: z.string().max(20).optional(),
+  name: z.string().trim().min(2, 'Nama minimal 2 karakter'),
+  username: z.string().trim().min(3, 'Username min 3 karakter').regex(/^[a-z0-9-]+$/, 'Hanya huruf kecil, angka, dan tanda hubung'),
+  phone: z.string().trim().min(10, 'No. HP minimal 10 digit').max(20).regex(/^[0-9+\-\s]+$/, 'Format nomor tidak valid'),
   bio: z.string().max(500).optional(),
-  riding_style: z.string().optional(),
-  location: z.string().max(100).optional(),
+  riding_style: z.string().min(1, 'Pilih riding style'),
+  location: z.string().trim().min(2, 'Isi lokasi kamu').max(100),
   banner_url: z.string().optional(),
 });
 

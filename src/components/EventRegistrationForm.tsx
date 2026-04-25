@@ -83,8 +83,11 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     queryKey: ['my-profile-interest', user?.id],
     queryFn: async () => {
       if (!user) return null;
-      const { data } = await supabase.from('profiles').select('name, phone').eq('user_id', user.id).maybeSingle();
-      return data;
+      const [{ data: prof }, { data: priv }] = await Promise.all([
+        supabase.from('profiles').select('name').eq('user_id', user.id).maybeSingle(),
+        (supabase.from('profile_private') as any).select('phone').eq('user_id', user.id).maybeSingle(),
+      ]);
+      return { name: (prof as any)?.name || '', phone: (priv as any)?.phone || '' };
     },
     enabled: !!user && isTentative,
   });

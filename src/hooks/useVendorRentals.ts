@@ -25,11 +25,12 @@ export function useVendorRentals() {
 
       const userIds = Array.from(new Set(rentals.map(r => r.user_id).filter(Boolean)));
       if (userIds.length === 0) return rentals;
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, name, phone')
-        .in('user_id', userIds);
-      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, p]));
+      const [{ data: profiles }, { data: privates }] = await Promise.all([
+        supabase.from('profiles').select('user_id, name').in('user_id', userIds),
+        (supabase.from('profile_private') as any).select('user_id, phone').in('user_id', userIds),
+      ]);
+      const phoneMap = new Map(((privates as any[]) || []).map((p: any) => [p.user_id, p.phone]));
+      const profileMap = new Map((profiles || []).map((p: any) => [p.user_id, { ...p, phone: phoneMap.get(p.user_id) || '' }]));
       return rentals.map(r => ({ ...r, profiles: profileMap.get(r.user_id) || null }));
     },
     enabled: !!vendor,

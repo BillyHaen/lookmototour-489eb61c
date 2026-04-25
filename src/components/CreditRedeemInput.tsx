@@ -18,12 +18,16 @@ interface Props {
  * Saldo dihitung dari penjumlahan ledger (positif - negatif), konsisten dengan WalletCard.
  */
 export default function CreditRedeemInput({ totalPrice, value, onChange }: Props) {
-  const { data: ledger = [] } = useWalletLedger(500);
+  const { data: ledger = [], isLoading: ledgerLoading } = useWalletLedger(500);
+  const { data: rpcBalance, isLoading: rpcLoading } = useWalletBalance();
   const { data: settings } = useWalletSettings();
-  const balance = useMemo(
+  const ledgerSum = useMemo(
     () => ledger.reduce((sum: number, row: any) => sum + (Number(row.amount) || 0), 0),
     [ledger]
   );
+  // Pakai nilai terbesar dari RPC vs sum ledger agar tahan terhadap salah-satu-gagal
+  const balance = Math.max(Number(rpcBalance) || 0, ledgerSum);
+  const isLoading = ledgerLoading || rpcLoading;
   const maxPercent = settings?.max_redeem_percent ?? 100;
   const cap = Math.floor(totalPrice * maxPercent / 100);
   const maxRedeem = Math.max(0, Math.min(balance, cap));

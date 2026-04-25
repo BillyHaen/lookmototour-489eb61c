@@ -341,28 +341,38 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nama Lengkap *</FormLabel>
-                  <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField control={form.control} name="email" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email *</FormLabel>
-                    <FormControl><Input type="email" placeholder="john@email.com" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="phone" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>No. HP *</FormLabel>
-                    <FormControl><Input placeholder="08123456789" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+              {!profileIsComplete && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Lengkapi profil dulu</AlertTitle>
+                  <AlertDescription className="space-y-2">
+                    <p>Data berikut masih kosong: <strong>{profileMissing.join(', ')}</strong>.</p>
+                    <Button asChild size="sm" variant="outline" type="button">
+                      <Link to="/profile?incomplete=1">Lengkapi Profil</Link>
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-3 p-3 rounded-lg bg-muted/40 border border-border">
+                <p className="text-xs text-muted-foreground">
+                  Identitas diambil dari profil dan tidak bisa diubah di sini.{' '}
+                  <Link to="/profile" className="text-primary hover:underline">Edit di Profil</Link>
+                </p>
+                <div>
+                  <label className="text-sm font-medium">Nama Lengkap</label>
+                  <Input value={profileName} readOnly className="bg-background mt-1" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium">Email</label>
+                    <Input value={profileEmail} readOnly className="bg-background mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">No. HP</label>
+                    <Input value={profilePhone} readOnly className="bg-background mt-1" />
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField control={form.control} name="motorBrand" render={({ field }) => (

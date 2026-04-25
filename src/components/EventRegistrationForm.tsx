@@ -13,18 +13,20 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { formatPrice } from '@/data/events';
-import { Loader2, CheckCircle2, Heart } from 'lucide-react';
+import { Loader2, CheckCircle2, Heart, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import type { DbEvent } from '@/hooks/useEvents';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import RentalGearRecommendations, { SelectedRental } from '@/components/RentalGearRecommendations';
 import CreditRedeemInput from '@/components/CreditRedeemInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MOTORCYCLES, MOTOR_BRANDS, getModelCategory } from '@/data/motorcycles';
+import { useProfileComplete } from '@/hooks/useProfileComplete';
+import { Link } from 'react-router-dom';
 
+// Note: name/email/phone are NOT in the schema — they come from the user's profile
+// (read-only) and are enforced server-side by an RLS trigger.
 const schema = z.object({
-  name: z.string().trim().min(3, 'Nama minimal 3 karakter').max(100),
-  email: z.string().trim().email('Email tidak valid').max(255),
-  phone: z.string().trim().min(10, 'Nomor HP minimal 10 digit').max(15).regex(/^[0-9+\-\s]+$/, 'Format nomor tidak valid'),
   motorBrand: z.string().trim().min(1, 'Pilih merk motor'),
   motorModel: z.string().trim().min(1, 'Pilih tipe motor'),
   plateNumber: z.string().trim().min(3, 'Masukkan plat nomor').max(15),
@@ -137,9 +139,14 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     return 'outline' as const;
   };
 
+  const { data: profileData, isComplete: profileIsComplete, missing: profileMissing } = useProfileComplete();
+  const profileName = profileData?.name || '';
+  const profileEmail = user?.email || '';
+  const profilePhone = profileData?.phone || '';
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', phone: '', motorBrand: '', motorModel: '', plateNumber: '', emergencyContact: '', registrationType: 'single', towingPergi: false, towingPulang: false, notes: '' },
+    defaultValues: { motorBrand: '', motorModel: '', plateNumber: '', emergencyContact: '', registrationType: 'single', towingPergi: false, towingPulang: false, notes: '' },
   });
 
   const selectedType = form.watch('registrationType');
@@ -195,9 +202,9 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       _event_id: event.id,
       _credit_redeem: creditRedeem,
       _payload: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
+        name: profileName,
+        email: profileEmail,
+        phone: profilePhone,
         motor_type: `${data.motorBrand} ${data.motorModel}`.trim(),
         plate_number: data.plateNumber,
         emergency_contact: data.emergencyContact,
@@ -228,10 +235,10 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'event-registration-confirmation',
-          recipientEmail: data.email,
+          recipientEmail: profileEmail,
           idempotencyKey: `reg-confirm-${regId}`,
           templateData: {
-            name: data.name,
+            name: profileName,
             eventTitle: event.title,
             eventDate: eventDateStr,
             eventLocation: event.location,
@@ -249,10 +256,10 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
         await supabase.functions.invoke('send-transactional-email', {
           body: {
             templateName: 'gear-rental-confirmation',
-            recipientEmail: data.email,
+            recipientEmail: profileEmail,
             idempotencyKey: `rental-confirm-${regId}-${i}`,
             templateData: {
-              name: data.name,
+              name: profileName,
               productName: r.name || 'Gear',
               qty: r.qty,
               startDate: eventDateStr,
@@ -274,7 +281,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     queryClient.invalidateQueries({ queryKey: ['events'] });
     queryClient.invalidateQueries({ queryKey: ['my-registration', event.id, user?.id] });
     queryClient.invalidateQueries({ queryKey: ['my-rentals'] });
-    toast({ title: 'Pendaftaran berhasil! 🎉', description: `Detail dikirim ke email ${data.email}` });
+    toast({ title: 'Pendaftaran berhasil! 🎉', description: `Detail dikirim ke email ${profileEmail}` });
   };
 
   if (isTentative) {
@@ -334,28 +341,38 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
         ) : (
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nama Lengkap *</FormLabel>
-                  <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField control={form.control} name="email" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email *</FormLabel>
-                    <FormControl><Input type="email" placeholder="john@email.com" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
-                <FormField control={form.control} name="phone" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>No. HP *</FormLabel>
-                    <FormControl><Input placeholder="08123456789" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )} />
+              {!profileIsComplete && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Lengkapi profil dulu</AlertTitle>
+                  <AlertDescription className="space-y-2">
+                    <p>Data berikut masih kosong: <strong>{profileMissing.join(', ')}</strong>.</p>
+                    <Button asChild size="sm" variant="outline" type="button">
+                      <Link to="/profile?incomplete=1">Lengkapi Profil</Link>
+                    </Button>
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-3 p-3 rounded-lg bg-muted/40 border border-border">
+                <p className="text-xs text-muted-foreground">
+                  Identitas diambil dari profil dan tidak bisa diubah di sini.{' '}
+                  <Link to="/profile" className="text-primary hover:underline">Edit di Profil</Link>
+                </p>
+                <div>
+                  <label className="text-sm font-medium">Nama Lengkap</label>
+                  <Input value={profileName} readOnly className="bg-background mt-1" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium">Email</label>
+                    <Input value={profileEmail} readOnly className="bg-background mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">No. HP</label>
+                    <Input value={profilePhone} readOnly className="bg-background mt-1" />
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField control={form.control} name="motorBrand" render={({ field }) => (
@@ -474,9 +491,9 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                 <div className="flex justify-between font-bold text-base pt-1 border-t border-border"><span>Total</span><span className="text-primary">{formatPrice(Math.max(0, selectedPrice - creditRedeem))}</span></div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || !profileIsComplete}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {loading ? 'Mendaftar...' : `Kirim Pendaftaran - ${formatPrice(Math.max(0, selectedPrice - creditRedeem))}`}
+                {loading ? 'Mendaftar...' : !profileIsComplete ? 'Lengkapi Profil Dulu' : `Kirim Pendaftaran - ${formatPrice(Math.max(0, selectedPrice - creditRedeem))}`}
               </Button>
             </form>
           </Form>

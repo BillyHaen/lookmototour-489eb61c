@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Navigate, Link } from 'react-router-dom';
+import { useNavigate, Navigate, Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -16,7 +16,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Star, MessageSquare, Award, Shield, Flame, Trophy, Package, CalendarDays, Settings, Sparkles, Wallet } from 'lucide-react';
+import { Loader2, Star, MessageSquare, Award, Shield, Flame, Trophy, Package, CalendarDays, Settings, Sparkles, Wallet, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useProfileComplete } from '@/hooks/useProfileComplete';
 import { formatDate } from '@/data/events';
 import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
 import { useMyRentals } from '@/hooks/useGearRentals';
@@ -44,12 +46,12 @@ const BADGES = [
 ];
 
 const schema = z.object({
-  name: z.string().min(2, 'Nama minimal 2 karakter'),
-  username: z.string().min(3, 'Username min 3 karakter').regex(/^[a-z0-9-]+$/, 'Hanya huruf kecil, angka, dan tanda hubung').optional().or(z.literal('')),
-  phone: z.string().max(20).optional(),
+  name: z.string().trim().min(2, 'Nama minimal 2 karakter'),
+  username: z.string().trim().min(3, 'Username min 3 karakter').regex(/^[a-z0-9-]+$/, 'Hanya huruf kecil, angka, dan tanda hubung'),
+  phone: z.string().trim().min(10, 'No. HP minimal 10 digit').max(20).regex(/^[0-9+\-\s]+$/, 'Format nomor tidak valid'),
   bio: z.string().max(500).optional(),
-  riding_style: z.string().optional(),
-  location: z.string().max(100).optional(),
+  riding_style: z.string().min(1, 'Pilih riding style'),
+  location: z.string().trim().min(2, 'Isi lokasi kamu').max(100),
   banner_url: z.string().optional(),
 });
 
@@ -57,6 +59,9 @@ export default function Profile() {
   const { user, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
+  const { isComplete, missing } = useProfileComplete();
+  const showIncompleteWarning = searchParams.get('incomplete') === '1' || searchParams.get('welcome') === '1' || !isComplete;
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login');
@@ -132,13 +137,18 @@ export default function Profile() {
         .upsert({ user_id: user!.id, phone: phone ?? '' }, { onConflict: 'user_id' });
       if (pErr) throw pErr;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile-full', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['profile-nav', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['my-username'] });
-      queryClient.invalidateQueries({ queryKey: ['rider'] });
-      queryClient.invalidateQueries({ queryKey: ['profile-private', user?.id] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['profile-full', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['profile-nav', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['my-username'] });
+      await queryClient.invalidateQueries({ queryKey: ['rider'] });
+      await queryClient.invalidateQueries({ queryKey: ['profile-private', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['profile-complete', user?.id] });
       toast({ title: 'Profil berhasil diperbarui! ✅' });
+      // If we landed here from onboarding/incomplete redirect, send user home now.
+      if (searchParams.get('incomplete') === '1' || searchParams.get('welcome') === '1') {
+        navigate('/');
+      }
     },
     onError: (e: Error) => {
       toast({ title: 'Gagal', description: e.message, variant: 'destructive' });
@@ -185,17 +195,29 @@ export default function Profile() {
             onLogout={handleLogout}
           />
 
+          {showIncompleteWarning && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Lengkapi profil kamu dulu</AlertTitle>
+              <AlertDescription>
+                {isComplete
+                  ? 'Profil kamu sudah lengkap! Silakan jelajahi fitur lainnya.'
+                  : `Untuk bisa daftar trip & akses fitur lain, lengkapi: ${missing.join(', ')}.`}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* 2-col layout */}
           <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
             {/* Main */}
             <div className="min-w-0">
-              <Tabs defaultValue="aktivitas" className="w-full">
+              <Tabs defaultValue={isComplete ? 'aktivitas' : 'settings'} className="w-full">
                 <TabsList className="grid w-full grid-cols-5 bg-card border border-border h-auto p-1 gap-1">
                   <TabsTrigger value="aktivitas" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Sparkles className="h-4 w-4 shrink-0" /><span className="truncate">Aktivitas</span></TabsTrigger>
                   <TabsTrigger value="sewa" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Package className="h-4 w-4 shrink-0" /><span className="truncate">Sewa</span></TabsTrigger>
                   <TabsTrigger value="riwayat" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><CalendarDays className="h-4 w-4 shrink-0" /><span className="truncate">Riwayat</span></TabsTrigger>
                   <TabsTrigger value="kredit" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Wallet className="h-4 w-4 shrink-0" /><span className="truncate">Wallet</span></TabsTrigger>
-                  <TabsTrigger value="settings" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Settings className="h-4 w-4 shrink-0" /><span className="truncate">Setelan</span></TabsTrigger>
+                  <TabsTrigger value="settings" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Settings className="h-4 w-4 shrink-0" /><span className="truncate">Profil</span></TabsTrigger>
                 </TabsList>
 
                 {/* Aktivitas */}
@@ -327,7 +349,7 @@ export default function Profile() {
                   <Card className="rounded-xl shadow-sm">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Settings className="h-5 w-5 text-primary" /> Informasi Profil
+                        <Settings className="h-5 w-5 text-primary" /> Profil
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -335,14 +357,14 @@ export default function Profile() {
                         <form onSubmit={form.handleSubmit((v) => updateProfile.mutate(v))} className="space-y-4">
                           <FormField control={form.control} name="name" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Nama</FormLabel>
+                              <FormLabel>Nama <span className="text-destructive">*</span></FormLabel>
                               <FormControl><Input {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
                           <FormField control={form.control} name="username" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Username (URL profil publik)</FormLabel>
+                              <FormLabel>Username (URL profil publik) <span className="text-destructive">*</span></FormLabel>
                               <FormControl><Input placeholder="rider-keren" {...field} /></FormControl>
                               {field.value && (
                                 <Link to={`/riders/${field.value}`} className="text-xs text-primary hover:underline">
@@ -354,14 +376,14 @@ export default function Profile() {
                           )} />
                           <FormField control={form.control} name="phone" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>No. HP</FormLabel>
+                              <FormLabel>No. HP <span className="text-destructive">*</span></FormLabel>
                               <FormControl><Input placeholder="08123456789" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
                           <FormField control={form.control} name="riding_style" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Riding Style</FormLabel>
+                              <FormLabel>Riding Style <span className="text-destructive">*</span></FormLabel>
                               <Select onValueChange={field.onChange} value={field.value || ''}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Pilih gaya riding" /></SelectTrigger></FormControl>
                                 <SelectContent>
@@ -376,7 +398,7 @@ export default function Profile() {
                           )} />
                           <FormField control={form.control} name="location" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Lokasi</FormLabel>
+                              <FormLabel>Lokasi <span className="text-destructive">*</span></FormLabel>
                               <FormControl><Input placeholder="Jakarta, Indonesia" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>

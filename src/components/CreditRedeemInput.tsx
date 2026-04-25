@@ -53,7 +53,7 @@ export default function CreditRedeemInput({ totalPrice, value, onChange }: Props
     <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-2">
       <div className="flex items-center justify-between">
         <Label className="flex items-center gap-2 text-sm font-medium">
-          <Wallet className="h-4 w-4 text-primary" /> Pakai Kredit
+          <Wallet className="h-4 w-4 text-primary" /> Pakai Wallet
         </Label>
         <span className="text-xs text-muted-foreground">Saldo: {formatPrice(balance)}</span>
       </div>

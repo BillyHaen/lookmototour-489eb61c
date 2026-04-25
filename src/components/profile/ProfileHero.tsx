@@ -60,7 +60,7 @@ export default function ProfileHero({
       </div>
 
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <StatCard icon={Wallet} label="Kredit" value={formatPrice(walletBalance)} />
+        <StatCard icon={Wallet} label="Wallet" value={formatPrice(walletBalance)} />
         <StatCard icon={CalendarDays} label="Events" value={confirmedCount} />
         <StatCard
           icon={Navigation}

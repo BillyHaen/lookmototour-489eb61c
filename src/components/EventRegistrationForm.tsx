@@ -467,7 +467,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                 {towingTotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Towing</span><span>{formatPrice(towingTotal)}</span></div>}
                 {rentalsTotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Sewa Gear ({Object.keys(selectedRentals).length})</span><span>{formatPrice(rentalsTotal)}</span></div>}
                 {rentalsDeposit > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Deposit gear (refundable)</span><span>{formatPrice(rentalsDeposit)}</span></div>}
-                {creditRedeem > 0 && <div className="flex justify-between text-xs text-emerald-600"><span>Pakai kredit</span><span>− {formatPrice(creditRedeem)}</span></div>}
+                {creditRedeem > 0 && <div className="flex justify-between text-xs text-emerald-600"><span>Pakai wallet</span><span>− {formatPrice(creditRedeem)}</span></div>}
                 <div className="flex justify-between font-bold text-base pt-1 border-t border-border"><span>Total</span><span className="text-primary">{formatPrice(Math.max(0, selectedPrice - creditRedeem))}</span></div>
               </div>
 

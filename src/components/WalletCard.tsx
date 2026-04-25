@@ -17,7 +17,7 @@ export default function WalletCard() {
   const TermsTrigger = (
     <button
       type="button"
-      aria-label="Syarat & Ketentuan Kredit"
+      aria-label="Syarat & Ketentuan Wallet"
       className="inline-flex items-center justify-center h-6 w-6 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
     >
       <Info className="h-4 w-4" />
@@ -27,7 +27,7 @@ export default function WalletCard() {
   const TermsBody = (
     <div className="space-y-2">
       <p className="text-sm font-semibold flex items-center gap-1.5">
-        <Info className="h-4 w-4 text-primary" /> Syarat & Ketentuan Kredit
+        <Info className="h-4 w-4 text-primary" /> Syarat & Ketentuan Wallet
       </p>
       {hasTerms ? (
         <RichTextContent content={termsHtml!} className="text-xs" />
@@ -41,12 +41,12 @@ export default function WalletCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Wallet className="h-5 w-5 text-primary" /> Kredit Saya
+          <Wallet className="h-5 w-5 text-primary" /> Wallet Saya
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="rounded-lg bg-gradient-to-br from-primary/10 to-accent/10 p-6 text-center relative">
-          <p className="text-xs text-muted-foreground mb-1">Total kredit</p>
+          <p className="text-xs text-muted-foreground mb-1">Total saldo wallet</p>
           <div className="flex items-center justify-center gap-1.5">
             <p className="font-heading text-3xl font-bold text-primary">
               {formatPrice(totalBalance)}

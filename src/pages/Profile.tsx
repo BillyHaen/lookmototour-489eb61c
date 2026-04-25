@@ -349,7 +349,7 @@ export default function Profile() {
                   <Card className="rounded-xl shadow-sm">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Settings className="h-5 w-5 text-primary" /> Informasi Profil
+                        <Settings className="h-5 w-5 text-primary" /> Profil
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -357,14 +357,14 @@ export default function Profile() {
                         <form onSubmit={form.handleSubmit((v) => updateProfile.mutate(v))} className="space-y-4">
                           <FormField control={form.control} name="name" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Nama</FormLabel>
+                              <FormLabel>Nama <span className="text-destructive">*</span></FormLabel>
                               <FormControl><Input {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
                           <FormField control={form.control} name="username" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Username (URL profil publik)</FormLabel>
+                              <FormLabel>Username (URL profil publik) <span className="text-destructive">*</span></FormLabel>
                               <FormControl><Input placeholder="rider-keren" {...field} /></FormControl>
                               {field.value && (
                                 <Link to={`/riders/${field.value}`} className="text-xs text-primary hover:underline">
@@ -376,14 +376,14 @@ export default function Profile() {
                           )} />
                           <FormField control={form.control} name="phone" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>No. HP</FormLabel>
+                              <FormLabel>No. HP <span className="text-destructive">*</span></FormLabel>
                               <FormControl><Input placeholder="08123456789" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>
                           )} />
                           <FormField control={form.control} name="riding_style" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Riding Style</FormLabel>
+                              <FormLabel>Riding Style <span className="text-destructive">*</span></FormLabel>
                               <Select onValueChange={field.onChange} value={field.value || ''}>
                                 <FormControl><SelectTrigger><SelectValue placeholder="Pilih gaya riding" /></SelectTrigger></FormControl>
                                 <SelectContent>
@@ -398,7 +398,7 @@ export default function Profile() {
                           )} />
                           <FormField control={form.control} name="location" render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Lokasi</FormLabel>
+                              <FormLabel>Lokasi <span className="text-destructive">*</span></FormLabel>
                               <FormControl><Input placeholder="Jakarta, Indonesia" {...field} /></FormControl>
                               <FormMessage />
                             </FormItem>

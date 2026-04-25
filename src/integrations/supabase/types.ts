@@ -2526,6 +2526,13 @@ export type Database = {
           product_name: string
         }[]
       }
+      get_rider_achievements: {
+        Args: { _user_id: string }
+        Returns: {
+          achievement_code: string
+          unlocked_at: string
+        }[]
+      }
       get_rider_public_profile: {
         Args: { _username: string }
         Returns: {

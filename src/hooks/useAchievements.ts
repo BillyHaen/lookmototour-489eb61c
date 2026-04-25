@@ -26,8 +26,7 @@ export function useUserAchievements(userId?: string) {
     queryKey: ['user-achievements', userId],
     queryFn: async () => {
       if (!userId) return [];
-      const { data } = await (supabase.from('user_achievements' as any) as any)
-        .select('achievement_code, unlocked_at').eq('user_id', userId);
+      const { data } = await (supabase.rpc as any)('get_rider_achievements', { _user_id: userId });
       return (data as { achievement_code: string; unlocked_at: string }[]) || [];
     },
     enabled: !!userId,

@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.create_registration_with_rentals(uuid, jsonb, jsonb);

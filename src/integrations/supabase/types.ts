@@ -2403,20 +2403,15 @@ export type Database = {
         }
         Returns: number
       }
-      create_registration_with_rentals:
-        | {
-            Args: { _event_id: string; _payload: Json; _rentals?: Json }
-            Returns: string
-          }
-        | {
-            Args: {
-              _credit_redeem?: number
-              _event_id: string
-              _payload: Json
-              _rentals?: Json
-            }
-            Returns: string
-          }
+      create_registration_with_rentals: {
+        Args: {
+          _credit_redeem?: number
+          _event_id: string
+          _payload: Json
+          _rentals?: Json
+        }
+        Returns: string
+      }
       create_rental_with_credit: {
         Args: {
           _credit_redeem?: number

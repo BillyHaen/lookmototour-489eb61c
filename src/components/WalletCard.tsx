@@ -27,7 +27,7 @@ export default function WalletCard() {
   const TermsBody = (
     <div className="space-y-2">
       <p className="text-sm font-semibold flex items-center gap-1.5">
-        <Info className="h-4 w-4 text-primary" /> Syarat & Ketentuan Kredit
+        <Info className="h-4 w-4 text-primary" /> Syarat & Ketentuan Wallet
       </p>
       {hasTerms ? (
         <RichTextContent content={termsHtml!} className="text-xs" />

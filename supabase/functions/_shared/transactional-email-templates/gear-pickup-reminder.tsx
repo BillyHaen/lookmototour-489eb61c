@@ -16,7 +16,7 @@ interface Props {
 const Email = ({ name, productName, qty, pickupDate, vendorName, vendorPhone, isVendor }: Props) => (
   <Html lang="id" dir="ltr">
     <Head />
-    <Preview>Pickup gear {productName} besok</Preview>
+    <Preview>{`Pickup gear ${productName ?? ''} besok`}</Preview>
     <Body style={styles.main}>
       <Container style={styles.container}>
         <Img src={LOGO_URL} alt={SITE_NAME} height="40" style={styles.logo} />

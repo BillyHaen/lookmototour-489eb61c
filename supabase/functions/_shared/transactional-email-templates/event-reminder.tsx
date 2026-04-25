@@ -15,7 +15,7 @@ interface Props {
 const Email = ({ name, eventTitle, eventDate, eventLocation, daysUntil, eventUrl }: Props) => (
   <Html lang="id" dir="ltr">
     <Head />
-    <Preview>{daysUntil === 1 ? 'Besok!' : `H-${daysUntil}`} {eventTitle}</Preview>
+    <Preview>{`${daysUntil === 1 ? 'Besok!' : `H-${daysUntil ?? ''}`} ${eventTitle ?? ''}`}</Preview>
     <Body style={styles.main}>
       <Container style={styles.container}>
         <Img src={LOGO_URL} alt={SITE_NAME} height="40" style={styles.logo} />

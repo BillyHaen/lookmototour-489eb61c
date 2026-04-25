@@ -139,9 +139,14 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     return 'outline' as const;
   };
 
+  const { data: profileData, isComplete: profileIsComplete, missing: profileMissing } = useProfileComplete();
+  const profileName = profileData?.name || '';
+  const profileEmail = user?.email || '';
+  const profilePhone = profileData?.phone || '';
+
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', email: '', phone: '', motorBrand: '', motorModel: '', plateNumber: '', emergencyContact: '', registrationType: 'single', towingPergi: false, towingPulang: false, notes: '' },
+    defaultValues: { motorBrand: '', motorModel: '', plateNumber: '', emergencyContact: '', registrationType: 'single', towingPergi: false, towingPulang: false, notes: '' },
   });
 
   const selectedType = form.watch('registrationType');
@@ -197,9 +202,9 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       _event_id: event.id,
       _credit_redeem: creditRedeem,
       _payload: {
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
+        name: profileName,
+        email: profileEmail,
+        phone: profilePhone,
         motor_type: `${data.motorBrand} ${data.motorModel}`.trim(),
         plate_number: data.plateNumber,
         emergency_contact: data.emergencyContact,
@@ -230,10 +235,10 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
       await supabase.functions.invoke('send-transactional-email', {
         body: {
           templateName: 'event-registration-confirmation',
-          recipientEmail: data.email,
+          recipientEmail: profileEmail,
           idempotencyKey: `reg-confirm-${regId}`,
           templateData: {
-            name: data.name,
+            name: profileName,
             eventTitle: event.title,
             eventDate: eventDateStr,
             eventLocation: event.location,
@@ -251,10 +256,10 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
         await supabase.functions.invoke('send-transactional-email', {
           body: {
             templateName: 'gear-rental-confirmation',
-            recipientEmail: data.email,
+            recipientEmail: profileEmail,
             idempotencyKey: `rental-confirm-${regId}-${i}`,
             templateData: {
-              name: data.name,
+              name: profileName,
               productName: r.name || 'Gear',
               qty: r.qty,
               startDate: eventDateStr,
@@ -276,7 +281,7 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
     queryClient.invalidateQueries({ queryKey: ['events'] });
     queryClient.invalidateQueries({ queryKey: ['my-registration', event.id, user?.id] });
     queryClient.invalidateQueries({ queryKey: ['my-rentals'] });
-    toast({ title: 'Pendaftaran berhasil! 🎉', description: `Detail dikirim ke email ${data.email}` });
+    toast({ title: 'Pendaftaran berhasil! 🎉', description: `Detail dikirim ke email ${profileEmail}` });
   };
 
   if (isTentative) {

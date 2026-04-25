@@ -73,6 +73,17 @@ export default function AdminUsers() {
     enabled: !!selectedUser,
   });
 
+  const { data: selectedUserPhoneData } = useQuery({
+    queryKey: ['admin-user-phone', selectedUser?.user_id],
+    queryFn: async () => {
+      const { data } = await (supabase.from('profile_private') as any)
+        .select('phone').eq('user_id', selectedUser!.user_id).maybeSingle();
+      return (data as any)?.phone as string | undefined;
+    },
+    enabled: !!selectedUser,
+  });
+  const selectedUserPhone = selectedUserPhoneData || '';
+
   const { data: vendors } = useQuery({
     queryKey: ['admin-all-vendors-for-link'],
     queryFn: async () => {

@@ -13,7 +13,7 @@ interface Props {
 const Email = ({ name, eventTitle, recipientCount, manageUrl }: Props) => (
   <Html lang="id" dir="ltr">
     <Head />
-    <Preview>Live tracking aktif untuk {eventTitle}</Preview>
+    <Preview>{`Live tracking aktif untuk ${eventTitle ?? ''}`}</Preview>
     <Body style={styles.main}>
       <Container style={styles.container}>
         <Img src={LOGO_URL} alt={SITE_NAME} height="40" style={styles.logo} />

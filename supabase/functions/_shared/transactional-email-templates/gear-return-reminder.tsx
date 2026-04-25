@@ -16,7 +16,7 @@ interface Props {
 const Email = ({ name, productName, qty, returnDate, vendorName, vendorPhone, isVendor }: Props) => (
   <Html lang="id" dir="ltr">
     <Head />
-    <Preview>Return gear {productName} hari ini</Preview>
+    <Preview>{`Return gear ${productName ?? ''} hari ini`}</Preview>
     <Body style={styles.main}>
       <Container style={styles.container}>
         <Img src={LOGO_URL} alt={SITE_NAME} height="40" style={styles.logo} />

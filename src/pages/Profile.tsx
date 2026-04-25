@@ -137,6 +137,7 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ['profile-nav', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['my-username'] });
       queryClient.invalidateQueries({ queryKey: ['rider'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-private', user?.id] });
       toast({ title: 'Profil berhasil diperbarui! ✅' });
     },
     onError: (e: Error) => {

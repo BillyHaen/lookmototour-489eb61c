@@ -277,7 +277,7 @@ export default function AdminUsers() {
                     <UserAvatar src={selectedUser.avatar_url} name={selectedUser.name} className="h-12 w-12" />
                     <div>
                       <p>{selectedUser.name || 'Tanpa Nama'}</p>
-                      <p className="text-sm font-normal text-muted-foreground">{selectedUser.phone || '-'}</p>
+                      <p className="text-sm font-normal text-muted-foreground">{selectedUserPhone || '-'}</p>
                     </div>
                   </DialogTitle>
                 </DialogHeader>

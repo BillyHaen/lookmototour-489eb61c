@@ -491,9 +491,9 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                 <div className="flex justify-between font-bold text-base pt-1 border-t border-border"><span>Total</span><span className="text-primary">{formatPrice(Math.max(0, selectedPrice - creditRedeem))}</span></div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || !profileIsComplete}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {loading ? 'Mendaftar...' : `Kirim Pendaftaran - ${formatPrice(Math.max(0, selectedPrice - creditRedeem))}`}
+                {loading ? 'Mendaftar...' : !profileIsComplete ? 'Lengkapi Profil Dulu' : `Kirim Pendaftaran - ${formatPrice(Math.max(0, selectedPrice - creditRedeem))}`}
               </Button>
             </form>
           </Form>

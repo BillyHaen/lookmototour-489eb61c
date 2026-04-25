@@ -137,13 +137,18 @@ export default function Profile() {
         .upsert({ user_id: user!.id, phone: phone ?? '' }, { onConflict: 'user_id' });
       if (pErr) throw pErr;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile-full', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['profile-nav', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['my-username'] });
-      queryClient.invalidateQueries({ queryKey: ['rider'] });
-      queryClient.invalidateQueries({ queryKey: ['profile-private', user?.id] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['profile-full', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['profile-nav', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['my-username'] });
+      await queryClient.invalidateQueries({ queryKey: ['rider'] });
+      await queryClient.invalidateQueries({ queryKey: ['profile-private', user?.id] });
+      await queryClient.invalidateQueries({ queryKey: ['profile-complete', user?.id] });
       toast({ title: 'Profil berhasil diperbarui! ✅' });
+      // If we landed here from onboarding/incomplete redirect, send user home now.
+      if (searchParams.get('incomplete') === '1' || searchParams.get('welcome') === '1') {
+        navigate('/');
+      }
     },
     onError: (e: Error) => {
       toast({ title: 'Gagal', description: e.message, variant: 'destructive' });

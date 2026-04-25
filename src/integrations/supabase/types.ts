@@ -1345,6 +1345,24 @@ export type Database = {
           },
         ]
       }
+      profile_private: {
+        Row: {
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1359,7 +1377,6 @@ export type Database = {
           override_trust_score: number | null
           override_updated_at: string | null
           override_updated_by: string | null
-          phone: string | null
           riding_style: string | null
           total_km: number
           total_trips: number
@@ -1381,7 +1398,6 @@ export type Database = {
           override_trust_score?: number | null
           override_updated_at?: string | null
           override_updated_by?: string | null
-          phone?: string | null
           riding_style?: string | null
           total_km?: number
           total_trips?: number
@@ -1403,7 +1419,6 @@ export type Database = {
           override_trust_score?: number | null
           override_updated_at?: string | null
           override_updated_by?: string | null
-          phone?: string | null
           riding_style?: string | null
           total_km?: number
           total_trips?: number

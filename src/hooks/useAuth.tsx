@@ -37,8 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logAudit = async (payload: Record<string, unknown>) => {
     try {
+      // Only log when authenticated; the edge function requires a valid JWT.
+      const { data: { session: current } } = await supabase.auth.getSession();
+      if (!current) return;
       await supabase.functions.invoke('log-audit-event', { body: payload });
     } catch (e) {
+      // Swallow — audit logging must never break auth flows.
       console.warn('audit log failed', e);
     }
   };
@@ -52,50 +56,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         emailRedirectTo: window.location.origin,
       },
     });
-    await logAudit({
-      action: 'signup',
-      status: error ? 'failed' : 'success',
-      user_id: data?.user?.id ?? null,
-      user_email: email,
-      user_name: name,
-      error_message: error?.message ?? null,
-    });
+    // Only audit when signup produced a session (auto-confirm). Otherwise no JWT to authorize the call.
+    if (!error && data?.session) {
+      await logAudit({
+        action: 'signup',
+        status: 'success',
+        user_id: data?.user?.id ?? null,
+        user_email: email,
+        user_name: name,
+      });
+    }
     return { error: error as Error | null };
   };
 
   const signIn = async (email: string, password: string) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    await logAudit({
-      action: error ? 'login_failed' : 'login',
-      status: error ? 'failed' : 'success',
-      user_id: data?.user?.id ?? null,
-      user_email: email,
-      error_message: error?.message ?? null,
-    });
+    // Failed logins have no session — skip audit (server rejects unauthenticated calls).
+    if (!error && data?.session) {
+      await logAudit({
+        action: 'login',
+        status: 'success',
+        user_id: data?.user?.id ?? null,
+        user_email: email,
+      });
+    }
     return { error: error as Error | null };
   };
 
   const signOut = async () => {
     const currentUser = user;
-    await supabase.auth.signOut();
+    // Log BEFORE signOut so the JWT is still valid.
     await logAudit({
       action: 'logout',
       status: 'success',
       user_id: currentUser?.id ?? null,
       user_email: currentUser?.email ?? null,
     });
+    await supabase.auth.signOut();
   };
 
   const resetPassword = async (email: string) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
-    await logAudit({
-      action: 'password_reset',
-      status: error ? 'failed' : 'success',
-      user_email: email,
-      error_message: error?.message ?? null,
-    });
+    // Password reset is unauthenticated by definition — skip audit.
     return { error: error as Error | null };
   };
 

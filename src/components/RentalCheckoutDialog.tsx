@@ -81,7 +81,7 @@ export default function RentalCheckoutDialog({ product, trigger }: Props) {
           <div className="p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">{formatPrice(product.daily_rent_price)} × {days || 0} hari × {qty}</span><span>{formatPrice(subtotal)}</span></div>
             {deposit > 0 && <div className="flex justify-between text-xs text-muted-foreground"><span>Deposit (refundable)</span><span>+ {formatPrice(deposit)}</span></div>}
-            {credit > 0 && <div className="flex justify-between text-xs text-emerald-600"><span>Pakai kredit</span><span>− {formatPrice(credit)}</span></div>}
+            {credit > 0 && <div className="flex justify-between text-xs text-emerald-600"><span>Pakai wallet</span><span>− {formatPrice(credit)}</span></div>}
             <div className="flex justify-between font-bold pt-1 border-t border-border"><span>Total Bayar</span><span className="text-primary">{formatPrice(totalDue)}</span></div>
           </div>
           <Button className="w-full" onClick={submit} disabled={loading || !start || !end}>

@@ -17,7 +17,7 @@ export default function WalletCard() {
   const TermsTrigger = (
     <button
       type="button"
-      aria-label="Syarat & Ketentuan Kredit"
+      aria-label="Syarat & Ketentuan Wallet"
       className="inline-flex items-center justify-center h-6 w-6 rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
     >
       <Info className="h-4 w-4" />

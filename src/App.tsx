@@ -50,6 +50,7 @@ import VendorRentals from "./pages/vendor/VendorRentals";
 import ShareRedirect from "./pages/ShareRedirect";
 import NotFound from "./pages/NotFound";
 import RequireAdmin from "./components/RequireAdmin";
+import RequireCompleteProfile from "./components/RequireCompleteProfile";
 
 const queryClient = new QueryClient();
 

@@ -11,10 +11,34 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const body = await req.json();
-    const { action, status = 'success', user_id, user_email, user_name, error_message, metadata } = body ?? {};
+    // Require an authenticated caller; derive identity from JWT, never trust client-supplied user fields.
+    const authHeader = req.headers.get('Authorization') || '';
+    const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
-    if (!action || typeof action !== 'string') {
+    const userClient = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } },
+    );
+    const { data: userData, error: userErr } = await userClient.auth.getUser();
+    if (userErr || !userData?.user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+    const authedUser = userData.user;
+
+    const body = await req.json().catch(() => ({}));
+    const { action, status = 'success', error_message, metadata } = body ?? {};
+
+    if (!action || typeof action !== 'string' || action.length > 100) {
       return new Response(JSON.stringify({ error: 'action required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -32,16 +56,27 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    // Resolve user_name from server-side profile; ignore client-supplied identity fields.
+    let userName: string | null = null;
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('name')
+      .eq('user_id', authedUser.id)
+      .maybeSingle();
+    userName = profile?.name ?? null;
+
+    const safeStatus = ['success', 'failure', 'warning'].includes(status) ? status : 'success';
+
     const { error } = await supabase.from('audit_logs').insert({
-      user_id: user_id ?? null,
-      user_email: user_email ?? null,
-      user_name: user_name ?? null,
+      user_id: authedUser.id,
+      user_email: authedUser.email ?? null,
+      user_name: userName,
       action,
-      status,
+      status: safeStatus,
       ip_address: ip,
       user_agent: userAgent,
-      error_message: error_message ?? null,
-      metadata: metadata ?? {},
+      error_message: typeof error_message === 'string' ? error_message.slice(0, 1000) : null,
+      metadata: metadata && typeof metadata === 'object' ? metadata : {},
     });
 
     if (error) {

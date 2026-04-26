@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Navigate, Link } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -12,27 +12,19 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Star, MessageSquare, Award, Shield, Flame, Trophy, Package, CalendarDays, Settings, Sparkles } from 'lucide-react';
-import { formatDate } from '@/data/events';
+import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck, Navigation, Gift, Package } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { formatDate, formatPrice } from '@/data/events';
 import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
 import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useMyProfile } from '@/hooks/useProfile';
-import { useWalletBalance } from '@/hooks/useWallet';
-
+import AvatarUpload from '@/components/AvatarUpload';
+import BannerUpload from '@/components/BannerUpload';
 import RecommendedSponsors from '@/components/RecommendedSponsors';
-import WalletCard from '@/components/WalletCard';
-import ProfileHero from '@/components/profile/ProfileHero';
-import RentalCard from '@/components/profile/RentalCard';
-import RegistrationRow from '@/components/profile/RegistrationRow';
-import LiveTrackingWidget from '@/components/profile/LiveTrackingWidget';
-import SponsorDealsCard from '@/components/profile/SponsorDealsCard';
-import ProfilePageSkeleton from '@/components/profile/ProfileSkeleton';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },
@@ -61,15 +53,22 @@ export default function Profile() {
     if (!authLoading && !user) navigate('/login');
   }, [authLoading, user, navigate]);
 
-  const { data: profile, isLoading: profileLoading } = useMyProfile();
-  const { data: walletBalance = 0 } = useWalletBalance();
+  const { data: profile, isLoading: profileLoading } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('profiles').select('*').eq('user_id', user!.id).single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const { data: registrations } = useQuery({
     queryKey: ['my-registrations', user?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('event_registrations')
-        .select('*, events(id, slug, title, date, location, price, price_sharing, price_single, price_couple, towing_pergi_price, towing_pulang_price, status)')
+        .select('*, events(id, title, date, location, price, price_sharing, price_single, price_couple, towing_pergi_price, towing_pulang_price, status)')
         .eq('user_id', user!.id)
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -84,30 +83,26 @@ export default function Profile() {
   const { data: myRentals = [] } = useMyRentals();
   const activeSessions = (trackingSessions as any[]).filter(s => s.status === 'active' && new Date(s.expires_at) > new Date());
 
+  // Completed events for testimonial
   const completedEvents = (registrations || []).filter(r => {
     const ev = (r as any).events;
     return r.status === 'confirmed' && ev?.status === 'completed';
   });
 
+  const p: any = profile || {};
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: { name: '', username: '', phone: '', bio: '', riding_style: '', location: '', banner_url: '' },
+    values: profile ? {
+      name: p.name || '',
+      username: p.username || '',
+      phone: p.phone || '',
+      bio: p.bio || '',
+      riding_style: p.riding_style || '',
+      location: p.location || '',
+      banner_url: p.banner_url || '',
+    } : undefined,
   });
-
-  useEffect(() => {
-    if (!profile) return;
-    const p: any = profile;
-    form.reset({
-      name: p.name ?? '',
-      username: p.username ?? '',
-      phone: p.phone ?? '',
-      bio: p.bio ?? '',
-      riding_style: p.riding_style ?? '',
-      location: p.location ?? '',
-      banner_url: p.banner_url ?? '',
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profile]);
 
   const updateProfile = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {
@@ -117,10 +112,8 @@ export default function Profile() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile-full', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['profile-nav', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
       queryClient.invalidateQueries({ queryKey: ['my-username'] });
-      queryClient.invalidateQueries({ queryKey: ['rider'] });
       toast({ title: 'Profil berhasil diperbarui! ✅' });
     },
     onError: (e: Error) => {
@@ -135,10 +128,10 @@ export default function Profile() {
 
   if (authLoading || (user && profileLoading)) {
     return (
-      <div className="min-h-screen bg-muted/30 overflow-x-hidden">
+      <div className="min-h-screen">
         <Navbar />
-        <div className="pt-24 pb-20">
-          <ProfilePageSkeleton />
+        <div className="pt-24 pb-20 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
         <Footer />
       </div>
@@ -149,232 +142,304 @@ export default function Profile() {
     return <Navigate to="/login" replace />;
   }
 
-  const p: any = profile || {};
-
   return (
-    <div className="min-h-screen bg-muted/30 overflow-x-hidden">
+    <div className="min-h-screen">
       <Navbar />
       <div className="pt-24 pb-20">
-        <div className="container max-w-6xl px-3 sm:px-4">
-          {/* Hero */}
-          <ProfileHero
-            userId={user.id}
-            name={p.name}
-            username={p.username}
-            avatarUrl={p.avatar_url}
-            confirmedCount={confirmedCount}
-            walletBalance={walletBalance}
-            activeSessions={activeSessions.length}
-            onLogout={handleLogout}
-          />
-
-          {/* 2-col layout */}
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
-            {/* Main */}
-            <div className="min-w-0">
-              <Tabs defaultValue="aktivitas" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 bg-card border border-border h-auto p-1 gap-1">
-                  <TabsTrigger value="aktivitas" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Sparkles className="h-4 w-4 shrink-0" /><span className="truncate">Aktivitas</span></TabsTrigger>
-                  <TabsTrigger value="sewa" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Package className="h-4 w-4 shrink-0" /><span className="truncate">Sewa</span></TabsTrigger>
-                  <TabsTrigger value="riwayat" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><CalendarDays className="h-4 w-4 shrink-0" /><span className="truncate">Riwayat</span></TabsTrigger>
-                  <TabsTrigger value="settings" className="flex-col sm:flex-row gap-0.5 sm:gap-1.5 text-[10px] sm:text-sm py-1.5 sm:py-1.5 px-1 sm:px-3 min-w-0"><Settings className="h-4 w-4 shrink-0" /><span className="truncate">Setelan</span></TabsTrigger>
-                </TabsList>
-
-                {/* Aktivitas */}
-                <TabsContent value="aktivitas" className="space-y-6 mt-4">
-                  {badges.length > 0 && (
-                    <Card className="rounded-xl shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <Award className="h-5 w-5 text-primary" /> Badge Saya ({confirmedCount} event)
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                          {badges.map((b) => (
-                            <Badge key={b.label} variant="outline" className="gap-1 py-1.5 px-3">
-                              <b.icon className={`h-4 w-4 ${b.color}`} />
-                              {b.label}
-                            </Badge>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  <Card className="rounded-xl shadow-sm">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base">Sponsor untuk Saya</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <RecommendedSponsors limit={4} />
-                    </CardContent>
-                  </Card>
-
-                  {completedEvents.length > 0 && (
-                    <Card className="rounded-xl shadow-sm">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                          <MessageSquare className="h-5 w-5 text-primary" /> Tulis Testimoni
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-2">
-                          {completedEvents.map((r) => (
-                            <div key={r.id} className="flex items-center justify-between p-3 rounded-lg border border-border">
-                              <div className="min-w-0">
-                                <p className="font-medium text-sm truncate">{(r as any).events?.title}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {(r as any).events?.date ? formatDate((r as any).events.date) : ''}
-                                </p>
-                              </div>
-                              <TestimonialButton eventId={(r as any).events?.id} userId={user!.id} />
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </TabsContent>
-
-                {/* Sewa Gear */}
-                <TabsContent value="sewa" className="mt-4">
-                  <Card className="rounded-xl shadow-sm">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Package className="h-5 w-5 text-primary" /> Sewa Gear Saya
-                        {myRentals.length > 0 && <Badge variant="secondary" className="ml-auto">{myRentals.length}</Badge>}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {myRentals.length === 0 ? (
-                        <div className="text-center py-10">
-                          <Package className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">Belum ada sewa gear.</p>
-                          <Button asChild variant="outline" size="sm" className="mt-3">
-                            <Link to="/shop">Jelajahi Gear</Link>
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="grid sm:grid-cols-2 gap-3">
-                          {myRentals.map((r: any) => <RentalCard key={r.id} rental={r} />)}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* Riwayat */}
-                <TabsContent value="riwayat" className="mt-4">
-                  <Card className="rounded-xl shadow-sm">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-primary" /> Riwayat Pendaftaran
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {!registrations?.length ? (
-                        <div className="text-center py-10">
-                          <CalendarDays className="h-10 w-10 text-muted-foreground/50 mx-auto mb-2" />
-                          <p className="text-sm text-muted-foreground">Belum ada pendaftaran event.</p>
-                          <Button asChild variant="outline" size="sm" className="mt-3">
-                            <Link to="/events">Lihat Events</Link>
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="divide-y divide-border">
-                          {registrations.map((r) => <RegistrationRow key={r.id} reg={r} />)}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* Settings */}
-                <TabsContent value="settings" className="mt-4">
-                  <Card className="rounded-xl shadow-sm">
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Settings className="h-5 w-5 text-primary" /> Informasi Profil
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <Form {...form}>
-                        <form onSubmit={form.handleSubmit((v) => updateProfile.mutate(v))} className="space-y-4">
-                          <FormField control={form.control} name="name" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nama</FormLabel>
-                              <FormControl><Input {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="username" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Username (URL profil publik)</FormLabel>
-                              <FormControl><Input placeholder="rider-keren" {...field} /></FormControl>
-                              {field.value && (
-                                <Link to={`/riders/${field.value}`} className="text-xs text-primary hover:underline">
-                                  → /riders/{field.value}
-                                </Link>
-                              )}
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="phone" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>No. HP</FormLabel>
-                              <FormControl><Input placeholder="08123456789" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="riding_style" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Riding Style</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value || ''}>
-                                <FormControl><SelectTrigger><SelectValue placeholder="Pilih gaya riding" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                  <SelectItem value="santai">Santai</SelectItem>
-                                  <SelectItem value="adventure">Adventure</SelectItem>
-                                  <SelectItem value="touring">Touring</SelectItem>
-                                  <SelectItem value="racing">Racing</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="location" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Lokasi</FormLabel>
-                              <FormControl><Input placeholder="Jakarta, Indonesia" {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <FormField control={form.control} name="bio" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Bio</FormLabel>
-                              <FormControl><Textarea placeholder="Ceritakan tentang kamu..." {...field} /></FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <Button type="submit" disabled={updateProfile.isPending} className="bg-primary hover:bg-primary/90">
-                            {updateProfile.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                            Simpan
-                          </Button>
-                        </form>
-                      </Form>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+        <div className="container max-w-3xl space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <AvatarUpload userId={user!.id} currentUrl={profile?.avatar_url} name={profile?.name} size="lg" />
+              <h1 className="font-heading font-bold text-3xl">Profil Saya</h1>
             </div>
-
-            {/* Sidebar */}
-            <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-              <LiveTrackingWidget activeCount={activeSessions.length} totalCount={trackingSessions.length} />
-              <WalletCard />
-              <SponsorDealsCard />
-            </aside>
+            <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2">
+              <LogOut className="h-4 w-4" /> Keluar
+            </Button>
           </div>
+
+          {/* Badges */}
+          {badges.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" /> Badge Saya ({confirmedCount} event)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {badges.map((b) => (
+                    <Badge key={b.label} variant="outline" className="gap-1 py-1.5 px-3">
+                      <b.icon className={`h-4 w-4 ${b.color}`} />
+                      {b.label}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Informasi Profil</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit((v) => updateProfile.mutate(v))} className="space-y-4">
+                  <FormField control={form.control} name="name" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nama</FormLabel>
+                      <FormControl><Input {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username (URL profil publik)</FormLabel>
+                      <FormControl><Input placeholder="rider-keren" {...field} /></FormControl>
+                      {field.value && (
+                        <Link to={`/riders/${field.value}`} className="text-xs text-primary hover:underline">
+                          → Lihat profil publik: /riders/{field.value}
+                        </Link>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="phone" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>No. HP</FormLabel>
+                      <FormControl><Input placeholder="08123456789" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="riding_style" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Riding Style</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih gaya riding" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="santai">Santai</SelectItem>
+                          <SelectItem value="adventure">Adventure</SelectItem>
+                          <SelectItem value="touring">Touring</SelectItem>
+                          <SelectItem value="racing">Racing</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="location" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lokasi</FormLabel>
+                      <FormControl><Input placeholder="Jakarta, Indonesia" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="bio" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bio</FormLabel>
+                      <FormControl><Textarea placeholder="Ceritakan tentang kamu..." {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="banner_url" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Banner Profil</FormLabel>
+                      <FormControl>
+                        <BannerUpload
+                          userId={user!.id}
+                          currentUrl={field.value}
+                          onUploaded={(url) => field.onChange(url)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <Button type="submit" disabled={updateProfile.isPending}>
+                    {updateProfile.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                    Simpan
+                  </Button>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Personalized Sponsor Recommendations */}
+          <RecommendedSponsors limit={6} />
+
+          {/* Live Tracking Sessions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Navigation className="h-5 w-5 text-primary" /> Live Tracking
+                {activeSessions.length > 0 && <Badge variant="default" className="ml-auto">{activeSessions.length} aktif</Badge>}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {trackingSessions.length === 0 ? (
+                <p className="text-muted-foreground text-sm py-2">Belum ada sesi tracking. Mulai dari halaman event saat hari keberangkatan.</p>
+              ) : (
+                <div className="space-y-2">
+                  {activeSessions.length > 0 && (
+                    <p className="text-sm text-muted-foreground">{activeSessions.length} sesi sedang aktif berbagi lokasi.</p>
+                  )}
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/tracking/manage">Kelola Sesi Tracking</Link>
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* My Rentals */}
+          {myRentals.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" /> Sewa Gear Saya
+                  <Badge variant="secondary" className="ml-auto">{myRentals.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {myRentals.map((r: any) => {
+                    const statusLabel: Record<string, string> = {
+                      pending: 'Menunggu Konfirmasi', confirmed: 'Dikonfirmasi',
+                      picked_up: 'Sedang Disewa', returned: 'Dikembalikan', cancelled: 'Dibatalkan',
+                    };
+                    const statusVariant: any = {
+                      pending: 'outline', confirmed: 'secondary',
+                      picked_up: 'default', returned: 'default', cancelled: 'destructive',
+                    };
+                    return (
+                      <div key={r.id} className="p-3 rounded-lg border border-border flex items-start gap-3">
+                        {r.products?.image_url && <img src={r.products.image_url} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-sm">{r.products?.name}</p>
+                            <Badge variant={statusVariant[r.status]} className="text-[10px]">{statusLabel[r.status]}</Badge>
+                          </div>
+                          {r.products?.vendors?.name && (
+                            <p className="text-xs text-muted-foreground">oleh {r.products.vendors.name}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(r.start_date)} → {formatDate(r.end_date)} • {r.total_days} hari • Qty: {r.qty}
+                          </p>
+                          <p className="text-sm font-semibold text-primary mt-1">
+                            {formatPrice(r.total_price)}
+                            {r.deposit_amount > 0 && <span className="text-xs font-normal text-muted-foreground ml-1">+ deposit {formatPrice(r.deposit_amount)}</span>}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-primary" /> Riwayat Pendaftaran
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!registrations?.length ? (
+                <p className="text-muted-foreground text-sm py-4">Belum ada pendaftaran event.</p>
+              ) : (
+                <div className="space-y-3">
+                  {registrations.map((r) => {
+                    const reg = r as any;
+                    const regTypeLabel = reg.registration_type === 'sharing' ? 'Sharing' : reg.registration_type === 'couple' ? 'Couple' : 'Single';
+                    const paymentStatus = reg.payment_status || 'pending';
+                    const paymentLabel = paymentStatus === 'lunas' ? 'Lunas' : paymentStatus === 'batal' ? 'Batal' : paymentStatus?.startsWith('cicilan_') ? `Cicilan ${paymentStatus.split('_')[1]}` : 'Menunggu Pembayaran';
+                    const paymentVariant = paymentStatus === 'lunas' ? 'default' : paymentStatus === 'batal' ? 'destructive' : paymentStatus?.startsWith('cicilan_') ? 'secondary' : 'outline';
+                    return (
+                      <div key={r.id} className="p-4 rounded-lg border border-border space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{reg.events?.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {reg.events?.date ? formatDate(reg.events.date) : ''} • {reg.events?.location}
+                            </p>
+                          </div>
+                          <div className="text-right space-y-1">
+                            <Badge variant={r.status === 'confirmed' ? 'default' : 'secondary'}>
+                              {r.status === 'confirmed' ? 'Terdaftar' : r.status}
+                            </Badge>
+                            <Badge variant={paymentVariant as any} className="block">
+                              {paymentLabel}
+                              {paymentStatus?.startsWith('cicilan_') && reg.installment_amount > 0 && (
+                                <span className="ml-1">— {formatPrice(reg.installment_amount)}</span>
+                              )}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs">
+                          <Badge variant="outline">{regTypeLabel}</Badge>
+                          {reg.towing_pergi && (
+                            <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> Towing Pergi — {formatPrice(reg.events?.towing_pergi_price || 0)}</Badge>
+                          )}
+                          {reg.towing_pulang && (
+                            <Badge variant="outline" className="gap-1"><Truck className="h-3 w-3" /> Towing Pulang — {formatPrice(reg.events?.towing_pulang_price || 0)}</Badge>
+                          )}
+                        </div>
+                        {(() => {
+                          const ev = reg.events;
+                          if (!ev) return null;
+                          const basePrice = reg.registration_type === 'sharing' ? (ev.price_sharing || 0) : reg.registration_type === 'couple' ? (ev.price_couple || 0) : (ev.price_single || ev.price || 0);
+                          const towingTotal = (reg.towing_pergi ? (ev.towing_pergi_price || 0) : 0) + (reg.towing_pulang ? (ev.towing_pulang_price || 0) : 0);
+                          return <p className="text-sm font-bold text-primary">{formatPrice(basePrice + towingTotal)}</p>;
+                        })()}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Write Testimonials for completed events */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" /> Tulis Testimoni
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {!completedEvents.length ? (
+                <p className="text-muted-foreground text-sm py-4">Belum ada event selesai untuk diberikan testimoni.</p>
+              ) : (
+                <div className="space-y-3">
+                  {completedEvents.map((r) => (
+                    <div key={r.id} className="flex items-center justify-between p-4 rounded-lg border border-border">
+                      <div>
+                        <p className="font-medium">{(r as any).events?.title}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {(r as any).events?.date ? formatDate((r as any).events.date) : ''}
+                        </p>
+                      </div>
+                      <TestimonialButton eventId={(r as any).events?.id} userId={user!.id} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'hsl(24 95% 53% / 0.15)' }}>
+                  <Gift className="h-5 w-5" style={{ color: 'hsl(24 95% 53%)' }} />
+                </div>
+                <div>
+                  <h3 className="font-heading font-semibold">Sponsor Deals</h3>
+                  <p className="text-sm text-muted-foreground">Penawaran eksklusif dari sponsor untuk trip Anda</p>
+                </div>
+              </div>
+              <Button asChild><Link to="/dashboard/sponsor-deals">Lihat Penawaran</Link></Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
       <Footer />
@@ -389,165 +454,64 @@ function TestimonialButton({ eventId, userId }: { eventId: string; userId: strin
   const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: existing, isLoading: existingLoading } = useQuery({
+  const { data: existing } = useQuery({
     queryKey: ['my-testimonial', eventId, userId],
     queryFn: async () => {
-      const { data, error } = await (supabase.from('testimonials') as any)
+      const { data } = await (supabase.from('testimonials') as any)
         .select('*').eq('event_id', eventId).eq('user_id', userId).maybeSingle();
-      if (error) throw error;
       return data;
     },
-    enabled: !!eventId && !!userId,
   });
 
-  // Prefill saat dialog dibuka untuk testimoni pending (boleh edit per RLS)
-  useEffect(() => {
-    if (open) {
-      if (existing && existing.status === 'pending') {
-        setRating(String(existing.rating ?? 5));
-        setContent(existing.content ?? '');
-      } else if (!existing) {
-        setRating('5');
-        setContent('');
-      }
-    }
-  }, [open, existing]);
-
   const submit = async () => {
-    const trimmed = content.trim();
-    if (trimmed.length < 10) {
-      toast({ title: 'Testimoni terlalu pendek', description: 'Minimal 10 karakter.', variant: 'destructive' });
-      return;
-    }
     setLoading(true);
-    let error;
-    if (existing && existing.status === 'pending') {
-      // Update existing pending testimonial
-      ({ error } = await (supabase.from('testimonials') as any)
-        .update({ rating: Number(rating), content: trimmed, updated_at: new Date().toISOString() })
-        .eq('id', existing.id)
-        .eq('user_id', userId));
-    } else {
-      ({ error } = await (supabase.from('testimonials') as any).insert({
-        user_id: userId, event_id: eventId, rating: Number(rating), content: trimmed,
-      }));
-    }
+    const { error } = await (supabase.from('testimonials') as any).insert({
+      user_id: userId, event_id: eventId, rating: Number(rating), content,
+    });
     setLoading(false);
     if (error) {
-      toast({ title: 'Gagal mengirim testimoni', description: error.message, variant: 'destructive' });
+      toast({ title: 'Gagal', description: error.message, variant: 'destructive' });
       return;
     }
-    toast({
-      title: existing ? 'Testimoni diperbarui ✅' : 'Testimoni terkirim ✅',
-      description: 'Akan ditampilkan publik setelah disetujui admin.',
-    });
+    toast({ title: 'Testimoni terkirim! ✅', description: 'Testimoni kamu akan ditampilkan setelah disetujui admin.' });
     setOpen(false);
     queryClient.invalidateQueries({ queryKey: ['my-testimonial', eventId, userId] });
   };
 
-  if (existingLoading) {
-    return <Badge variant="outline" className="text-[10px]">Memuat…</Badge>;
-  }
-
-  // Status badge variants
   if (existing) {
-    const statusMeta: Record<string, { label: string; variant: any; className: string }> = {
-      approved: { label: 'Disetujui', variant: 'default', className: 'bg-emerald-500/15 text-emerald-700 border-emerald-500/30' },
-      pending: { label: 'Menunggu Review', variant: 'secondary', className: 'bg-amber-500/15 text-amber-700 border-amber-500/30' },
-      rejected: { label: 'Ditolak', variant: 'destructive', className: '' },
-    };
-    const meta = statusMeta[existing.status] || statusMeta.pending;
-
-    return (
-      <div className="flex items-center gap-2">
-        <Badge variant="outline" className={`text-[10px] ${meta.className}`}>{meta.label}</Badge>
-        {existing.status === 'pending' && (
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
-                <MessageSquare className="h-3 w-3" /> Edit
-              </Button>
-            </DialogTrigger>
-            <TestimonialDialogContent
-              rating={rating} setRating={setRating}
-              content={content} setContent={setContent}
-              loading={loading} onSubmit={submit}
-              isEdit
-            />
-          </Dialog>
-        )}
-      </div>
-    );
+    return <Badge variant={existing.status === 'approved' ? 'default' : 'secondary'}>{existing.status === 'approved' ? 'Disetujui' : existing.status === 'pending' ? 'Menunggu' : 'Ditolak'}</Badge>;
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1">
-          <MessageSquare className="h-3 w-3" /> Tulis Testimoni
-        </Button>
+        <Button variant="outline" size="sm" className="gap-1"><MessageSquare className="h-3 w-3" /> Tulis</Button>
       </DialogTrigger>
-      <TestimonialDialogContent
-        rating={rating} setRating={setRating}
-        content={content} setContent={setContent}
-        loading={loading} onSubmit={submit}
-      />
+      <DialogContent>
+        <DialogHeader><DialogTitle>Tulis Testimoni</DialogTitle></DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-muted-foreground">Rating</label>
+            <Select value={rating} onValueChange={setRating}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {[5, 4, 3, 2, 1].map(v => (
+                  <SelectItem key={v} value={String(v)}>{'⭐'.repeat(v)} ({v})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm text-muted-foreground">Testimoni</label>
+            <Textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="Ceritakan pengalaman kamu..." rows={4} />
+          </div>
+          <Button className="w-full" onClick={submit} disabled={loading || !content.trim()}>
+            {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            Kirim Testimoni
+          </Button>
+          <p className="text-xs text-muted-foreground text-center">Testimoni akan ditampilkan setelah disetujui oleh admin.</p>
+        </div>
+      </DialogContent>
     </Dialog>
   );
 }
-
-function TestimonialDialogContent({
-  rating, setRating, content, setContent, loading, onSubmit, isEdit = false,
-}: {
-  rating: string; setRating: (v: string) => void;
-  content: string; setContent: (v: string) => void;
-  loading: boolean; onSubmit: () => void; isEdit?: boolean;
-}) {
-  const charCount = content.trim().length;
-  const tooShort = charCount > 0 && charCount < 10;
-
-  return (
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>{isEdit ? 'Edit Testimoni' : 'Tulis Testimoni'}</DialogTitle>
-      </DialogHeader>
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">Rating</label>
-          <Select value={rating} onValueChange={setRating}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {[5, 4, 3, 2, 1].map(v => (
-                <SelectItem key={v} value={String(v)}>{'⭐'.repeat(v)} ({v})</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <label className="text-sm font-medium">Cerita kamu</label>
-          <Textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="Bagaimana pengalaman trip kamu? Cerita rute, suasana, dan kesan keseluruhan…"
-            rows={5}
-            maxLength={500}
-          />
-          <div className="flex items-center justify-between text-xs">
-            <span className={tooShort ? 'text-destructive' : 'text-muted-foreground'}>
-              Min 10 karakter
-            </span>
-            <span className="text-muted-foreground">{charCount}/500</span>
-          </div>
-        </div>
-        <Button className="w-full bg-primary hover:bg-primary/90" onClick={onSubmit} disabled={loading || charCount < 10}>
-          {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {isEdit ? 'Simpan Perubahan' : 'Kirim Testimoni'}
-        </Button>
-        <p className="text-xs text-muted-foreground text-center">
-          Testimoni akan ditampilkan publik setelah disetujui oleh admin.
-        </p>
-      </div>
-    </DialogContent>
-  );
-}
-

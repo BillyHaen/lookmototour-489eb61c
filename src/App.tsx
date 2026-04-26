@@ -42,12 +42,6 @@ import AdminVendors from "./pages/admin/AdminVendors";
 import AdminRentals from "./pages/admin/AdminRentals";
 import AdminEmails from "./pages/admin/AdminEmails";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
-import AdminWallet from "./pages/admin/AdminWallet";
-import AdminPopups from "./pages/admin/AdminPopups";
-import PopupSlider from "./components/PopupSlider";
-import VendorProducts from "./pages/vendor/VendorProducts";
-import VendorRentals from "./pages/vendor/VendorRentals";
-import ShareRedirect from "./pages/ShareRedirect";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,7 +53,6 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <PopupSlider />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/events" element={<Events />} />
@@ -99,17 +92,6 @@ const App = () => (
             <Route path="/admin/rentals" element={<AdminRentals />} />
             <Route path="/admin/emails" element={<AdminEmails />} />
             <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
-            <Route path="/admin/wallet" element={<AdminWallet />} />
-            <Route path="/admin/popups" element={<AdminPopups />} />
-            <Route path="/vendor" element={<VendorProducts />} />
-            <Route path="/vendor/products" element={<VendorProducts />} />
-            <Route path="/vendor/rentals" element={<VendorRentals />} />
-            <Route path="/s/rider/:slug" element={<ShareRedirect to={(s) => `/riders/${s}`} />} />
-            <Route path="/s/blog_post/:slug" element={<ShareRedirect to={(s) => `/blog/${s}`} />} />
-            <Route path="/s/blog/:slug" element={<ShareRedirect to={(s) => `/blog/${s}`} />} />
-            <Route path="/s/trip_journal/:slug" element={<ShareRedirect to={(s) => `/jurnal/${s}`} />} />
-            <Route path="/s/jurnal/:slug" element={<ShareRedirect to={(s) => `/jurnal/${s}`} />} />
-            <Route path="/s/event/:slug" element={<ShareRedirect to={(s) => `/events/${s}`} />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

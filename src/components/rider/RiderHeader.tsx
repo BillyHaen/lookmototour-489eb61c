@@ -1,8 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import TrustBadge, { getTrustTier } from './TrustBadge';
+import TrustBadge from './TrustBadge';
 import FollowButton from './FollowButton';
-import RiderShareButton from './RiderShareButton';
 import AvatarUpload from '@/components/AvatarUpload';
 import BannerUpload from '@/components/BannerUpload';
 import UserAvatar from '@/components/UserAvatar';
@@ -90,7 +89,7 @@ export default function RiderHeader({ rider, isOwner = false }: { rider: RiderPr
           </div>
 
           {/* Actions */}
-          <div className="sm:pb-2 w-full sm:w-auto flex flex-col sm:flex-row gap-2">
+          <div className="sm:pb-2 w-full sm:w-auto">
             {isOwner ? (
               <Button asChild size="sm" className="gap-1.5 w-full sm:w-auto">
                 <Link to="/profile"><Pencil className="h-4 w-4" />Edit Profil</Link>
@@ -100,11 +99,6 @@ export default function RiderHeader({ rider, isOwner = false }: { rider: RiderPr
                 <FollowButton targetUserId={rider.user_id} />
               </div>
             )}
-            <RiderShareButton
-              rider={rider}
-              badge={getTrustTier(rider.trust_score).label}
-              className="w-full sm:w-auto"
-            />
           </div>
         </div>
       </div>

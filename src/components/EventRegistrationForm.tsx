@@ -17,7 +17,6 @@ import { Loader2, CheckCircle2, Heart } from 'lucide-react';
 import type { DbEvent } from '@/hooks/useEvents';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import RentalGearRecommendations, { SelectedRental } from '@/components/RentalGearRecommendations';
-import CreditRedeemInput from '@/components/CreditRedeemInput';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MOTORCYCLES, MOTOR_BRANDS, getModelCategory } from '@/data/motorcycles';
 
@@ -42,7 +41,6 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedRentals, setSelectedRentals] = useState<Record<string, SelectedRental>>({});
-  const [creditRedeem, setCreditRedeem] = useState(0);
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -190,7 +188,6 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
 
     const { data: regId, error } = await (supabase.rpc as any)('create_registration_with_rentals', {
       _event_id: event.id,
-      _credit_redeem: creditRedeem,
       _payload: {
         name: data.name,
         email: data.email,
@@ -459,21 +456,18 @@ export default function EventRegistrationForm({ event }: { event: DbEvent }) {
                 </FormItem>
               )} />
 
-              <CreditRedeemInput totalPrice={selectedPrice} value={creditRedeem} onChange={setCreditRedeem} />
-
               {/* Price breakdown */}
               <div className="p-3 rounded-lg bg-muted/50 space-y-1 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Trip ({selectedType})</span><span>{formatPrice(basePrice)}</span></div>
                 {towingTotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Towing</span><span>{formatPrice(towingTotal)}</span></div>}
                 {rentalsTotal > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Sewa Gear ({Object.keys(selectedRentals).length})</span><span>{formatPrice(rentalsTotal)}</span></div>}
                 {rentalsDeposit > 0 && <div className="flex justify-between text-xs text-muted-foreground"><span>Deposit gear (refundable)</span><span>+ {formatPrice(rentalsDeposit)}</span></div>}
-                {creditRedeem > 0 && <div className="flex justify-between text-xs text-emerald-600"><span>Pakai kredit</span><span>− {formatPrice(creditRedeem)}</span></div>}
-                <div className="flex justify-between font-bold text-base pt-1 border-t border-border"><span>Total</span><span className="text-primary">{formatPrice(Math.max(0, selectedPrice - creditRedeem))}</span></div>
+                <div className="flex justify-between font-bold text-base pt-1 border-t border-border"><span>Total</span><span className="text-primary">{formatPrice(selectedPrice)}</span></div>
               </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {loading ? 'Mendaftar...' : `Kirim Pendaftaran - ${formatPrice(Math.max(0, selectedPrice - creditRedeem))}`}
+                {loading ? 'Mendaftar...' : `Kirim Pendaftaran - ${formatPrice(selectedPrice)}`}
               </Button>
             </form>
           </Form>

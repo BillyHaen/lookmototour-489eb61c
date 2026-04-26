@@ -46,12 +46,6 @@ export function useMyUsername() {
   });
 }
 
-export function buildRiderShareCopy(rider: Pick<RiderProfile, 'name'>, badge: string) {
-  const title = `Riders ${rider.name} – ${badge} | LOOKMOTOTOUR`;
-  const description = `Riders ${rider.name} – ${badge} ada di LOOKMOTOTOUR. Ayo gabung di platform ekosistem motor terbesar di Indonesia bersama ratusan ribu riders!`;
-  return { title, text: description };
-}
-
 export function useRiderTrips(userId?: string) {
   return useQuery({
     queryKey: ['rider-trips', userId],

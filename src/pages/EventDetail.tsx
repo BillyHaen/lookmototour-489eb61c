@@ -431,28 +431,28 @@ export default function EventDetail() {
                   <>
                     <div>
                       <p className="text-sm text-muted-foreground text-center mb-3">Biaya Pendaftaran</p>
-                      <div className="flex flex-col sm:grid sm:grid-cols-3 gap-2">
+                      <div className="grid grid-cols-3 gap-2 text-center">
                         {(event as any).price_sharing > 0 && (
-                          <div className="p-2.5 rounded-lg bg-muted flex items-center justify-between sm:flex-col sm:justify-center sm:text-center gap-2">
+                          <div className="p-2 rounded-lg bg-muted">
                             <p className="text-[10px] text-muted-foreground uppercase font-medium">Sharing</p>
-                            <p className="font-heading font-bold text-sm text-primary whitespace-nowrap">{formatPrice((event as any).price_sharing)}</p>
+                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_sharing)}</p>
                           </div>
                         )}
                         {((event as any).price_single > 0 || event.price > 0) && (
-                          <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-between sm:flex-col sm:justify-center sm:text-center gap-2">
+                          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
                             <p className="text-[10px] text-muted-foreground uppercase font-medium">Single</p>
-                            <p className="font-heading font-bold text-sm text-primary whitespace-nowrap">{formatPrice((event as any).price_single || event.price)}</p>
+                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_single || event.price)}</p>
                           </div>
                         )}
                         {(event as any).price_couple > 0 && (
-                          <div className="p-2.5 rounded-lg bg-muted flex items-center justify-between sm:flex-col sm:justify-center sm:text-center gap-2">
+                          <div className="p-2 rounded-lg bg-muted">
                             <p className="text-[10px] text-muted-foreground uppercase font-medium">Couple</p>
-                            <p className="font-heading font-bold text-sm text-primary whitespace-nowrap">{formatPrice((event as any).price_couple)}</p>
+                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_couple)}</p>
                           </div>
                         )}
                       </div>
                       {(event as any).price_sharing === 0 && (event as any).price_couple === 0 && (event as any).price_single === 0 && event.price === 0 && (
-                        <p className="font-heading font-bold text-3xl text-primary text-center">{formatPrice(0)}</p>
+                        <p className="font-heading font-bold text-3xl text-primary text-center">GRATIS</p>
                       )}
                     </div>
 

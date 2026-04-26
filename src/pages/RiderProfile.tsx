@@ -44,14 +44,11 @@ export default function RiderProfile() {
   const deleteBike = useDeleteBike(rider?.user_id || '');
   const deleteGear = useDeleteGear(rider?.user_id || '');
 
-  const trustLabel = rider ? (rider.trust_score >= 300 ? 'Pro Rider' : rider.trust_score >= 100 ? 'Trusted Rider' : 'New Rider') : '';
   useSeoMeta({
-    title: rider ? `Riders ${rider.name} – ${trustLabel} | LOOKMOTOTOUR` : 'Rider Profile',
-    description: rider
-      ? `Riders ${rider.name} – ${trustLabel} ada di LOOKMOTOTOUR. Ayo gabung di platform ekosistem motor terbesar di Indonesia bersama ratusan ribu riders!`
-      : 'Profil rider LookMotoTour',
+    title: rider ? `${rider.name} (@${rider.username}) – Rider Profile | LookMotoTour` : 'Rider Profile',
+    description: rider ? `${rider.bio || `${rider.total_trips} trip · ${Math.round(Number(rider.total_km))} KM · Trust Score ${rider.trust_score}`}` : 'Profil rider LookMotoTour',
     image: rider?.avatar_url || rider?.banner_url || undefined,
-    url: rider ? `https://lookmototour.com/riders/${rider.username}` : undefined,
+    url: typeof window !== 'undefined' ? window.location.href : undefined,
   });
 
   useEffect(() => {

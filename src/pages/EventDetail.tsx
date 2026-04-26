@@ -108,7 +108,7 @@ export default function EventDetail() {
     <div className="min-h-screen">
       <Navbar />
       <div className="pt-20">
-        <div className="relative h-72 md:h-[28rem] overflow-hidden">
+        <div className="relative h-64 sm:h-72 md:h-[28rem] overflow-hidden">
           <img
             src={event.image_url || eventPlaceholder}
             alt={`${event.title} – ${event.location} motor adventure tour`}
@@ -117,30 +117,30 @@ export default function EventDetail() {
             height={600}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
-          <div className="absolute inset-0 flex flex-col justify-end pb-8">
-            <div className="container">
-              <Button variant="outline" size="sm" className="mb-4 w-fit" style={{ borderColor: 'hsl(0 0% 80%)', color: 'hsl(0 0% 100%)', backgroundColor: 'hsla(0 0% 100% / 0.1)' }} asChild>
+          <div className="absolute inset-0 flex flex-col justify-end pb-6 sm:pb-8">
+            <div className="container px-4 sm:px-6">
+              <Button variant="outline" size="sm" className="mb-3 sm:mb-4 w-fit" style={{ borderColor: 'hsl(0 0% 80%)', color: 'hsl(0 0% 100%)', backgroundColor: 'hsla(0 0% 100% / 0.1)' }} asChild>
                 <Link to="/events"><ArrowLeft className="h-4 w-4 mr-1" /> Kembali</Link>
               </Button>
-              <h1 className="font-heading font-bold text-3xl md:text-5xl lg:text-6xl text-white drop-shadow-lg max-w-4xl">
+              <h1 className="font-heading font-bold text-2xl sm:text-3xl md:text-5xl lg:text-6xl text-white drop-shadow-lg max-w-4xl leading-tight">
                 {event.title}
               </h1>
               {ev.hero_subheadline && (
-                <p className="mt-3 text-lg md:text-xl text-white/90 max-w-3xl drop-shadow">
+                <p className="mt-2 sm:mt-3 text-sm sm:text-lg md:text-xl text-white/90 max-w-3xl drop-shadow line-clamp-2 sm:line-clamp-none">
                   {ev.hero_subheadline}
                 </p>
               )}
-              <div className="mt-5 flex flex-wrap items-center gap-3">
+              <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-2 sm:gap-3">
                 <Button
                   size="lg"
-                  className="gap-2 text-base font-semibold shadow-lg"
+                  className="gap-2 text-sm sm:text-base font-semibold shadow-lg w-full sm:w-auto whitespace-normal sm:whitespace-nowrap text-left sm:text-center h-auto py-3 sm:py-2.5"
                   onClick={() => document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' })}
                 >
-                  <Zap className="h-5 w-5" />
-                  {ev.cta_primary_label || '🔥 Secure Your Slot Now – Limited Riders Only'}
+                  <Zap className="h-5 w-5 shrink-0" />
+                  <span className="leading-tight">{ev.cta_primary_label || '🔥 Secure Your Slot Now – Limited Riders Only'}</span>
                 </Button>
                 {!forceFull && spotsLeft > 0 && spotsLeft <= 10 && (
-                  <span className="px-3 py-1.5 rounded-full bg-destructive text-destructive-foreground text-sm font-bold animate-pulse">
+                  <span className="px-3 py-1.5 rounded-full bg-destructive text-destructive-foreground text-xs sm:text-sm font-bold animate-pulse">
                     🔥 Hanya {spotsLeft} slot tersisa!
                   </span>
                 )}
@@ -149,8 +149,8 @@ export default function EventDetail() {
           </div>
         </div>
 
-        <div className="container py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="container px-4 sm:px-6 py-6 sm:py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-6">
               <div>
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -431,23 +431,23 @@ export default function EventDetail() {
                   <>
                     <div>
                       <p className="text-sm text-muted-foreground text-center mb-3">Biaya Pendaftaran</p>
-                      <div className="grid grid-cols-3 gap-2 text-center">
+                      <div className="flex flex-col sm:grid sm:grid-cols-3 gap-2">
                         {(event as any).price_sharing > 0 && (
-                          <div className="p-2 rounded-lg bg-muted">
+                          <div className="p-2.5 rounded-lg bg-muted flex items-center justify-between sm:flex-col sm:justify-center sm:text-center gap-2">
                             <p className="text-[10px] text-muted-foreground uppercase font-medium">Sharing</p>
-                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_sharing)}</p>
+                            <p className="font-heading font-bold text-sm text-primary whitespace-nowrap">{formatPrice((event as any).price_sharing)}</p>
                           </div>
                         )}
                         {((event as any).price_single > 0 || event.price > 0) && (
-                          <div className="p-2 rounded-lg bg-primary/10 border border-primary/20">
+                          <div className="p-2.5 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-between sm:flex-col sm:justify-center sm:text-center gap-2">
                             <p className="text-[10px] text-muted-foreground uppercase font-medium">Single</p>
-                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_single || event.price)}</p>
+                            <p className="font-heading font-bold text-sm text-primary whitespace-nowrap">{formatPrice((event as any).price_single || event.price)}</p>
                           </div>
                         )}
                         {(event as any).price_couple > 0 && (
-                          <div className="p-2 rounded-lg bg-muted">
+                          <div className="p-2.5 rounded-lg bg-muted flex items-center justify-between sm:flex-col sm:justify-center sm:text-center gap-2">
                             <p className="text-[10px] text-muted-foreground uppercase font-medium">Couple</p>
-                            <p className="font-heading font-bold text-sm text-primary">{formatPrice((event as any).price_couple)}</p>
+                            <p className="font-heading font-bold text-sm text-primary whitespace-nowrap">{formatPrice((event as any).price_couple)}</p>
                           </div>
                         )}
                       </div>

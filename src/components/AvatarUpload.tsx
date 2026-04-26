@@ -10,16 +10,19 @@ interface AvatarUploadProps {
   userId: string;
   currentUrl?: string | null;
   name?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: 'overlay' | 'badge';
+  ringClassName?: string;
 }
 
 const SIZE_MAP = {
   sm: 'h-10 w-10',
   md: 'h-20 w-20',
   lg: 'h-28 w-28',
+  xl: 'h-28 w-28 sm:h-36 sm:w-36',
 };
 
-export default function AvatarUpload({ userId, currentUrl, name, size = 'lg' }: AvatarUploadProps) {
+export default function AvatarUpload({ userId, currentUrl, name, size = 'lg', variant = 'overlay', ringClassName = '' }: AvatarUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -58,7 +61,8 @@ export default function AvatarUpload({ userId, currentUrl, name, size = 'lg' }: 
         .from('profiles').update({ avatar_url: avatarUrl }).eq('user_id', userId);
       if (updateError) throw updateError;
 
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-full', userId] });
+      queryClient.invalidateQueries({ queryKey: ['profile-nav', userId] });
       queryClient.invalidateQueries({ queryKey: ['member-profile'] });
       queryClient.invalidateQueries({ queryKey: ['admin-profiles'] });
       queryClient.invalidateQueries({ queryKey: ['approved-testimonials'] });
@@ -75,21 +79,35 @@ export default function AvatarUpload({ userId, currentUrl, name, size = 'lg' }: 
   const initial = (name || 'U')[0].toUpperCase();
 
   return (
-    <div className="relative group inline-block">
-      <Avatar className={SIZE_MAP[size]}>
+    <div className="relative inline-block">
+      <Avatar className={`${SIZE_MAP[size]} ${ringClassName}`}>
         <AvatarImage src={currentUrl || undefined} alt={name || 'Avatar'} className="object-cover" />
-        <AvatarFallback className="text-lg font-bold bg-primary/10 text-primary">
+        <AvatarFallback className="text-2xl font-bold bg-primary/10 text-primary">
           {initial}
         </AvatarFallback>
       </Avatar>
-      <button
-        type="button"
-        onClick={() => fileRef.current?.click()}
-        disabled={uploading}
-        className="absolute inset-0 flex items-center justify-center rounded-full bg-background/60 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-      >
-        {uploading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <Camera className="h-5 w-5 text-primary" />}
-      </button>
+
+      {variant === 'overlay' ? (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="absolute inset-0 flex items-center justify-center rounded-full bg-background/60 opacity-0 hover:opacity-100 transition-opacity cursor-pointer group"
+        >
+          {uploading ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <Camera className="h-5 w-5 text-primary" />}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          aria-label="Ganti foto profil"
+          className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-full bg-background border border-border shadow-md hover:bg-muted transition-colors"
+        >
+          {uploading ? <Loader2 className="h-4 w-4 animate-spin text-primary" /> : <Camera className="h-4 w-4 text-foreground" />}
+        </button>
+      )}
+
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFile} />
       {cropSrc && (
         <AvatarCropDialog

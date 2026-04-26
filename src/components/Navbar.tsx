@@ -29,12 +29,13 @@ export default function Navbar() {
   const { data: hasActiveTracking } = useActiveTrackingCount();
 
   const { data: profile } = useQuery({
-    queryKey: ['profile', user?.id],
+    queryKey: ['profile-nav', user?.id],
     queryFn: async () => {
-      const { data } = await supabase.from('profiles').select('name, avatar_url').eq('user_id', user!.id).single();
+      const { data } = await supabase.from('profiles').select('name, avatar_url').eq('user_id', user!.id).maybeSingle();
       return data;
     },
     enabled: !!user,
+    staleTime: 60_000,
   });
 
   return (

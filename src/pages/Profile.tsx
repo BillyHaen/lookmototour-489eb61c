@@ -23,7 +23,8 @@ import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
-import BannerUpload from '@/components/BannerUpload';
+import { useMyProfile } from '@/hooks/useProfile';
+
 import RecommendedSponsors from '@/components/RecommendedSponsors';
 
 const BADGES = [
@@ -53,15 +54,7 @@ export default function Profile() {
     if (!authLoading && !user) navigate('/login');
   }, [authLoading, user, navigate]);
 
-  const { data: profile, isLoading: profileLoading } = useQuery({
-    queryKey: ['profile', user?.id],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('user_id', user!.id).single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user,
-  });
+  const { data: profile, isLoading: profileLoading } = useMyProfile();
 
   const { data: registrations } = useQuery({
     queryKey: ['my-registrations', user?.id],
@@ -95,14 +88,19 @@ export default function Profile() {
   });
 
   useEffect(() => {
-    if (profile) {
-      const p = profile as any;
-      form.reset({
-        name: p.name || '', username: p.username || '', phone: p.phone || '', bio: p.bio || '',
-        riding_style: p.riding_style || '', location: p.location || '', banner_url: p.banner_url || '',
-      });
-    }
-  }, [profile, form]);
+    if (!profile) return;
+    const p: any = profile;
+    form.reset({
+      name: p.name ?? '',
+      username: p.username ?? '',
+      phone: p.phone ?? '',
+      bio: p.bio ?? '',
+      riding_style: p.riding_style ?? '',
+      location: p.location ?? '',
+      banner_url: p.banner_url ?? '',
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile]);
 
   const updateProfile = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {
@@ -112,8 +110,10 @@ export default function Profile() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile-full', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile-nav', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['my-username'] });
+      queryClient.invalidateQueries({ queryKey: ['rider'] });
       toast({ title: 'Profil berhasil diperbarui! ✅' });
     },
     onError: (e: Error) => {
@@ -237,19 +237,6 @@ export default function Profile() {
                     <FormItem>
                       <FormLabel>Bio</FormLabel>
                       <FormControl><Textarea placeholder="Ceritakan tentang kamu..." {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="banner_url" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Banner Profil</FormLabel>
-                      <FormControl>
-                        <BannerUpload
-                          userId={user!.id}
-                          currentUrl={field.value}
-                          onUploaded={(url) => field.onChange(url)}
-                        />
-                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />

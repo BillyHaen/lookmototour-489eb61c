@@ -74,6 +74,25 @@ Deno.serve(async (req) => {
       publishedAt = data.created_at || "";
       ogType = "website";
     }
+  } else if (type === "rider") {
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id, name, username, avatar_url, banner_url, trust_score")
+      .eq("username", slug)
+      .single();
+    if (data) {
+      const trustLabel =
+        (data.trust_score ?? 0) >= 300
+          ? "Pro Rider"
+          : (data.trust_score ?? 0) >= 100
+          ? "Trusted Rider"
+          : "New Rider";
+      title = `Riders ${data.name} – ${trustLabel}`;
+      description = `Riders ${data.name} – ${trustLabel} ada di LOOKMOTOTOUR. Ayo gabung di platform ekosistem motor terbesar di Indonesia bersama ratusan ribu riders!`;
+      imageUrl = data.avatar_url || data.banner_url || "";
+      pageUrl = `${siteUrl}/riders/${data.username}`;
+      ogType = "website";
+    }
   }
 
   if (!pageUrl) {

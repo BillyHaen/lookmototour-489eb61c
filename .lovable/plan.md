@@ -1,109 +1,85 @@
 
-## Perbaikan Sinkronisasi Data `/profile` dan `/riders/:username`
 
-Memastikan data profil yang sudah disimpan selalu tampil konsisten di:
-- halaman edit profil `/profile`
-- halaman profil publik `/riders/:username`
+## Fix: WhatsApp Preview Hilang untuk Profil Rider
 
 ### Akar masalah
-Masalah utamanya ada pada cache query frontend:
-- `Navbar.tsx` dan `Profile.tsx` memakai query key yang sama: `['profile', user.id]`
-- tetapi bentuk datanya berbeda:
-  - `Navbar` hanya mengambil `name, avatar_url`
-  - `Profile` mengambil seluruh kolom profil
-- akibatnya cache React Query bisa tertimpa data parsial dari `Navbar`, lalu form di `/profile` ter-reset dengan field kosong saat refresh / render ulang
+URL `https://lookmototour.com/riders/billyhn` di-share langsung. Tidak ada Cloudflare Worker yang mendeteksi crawler (WhatsApp/FB/X) di domain utama, jadi WA mengambil `index.html` statis yang berisi meta tag default LookMotoTour. Edge function `share-meta` tetap berfungsi, tetapi hanya kalau URL pakai prefix `s.lookmototour.com/s/rider/...` — yang tidak terjadi saat user salin URL dari address bar.
 
-Backend bukan sumber masalah:
-- data di tabel `profiles` memang ada
-- akses baca owner juga sudah diizinkan
+`wrangler.jsonc` saat ini hanya mengaktifkan static asset SPA fallback, **tidak ada worker script** yang berjalan di request.
 
-### Yang akan diperbaiki
+### Solusi
+Tambahkan **Cloudflare Worker entry script** yang berjalan untuk setiap request ke `lookmototour.com`:
 
-#### 1. Pisahkan query profil menjadi jelas dan tidak saling menimpa
-Buat pemisahan query key agar tidak collision:
+1. Periksa header `User-Agent`. Kalau cocok regex crawler (`whatsapp|facebookexternalhit|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|skypeuripreview|embedly|redditbot|googlebot|bingbot|applebot|pinterest|tiktok`):
+   - Untuk path `/riders/:username` → proxy ke `share-meta?type=rider&slug=:username&site=https://lookmototour.com`
+   - Untuk path `/blog/:slug` → proxy ke `share-meta?type=blog_post&slug=:slug`
+   - Untuk path `/jurnal/:slug` → proxy ke `share-meta?type=trip_journal&slug=:slug`
+   - Untuk path `/events/:slug` → proxy ke `share-meta?type=event&slug=:slug`
+   - Stream HTML response dari edge function ke crawler (status 200 + meta tag yang benar)
+2. Untuk semua user/UA lain → lanjut ke SPA static asset (perilaku saat ini).
 
-- `['profile-full', user.id]` untuk halaman `/profile`
-- `['profile-nav', user.id]` untuk navbar
-- query rider publik tetap terpisah di `['rider', username]`
+Worker dipasang lewat `wrangler.jsonc` dengan `main: "worker/index.ts"` dan handler `fetch` standar Cloudflare Workers. Static assets tetap di-serve via `env.ASSETS.fetch(request)` untuk request non-crawler.
 
-Hasilnya:
-- navbar tetap ringan
-- halaman profil selalu memakai data lengkap
-- refresh tidak lagi menghilangkan `username`, `nama`, `no. HP`, `riding style`, `lokasi`, `bio`, dan `banner`
-
-#### 2. Rapikan sumber data profil sendiri
-Refactor menjadi pola shared hook agar konsisten:
-
-- `useMyProfile()` untuk full profile user login
-- `useMyProfileSummary()` untuk navbar / kebutuhan ringan
-
-Ini menghindari duplikasi query manual di banyak file dan menjaga struktur data selalu benar.
-
-#### 3. Perbaiki sinkronisasi form di halaman `/profile`
-Di `Profile.tsx`:
-- form hanya di-reset saat data full profile benar-benar tersedia
-- gunakan mapping field yang stabil dan tidak terpengaruh hasil query parsial
-- pertahankan nilai yang sudah ada selama loading/refetch, supaya form tidak sempat “kosong” lalu muncul lagi
-
-Field yang harus tetap tampil setelah refresh:
-- Nama
-- Username
-- No. HP
-- Riding Style
-- Lokasi
-- Bio
-- Avatar
-- Banner URL yang tersimpan
-
-#### 4. Samakan invalidasi cache setelah update/upload
-Setelah user:
-- simpan informasi profil
-- upload avatar
-- upload / hapus banner
-
-maka semua query terkait harus ikut di-refresh dengan key yang benar:
-- `profile-full`
-- `profile-nav`
-- `my-username`
-- `rider`
-
-Ini memastikan perubahan langsung terlihat di kedua halaman tanpa mismatch.
-
-### File yang akan diubah
+### File yang dibuat / diubah
 
 | File | Perubahan |
 |---|---|
-| `src/pages/Profile.tsx` | Ganti query key profil penuh, pakai hook profile penuh, perbaiki reset form agar tidak tertimpa data parsial |
-| `src/components/Navbar.tsx` | Pakai query key khusus navbar / hook summary agar tidak berbenturan dengan halaman profil |
-| `src/components/AvatarUpload.tsx` | Ubah invalidasi query ke key baru supaya avatar update muncul di `/profile` dan `/riders/:username` |
-| `src/components/BannerUpload.tsx` | Ubah invalidasi query ke key baru supaya banner update muncul di kedua halaman |
-| `src/hooks/useRider.ts` atau hook baru `src/hooks/useProfile.ts` | Tambah hook profil sendiri agar pengambilan data full vs summary rapi dan reusable |
+| `worker/index.ts` (baru) | Cloudflare Worker entry: deteksi UA crawler, mapping path → param `share-meta`, proxy fetch ke edge function, fallback ke `env.ASSETS.fetch()` |
+| `wrangler.jsonc` | Tambah `"main": "worker/index.ts"`, binding `ASSETS` (sudah implisit lewat `assets`), set `assets.binding = "ASSETS"` |
 
 ### Detail teknis
-Implementasi cache akan dibuat seperti ini:
 
-```text
-/profile           -> ['profile-full', user.id]
-navbar             -> ['profile-nav', user.id]
-/riders/:username  -> ['rider', username]
+**Mapping path → share-meta param:**
+```ts
+const ROUTES: Array<[RegExp, string]> = [
+  [/^\/riders\/([^\/]+)\/?$/, "rider"],
+  [/^\/blog\/([^\/]+)\/?$/, "blog_post"],
+  [/^\/jurnal\/([^\/]+)\/?$/, "trip_journal"],
+  [/^\/events\/([^\/]+)\/?$/, "event"],
+];
 ```
 
-Prinsipnya:
-- satu key = satu bentuk data
-- jangan reuse query key yang sama untuk payload berbeda
+**Endpoint share-meta:**
+```
+https://efrwzkdfkfvedtdrxrfg.supabase.co/functions/v1/share-meta?type=...&slug=...&site=https://lookmototour.com
+```
+Worker meneruskan `User-Agent` asli supaya edge function tetap mendeteksi crawler dan mengembalikan HTML (bukan redirect 302).
+
+**Worker pseudocode:**
+```ts
+export default {
+  async fetch(req: Request, env: { ASSETS: Fetcher }): Promise<Response> {
+    const url = new URL(req.url);
+    const ua = req.headers.get("user-agent") || "";
+    const isCrawler = /whatsapp|facebookexternalhit|.../i.test(ua);
+
+    if (isCrawler) {
+      for (const [re, type] of ROUTES) {
+        const m = url.pathname.match(re);
+        if (m) {
+          const target = `https://efrwzkdfkfvedtdrxrfg.supabase.co/functions/v1/share-meta?type=${type}&slug=${encodeURIComponent(m[1])}&site=${url.origin}`;
+          const r = await fetch(target, { headers: { "user-agent": ua } });
+          return new Response(r.body, {
+            status: r.status,
+            headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=300" },
+          });
+        }
+      }
+    }
+    return env.ASSETS.fetch(req);
+  },
+};
+```
 
 ### Validasi
-Setelah implementasi, alur berikut harus lolos:
-
-1. Simpan `Nama`, `Username`, `No. HP`, `Riding Style`, `Lokasi`, `Bio` di `/profile`
-2. Refresh `/profile` → semua field tetap tampil
-3. Buka `/riders/{username}` → data yang sama tampil di profil publik
-4. Upload avatar → avatar berubah di `/profile`, navbar, dan `/riders/{username}`
-5. Upload banner → banner tetap tampil setelah refresh
-6. Pindah halaman lalu kembali ke `/profile` → form tidak kosong lagi
-7. Tidak ada flicker kosong akibat refetch navbar
+1. Deploy worker → debug pakai `curl -A "WhatsApp/2.0" https://lookmototour.com/riders/billyhn` → terima HTML dengan `<meta property="og:image" content="{avatar_url}">`, `<meta property="og:title" content="Riders Billy ... – ...">`
+2. Curl tanpa UA crawler → terima SPA `index.html` (tidak berubah)
+3. Tempel ulang `https://lookmototour.com/riders/billyhn` di chat WhatsApp → preview menampilkan **avatar rider**, judul "Riders Billy – {badge}", dan deskripsi excerpt LookMotoTour
+4. Tempel link blog/journal/event → preview meta-nya juga benar (bonus, karena route ikut tertangani)
+5. Browse normal di `/riders/billyhn` → tidak ada perubahan UX, tetap SPA
 
 ### Dampak
-- Tidak perlu perubahan database
-- Tidak perlu perubahan RLS
-- Fokus sepenuhnya di frontend data flow dan cache consistency
+- Tidak mengubah React app, tidak mengubah edge function
+- Hanya menambah entry worker script + binding `ASSETS`
+- Setelah live, semua link riders existing langsung punya preview yang benar — tanpa perlu user pakai prefix `s.lookmototour.com`
+

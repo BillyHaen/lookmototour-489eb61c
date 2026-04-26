@@ -1133,6 +1133,11 @@ export type Database = {
           id: string
           location: string | null
           name: string
+          override_total_km: number | null
+          override_total_trips: number | null
+          override_trust_score: number | null
+          override_updated_at: string | null
+          override_updated_by: string | null
           phone: string | null
           riding_style: string | null
           total_km: number
@@ -1150,6 +1155,11 @@ export type Database = {
           id?: string
           location?: string | null
           name?: string
+          override_total_km?: number | null
+          override_total_trips?: number | null
+          override_trust_score?: number | null
+          override_updated_at?: string | null
+          override_updated_by?: string | null
           phone?: string | null
           riding_style?: string | null
           total_km?: number
@@ -1167,6 +1177,11 @@ export type Database = {
           id?: string
           location?: string | null
           name?: string
+          override_total_km?: number | null
+          override_total_trips?: number | null
+          override_trust_score?: number | null
+          override_updated_at?: string | null
+          override_updated_by?: string | null
           phone?: string | null
           riding_style?: string | null
           total_km?: number
@@ -2082,6 +2097,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_revoke_achievement: {
+        Args: { _code: string; _user_id: string }
+        Returns: undefined
+      }
+      admin_set_rider_overrides: {
+        Args: {
+          _achievement_codes: string[]
+          _km: number
+          _trips: number
+          _trust_score: number
+          _user_id: string
+        }
+        Returns: undefined
+      }
       claim_sponsor_benefit: {
         Args: { _benefit_id: string; _event_id?: string }
         Returns: {

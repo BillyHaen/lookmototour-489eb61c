@@ -74,24 +74,6 @@ Deno.serve(async (req) => {
       publishedAt = data.created_at || "";
       ogType = "website";
     }
-  } else if (type === "rider") {
-    const { data } = await supabase
-      .from("profiles")
-      .select("user_id, name, username, avatar_url, banner_url, trust_score")
-      .eq("username", slug)
-      .single();
-    if (data) {
-      const score = data.trust_score ?? 0;
-      const trustLabel =
-        score >= 300 ? "Pro Rider" : score >= 100 ? "Trusted Rider" : "New Rider";
-      const displayName = data.name || data.username || "Rider";
-      title = `Riders ${displayName} – ${trustLabel}`;
-      description = `Riders ${displayName} – ${trustLabel} ada di LOOKMOTOTOUR. Ayo gabung di platform ekosistem motor terbesar di Indonesia bersama ratusan ribu riders!`;
-      // Prioritize avatar (square, recognizable face) over banner
-      imageUrl = data.avatar_url || data.banner_url || "";
-      pageUrl = `${siteUrl}/riders/${data.username}`;
-      ogType = "website";
-    }
   }
 
   if (!pageUrl) {
@@ -167,7 +149,7 @@ ${publishedAt ? `<meta property="article:published_time" content="${esc(publishe
     headers: {
       ...corsHeaders,
       "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "public, max-age=300, s-maxage=300",
+      "Cache-Control": "public, max-age=3600",
     },
   });
 });

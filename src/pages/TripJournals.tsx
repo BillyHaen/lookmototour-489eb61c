@@ -26,15 +26,11 @@ export default function TripJournals() {
             <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {(journals || []).map((journal: any) => (
+              {(journals || []).map(journal => (
                 <Link key={journal.id} to={`/jurnal/${journal.slug || journal.id}`} className="group">
                   <div className="rounded-xl overflow-hidden border border-border bg-card shadow-card hover:shadow-elevated transition-all duration-300 hover:-translate-y-1">
-                    <div className="aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                      {journal.cover_image ? (
-                        <img src={journal.cover_image} alt={journal.title} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                      ) : (
-                        <Images className="h-12 w-12 text-muted-foreground/30" />
-                      )}
+                    <div className="aspect-video bg-muted flex items-center justify-center">
+                      <Images className="h-12 w-12 text-muted-foreground/30" />
                     </div>
                     <div className="p-5">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">

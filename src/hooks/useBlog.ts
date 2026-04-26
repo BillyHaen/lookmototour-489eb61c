@@ -5,7 +5,7 @@ export function useBlogPosts(includeAll = false) {
   return useQuery({
     queryKey: ['blog-posts', includeAll],
     queryFn: async () => {
-      let query = supabase.from('blog_posts').select('*').order('published_at', { ascending: false, nullsFirst: false });
+      let query = supabase.from('blog_posts').select('*').order('created_at', { ascending: false });
       if (!includeAll) query = query.eq('status', 'published');
       const { data, error } = await query;
       if (error) throw error;
@@ -14,37 +14,17 @@ export function useBlogPosts(includeAll = false) {
   });
 }
 
-export function useBlogPost(slug: string, allowDraft = false) {
+export function useBlogPost(slug: string) {
   return useQuery({
-    queryKey: ['blog-post', slug, allowDraft],
+    queryKey: ['blog-post', slug],
     queryFn: async () => {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
       const column = isUuid ? 'id' : 'slug';
-      const { data, error } = await supabase.from('blog_posts').select('*').eq(column, slug).maybeSingle();
+      const { data, error } = await supabase.from('blog_posts').select('*').eq(column, slug).single();
       if (error) throw error;
-      if (!data) return null;
-      if (data.status !== 'published' && !allowDraft) return null;
       return data;
     },
     enabled: !!slug,
-  });
-}
-
-export function usePostTaxonomy(postId: string | null) {
-  return useQuery({
-    queryKey: ['post-taxonomy', postId],
-    queryFn: async () => {
-      if (!postId) return { categories: [], tags: [] };
-      const [{ data: cats }, { data: tagLinks }] = await Promise.all([
-        supabase.from('blog_post_categories').select('category_id, blog_categories(id, name, slug)').eq('post_id', postId),
-        supabase.from('blog_post_tags').select('tag_id, blog_tags(id, name, slug)').eq('post_id', postId),
-      ]);
-      return {
-        categories: (cats || []).map((c: any) => c.blog_categories).filter(Boolean),
-        tags: (tagLinks || []).map((t: any) => t.blog_tags).filter(Boolean),
-      };
-    },
-    enabled: !!postId,
   });
 }
 
@@ -59,6 +39,7 @@ export function useBlogComments(postId: string) {
         .order('created_at', { ascending: true });
       if (error) throw error;
 
+      // Fetch profiles for comment authors
       const userIds = [...new Set((data || []).map(c => c.user_id))];
       const profiles: Record<string, { name: string; avatar_url: string | null }> = {};
       if (userIds.length > 0) {

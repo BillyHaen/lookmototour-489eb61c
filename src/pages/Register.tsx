@@ -44,10 +44,8 @@ export default function Register() {
     if (error) {
       toast({ title: 'Registrasi gagal', description: error.message, variant: 'destructive' });
     } else {
-      toast({ title: 'Registrasi berhasil! 🎉', description: 'Lengkapi profil kamu dulu ya.' });
-      // If session exists (auto-confirm), go straight to profile.
-      // Otherwise the user must verify email first → send to login.
-      navigate('/login?welcome=1');
+      toast({ title: 'Registrasi berhasil! 🎉', description: 'Silakan cek email untuk verifikasi.' });
+      navigate('/login');
     }
   };
 
@@ -55,7 +53,7 @@ export default function Register() {
     setGoogleLoading(true);
     try {
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: `${window.location.origin}/profile?welcome=1`,
+        redirect_uri: window.location.origin,
       });
       if (result.error) {
         toast({ title: 'Daftar Google gagal', description: String(result.error), variant: 'destructive' });
@@ -63,8 +61,8 @@ export default function Register() {
         return;
       }
       if (result.redirected) return;
-      toast({ title: 'Daftar berhasil! 🎉', description: 'Lengkapi profil kamu dulu ya.' });
-      navigate('/profile?welcome=1');
+      toast({ title: 'Daftar berhasil! 🎉' });
+      navigate('/');
     } catch (err: any) {
       toast({ title: 'Daftar Google gagal', description: err.message, variant: 'destructive' });
       setGoogleLoading(false);

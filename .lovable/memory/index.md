@@ -35,4 +35,3 @@ Use the custom LookMotoTour logo for branding, no generic icons.
 - [Live Tracking](mem://features/live-tracking) — Fase 1 Google Maps share link + per-recipient access token URL
 - [Route Preview](mem://features/route-preview) — Leaflet map, GPX upload, waypoints, elevation chart in event detail
 - [Safety Score](mem://features/safety-score) — Auto-calculated safety score from road_condition, difficulty, fatigue, distance
-- [Rider Identity](mem://features/rider-identity) — Public /riders/:username profiles with garage, achievements, follows, endorsements, trust score

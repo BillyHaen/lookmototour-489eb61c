@@ -9,20 +9,7 @@ export function useTripJournals(includeAll = false) {
       if (!includeAll) query = query.eq('status', 'published');
       const { data, error } = await query;
       if (error) throw error;
-
-      const ids = (data || []).map((j: any) => j.id);
-      const covers: Record<string, string> = {};
-      if (ids.length > 0) {
-        const { data: imgs } = await supabase
-          .from('trip_journal_images')
-          .select('journal_id, image_url, sort_order')
-          .in('journal_id', ids)
-          .order('sort_order', { ascending: true });
-        (imgs || []).forEach((img: any) => {
-          if (!covers[img.journal_id]) covers[img.journal_id] = img.image_url;
-        });
-      }
-      return (data || []).map((j: any) => ({ ...j, cover_image: covers[j.id] || null }));
+      return data;
     },
   });
 }

@@ -228,39 +228,17 @@ async function handleWebhook(req: Request): Promise<Response> {
     newEmail: payload.data.new_email,
   }
 
-  // Create Supabase client first — needed for override lookup
+  // Render React Email to HTML and plain text
+  const html = await renderAsync(React.createElement(EmailTemplate, templateProps))
+  const text = await renderAsync(React.createElement(EmailTemplate, templateProps), {
+    plainText: true,
+  })
+
+  // Enqueue email for async processing by the dispatcher (process-email-queue).
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
-
-  // Check for admin-edited override
-  const applyPlaceholders = (input: string, data: Record<string, any>) =>
-    !input ? input : input.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, k) => {
-      const v = data?.[k]
-      return v === undefined || v === null ? '' : String(v)
-    })
-
-  const { data: override } = await supabase
-    .from('email_template_overrides')
-    .select('subject, body_html, body_text, is_active')
-    .eq('template_name', emailType)
-    .eq('is_active', true)
-    .maybeSingle()
-
-  let html: string
-  let text: string
-  let subject: string
-
-  if (override) {
-    html = applyPlaceholders(override.body_html || '', templateProps)
-    text = applyPlaceholders(override.body_text || '', templateProps) || html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
-    subject = applyPlaceholders(override.subject || '', templateProps) || (EMAIL_SUBJECTS[emailType] || 'Notification')
-  } else {
-    html = await renderAsync(React.createElement(EmailTemplate, templateProps))
-    text = await renderAsync(React.createElement(EmailTemplate, templateProps), { plainText: true })
-    subject = EMAIL_SUBJECTS[emailType] || 'Notification'
-  }
 
   const messageId = crypto.randomUUID()
 
@@ -280,7 +258,7 @@ async function handleWebhook(req: Request): Promise<Response> {
       to: payload.data.email,
       from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
       sender_domain: SENDER_DOMAIN,
-      subject,
+      subject: EMAIL_SUBJECTS[emailType] || 'Notification',
       html,
       text,
       purpose: 'transactional',

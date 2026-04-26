@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,13 +15,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck, Navigation } from 'lucide-react';
+import { Loader2, User, CalendarDays, LogOut, Star, MessageSquare, Award, Shield, Flame, Trophy, Truck, Navigation, Gift, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { formatDate, formatPrice } from '@/data/events';
 import { useMyTrackingSessions } from '@/hooks/useTrackingSession';
+import { useMyRentals } from '@/hooks/useGearRentals';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AvatarUpload from '@/components/AvatarUpload';
+import BannerUpload from '@/components/BannerUpload';
+import RecommendedSponsors from '@/components/RecommendedSponsors';
 
 const BADGES = [
   { min: 1, label: 'Rookie Rider', icon: Star, color: 'text-muted-foreground' },
@@ -33,8 +36,12 @@ const BADGES = [
 
 const schema = z.object({
   name: z.string().min(2, 'Nama minimal 2 karakter'),
+  username: z.string().min(3, 'Username min 3 karakter').regex(/^[a-z0-9-]+$/, 'Hanya huruf kecil, angka, dan tanda hubung').optional().or(z.literal('')),
   phone: z.string().max(20).optional(),
   bio: z.string().max(500).optional(),
+  riding_style: z.string().optional(),
+  location: z.string().max(100).optional(),
+  banner_url: z.string().optional(),
 });
 
 export default function Profile() {
@@ -73,6 +80,7 @@ export default function Profile() {
   const confirmedCount = (registrations || []).filter(r => r.status === 'confirmed').length;
   const badges = BADGES.filter(b => confirmedCount >= b.min);
   const { data: trackingSessions = [] } = useMyTrackingSessions();
+  const { data: myRentals = [] } = useMyRentals();
   const activeSessions = (trackingSessions as any[]).filter(s => s.status === 'active' && new Date(s.expires_at) > new Date());
 
   // Completed events for testimonial
@@ -83,22 +91,29 @@ export default function Profile() {
 
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
-    defaultValues: { name: '', phone: '', bio: '' },
+    defaultValues: { name: '', username: '', phone: '', bio: '', riding_style: '', location: '', banner_url: '' },
   });
 
   useEffect(() => {
     if (profile) {
-      form.reset({ name: profile.name || '', phone: profile.phone || '', bio: profile.bio || '' });
+      const p = profile as any;
+      form.reset({
+        name: p.name || '', username: p.username || '', phone: p.phone || '', bio: p.bio || '',
+        riding_style: p.riding_style || '', location: p.location || '', banner_url: p.banner_url || '',
+      });
     }
   }, [profile, form]);
 
   const updateProfile = useMutation({
     mutationFn: async (values: z.infer<typeof schema>) => {
-      const { error } = await supabase.from('profiles').update(values).eq('user_id', user!.id);
+      const payload: any = { ...values };
+      if (!payload.username) delete payload.username;
+      const { error } = await supabase.from('profiles').update(payload).eq('user_id', user!.id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['my-username'] });
       toast({ title: 'Profil berhasil diperbarui! ✅' });
     },
     onError: (e: Error) => {
@@ -111,7 +126,7 @@ export default function Profile() {
     navigate('/');
   };
 
-  if (authLoading || profileLoading) {
+  if (authLoading || (user && profileLoading)) {
     return (
       <div className="min-h-screen">
         <Navbar />
@@ -121,6 +136,10 @@ export default function Profile() {
         <Footer />
       </div>
     );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
   }
 
   return (
@@ -173,6 +192,18 @@ export default function Profile() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <FormField control={form.control} name="username" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username (URL profil publik)</FormLabel>
+                      <FormControl><Input placeholder="rider-keren" {...field} /></FormControl>
+                      {field.value && (
+                        <Link to={`/riders/${field.value}`} className="text-xs text-primary hover:underline">
+                          → Lihat profil publik: /riders/{field.value}
+                        </Link>
+                      )}
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                   <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem>
                       <FormLabel>No. HP</FormLabel>
@@ -180,10 +211,45 @@ export default function Profile() {
                       <FormMessage />
                     </FormItem>
                   )} />
+                  <FormField control={form.control} name="riding_style" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Riding Style</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''}>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Pilih gaya riding" /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="santai">Santai</SelectItem>
+                          <SelectItem value="adventure">Adventure</SelectItem>
+                          <SelectItem value="touring">Touring</SelectItem>
+                          <SelectItem value="racing">Racing</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="location" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lokasi</FormLabel>
+                      <FormControl><Input placeholder="Jakarta, Indonesia" {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
                   <FormField control={form.control} name="bio" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Bio</FormLabel>
                       <FormControl><Textarea placeholder="Ceritakan tentang kamu..." {...field} /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={form.control} name="banner_url" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Banner Profil</FormLabel>
+                      <FormControl>
+                        <BannerUpload
+                          userId={user!.id}
+                          currentUrl={field.value}
+                          onUploaded={(url) => field.onChange(url)}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -195,6 +261,9 @@ export default function Profile() {
               </Form>
             </CardContent>
           </Card>
+
+          {/* Personalized Sponsor Recommendations */}
+          <RecommendedSponsors limit={6} />
 
           {/* Live Tracking Sessions */}
           <Card>
@@ -219,6 +288,53 @@ export default function Profile() {
               )}
             </CardContent>
           </Card>
+
+          {/* My Rentals */}
+          {myRentals.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Package className="h-5 w-5 text-primary" /> Sewa Gear Saya
+                  <Badge variant="secondary" className="ml-auto">{myRentals.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {myRentals.map((r: any) => {
+                    const statusLabel: Record<string, string> = {
+                      pending: 'Menunggu Konfirmasi', confirmed: 'Dikonfirmasi',
+                      picked_up: 'Sedang Disewa', returned: 'Dikembalikan', cancelled: 'Dibatalkan',
+                    };
+                    const statusVariant: any = {
+                      pending: 'outline', confirmed: 'secondary',
+                      picked_up: 'default', returned: 'default', cancelled: 'destructive',
+                    };
+                    return (
+                      <div key={r.id} className="p-3 rounded-lg border border-border flex items-start gap-3">
+                        {r.products?.image_url && <img src={r.products.image_url} alt="" className="w-12 h-12 rounded object-cover flex-shrink-0" />}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium text-sm">{r.products?.name}</p>
+                            <Badge variant={statusVariant[r.status]} className="text-[10px]">{statusLabel[r.status]}</Badge>
+                          </div>
+                          {r.products?.vendors?.name && (
+                            <p className="text-xs text-muted-foreground">oleh {r.products.vendors.name}</p>
+                          )}
+                          <p className="text-xs text-muted-foreground">
+                            {formatDate(r.start_date)} → {formatDate(r.end_date)} • {r.total_days} hari • Qty: {r.qty}
+                          </p>
+                          <p className="text-sm font-semibold text-primary mt-1">
+                            {formatPrice(r.total_price)}
+                            {r.deposit_amount > 0 && <span className="text-xs font-normal text-muted-foreground ml-1">+ deposit {formatPrice(r.deposit_amount)}</span>}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -307,6 +423,21 @@ export default function Profile() {
                   ))}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-5 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'hsl(24 95% 53% / 0.15)' }}>
+                  <Gift className="h-5 w-5" style={{ color: 'hsl(24 95% 53%)' }} />
+                </div>
+                <div>
+                  <h3 className="font-heading font-semibold">Sponsor Deals</h3>
+                  <p className="text-sm text-muted-foreground">Penawaran eksklusif dari sponsor untuk trip Anda</p>
+                </div>
+              </div>
+              <Button asChild><Link to="/dashboard/sponsor-deals">Lihat Penawaran</Link></Button>
             </CardContent>
           </Card>
         </div>

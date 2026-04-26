@@ -16,6 +16,8 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import Shop from "./pages/Shop";
 import MemberProfile from "./pages/MemberProfile";
+import RiderProfile from "./pages/RiderProfile";
+import RiderMeRedirect from "./pages/RiderMeRedirect";
 import Blog from "./pages/Blog";
 import BlogDetail from "./pages/BlogDetail";
 import TripJournals from "./pages/TripJournals";
@@ -28,10 +30,18 @@ import AdminTestimonials from "./pages/admin/AdminTestimonials";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminBlog from "./pages/admin/AdminBlog";
 import AdminTripJournals from "./pages/admin/AdminTripJournals";
+import AdminMedia from "./pages/admin/AdminMedia";
 import TripMatch from "./pages/TripMatch";
 import TrackingStart from "./pages/TrackingStart";
 import TrackingManage from "./pages/TrackingManage";
 import TrackPublic from "./pages/TrackPublic";
+import SponsorDetail from "./pages/SponsorDetail";
+import SponsorDeals from "./pages/SponsorDeals";
+import AdminSponsors from "./pages/admin/AdminSponsors";
+import AdminVendors from "./pages/admin/AdminVendors";
+import AdminRentals from "./pages/admin/AdminRentals";
+import AdminEmails from "./pages/admin/AdminEmails";
+import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -55,6 +65,8 @@ const App = () => (
             <Route path="/jurnal" element={<TripJournals />} />
             <Route path="/jurnal/:slug" element={<TripJournalDetail />} />
             <Route path="/member/:userId" element={<MemberProfile />} />
+            <Route path="/riders/me" element={<RiderMeRedirect />} />
+            <Route path="/riders/:username" element={<RiderProfile />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={<Profile />} />
@@ -68,10 +80,18 @@ const App = () => (
             <Route path="/admin/settings" element={<AdminSettings />} />
             <Route path="/admin/blog" element={<AdminBlog />} />
             <Route path="/admin/trip-journals" element={<AdminTripJournals />} />
+            <Route path="/admin/media" element={<AdminMedia />} />
             <Route path="/trip-match" element={<TripMatch />} />
             <Route path="/tracking/start/:eventId" element={<TrackingStart />} />
             <Route path="/tracking/manage" element={<TrackingManage />} />
             <Route path="/track/:token" element={<TrackPublic />} />
+            <Route path="/sponsor/:slug" element={<SponsorDetail />} />
+            <Route path="/dashboard/sponsor-deals" element={<SponsorDeals />} />
+            <Route path="/admin/sponsors" element={<AdminSponsors />} />
+            <Route path="/admin/vendors" element={<AdminVendors />} />
+            <Route path="/admin/rentals" element={<AdminRentals />} />
+            <Route path="/admin/emails" element={<AdminEmails />} />
+            <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "og-prerender",
+  "name": "share-proxy",
   "compatibility_date": "2026-04-19",
   "observability": {
     "enabled": true

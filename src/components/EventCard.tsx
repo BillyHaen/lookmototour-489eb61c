@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CalendarDays, MapPin, Users, Gauge, Clock, Zap, Heart, Shield, Map as MapIcon } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, Zap, Heart, Shield, Map as MapIcon, Handshake } from 'lucide-react';
 import { EVENT_CATEGORIES, formatPrice, formatDate, formatTentativeMonth, EventCategory, FATIGUE_LABELS, calculateSafetyScore } from '@/data/events';
 import type { DbEvent } from '@/hooks/useEvents';
+import { useTripSponsors } from '@/hooks/useSponsors';
 import eventPlaceholder from '@/assets/event-placeholder.jpg';
 
 const STATUS_MAP = {
@@ -24,6 +25,7 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
   const forceFull = (event as any).force_full || false;
   const spotsLeft = forceFull ? 0 : event.max_participants - event.current_participants;
   const isFull = spotsLeft <= 0 || forceFull;
+  const { data: sponsors } = useTripSponsors(event.id);
   const safety = calculateSafetyScore({
     road_condition: (event as any).road_condition,
     difficulty: event.difficulty,
@@ -129,6 +131,37 @@ export default function EventCard({ event, interestCount }: { event: DbEvent; in
             </span>
             <span className="text-xs text-muted-foreground">{event.distance}</span>
           </div>
+          {sponsors && sponsors.length > 0 && (
+            <div className="flex items-center gap-2 pt-2 border-t border-border/60">
+              <span className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground shrink-0">
+                <Handshake className="h-3 w-3" style={{ color: 'hsl(24 95% 53%)' }} />
+                <span className="hidden sm:inline">Sponsor</span>
+              </span>
+              <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none flex-1 min-w-0">
+                {sponsors.slice(0, 4).map((s: any) => (
+                  <div
+                    key={s.id}
+                    title={s.name}
+                    className="h-7 sm:h-8 w-12 sm:w-14 shrink-0 rounded bg-muted/40 flex items-center justify-center overflow-hidden"
+                  >
+                    {s.logo_url ? (
+                      <img
+                        src={s.logo_url}
+                        alt={s.name}
+                        loading="lazy"
+                        className="max-h-6 sm:max-h-7 max-w-[44px] sm:max-w-[52px] object-contain grayscale group-hover:grayscale-0 transition-all"
+                      />
+                    ) : (
+                      <span className="text-[10px] font-bold text-muted-foreground truncate px-1">{s.name}</span>
+                    )}
+                  </div>
+                ))}
+                {sponsors.length > 4 && (
+                  <span className="text-[10px] text-muted-foreground shrink-0">+{sponsors.length - 4}</span>
+                )}
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </Link>

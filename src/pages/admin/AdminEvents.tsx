@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
 import { formatPrice, formatDate, formatTentativeMonth, RIDER_LEVELS, MOTOR_TYPES, TOURING_STYLES, FATIGUE_LABELS, ROAD_CONDITION_LABELS, calculateSafetyScore, SAFETY_LEVEL_LABELS } from '@/data/events';
 import { Loader2, Plus, Pencil, Trash2, CalendarDays, Users, Heart, Shield } from 'lucide-react';
+import DataPagination, { DEFAULT_PAGE_SIZE, paginate } from '@/components/admin/DataPagination';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
@@ -20,6 +21,12 @@ import AdminEventInterests from './AdminEventInterests';
 import EventImageUpload from '@/components/EventImageUpload';
 import RouteEditor from '@/components/admin/RouteEditor';
 import type { RouteData } from '@/lib/gpxParser';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import ItineraryEditor, { type ItineraryDay } from '@/components/admin/ItineraryEditor';
+import FaqEditor, { type FaqItem } from '@/components/admin/FaqEditor';
+import ChecklistEditor from '@/components/admin/ChecklistEditor';
+import GalleryEditor, { type GalleryImage } from '@/components/admin/GalleryEditor';
 
 interface EventForm {
   title: string;
@@ -54,6 +61,18 @@ interface EventForm {
   fatigue_level: number;
   tentative_month: string;
   road_condition: number;
+  // ===== SEO landing fields =====
+  meta_title: string;
+  meta_description: string;
+  hero_subheadline: string;
+  cta_primary_label: string;
+  opening_hook: string;
+  why_join: string;
+  experience_section: string;
+  about_destination: string;
+  target_audience: string;
+  trust_section: string;
+  internal_link_blog_tag: string;
 }
 
 function generateSlug(title: string): string {
@@ -74,6 +93,9 @@ const emptyForm: EventForm = {
   towing_enabled: false, towing_description: '', towing_pergi_price: 0, towing_pulang_price: 0,
   rider_level: 'all', motor_types: [], touring_style: 'adventure', riding_hours_per_day: 0, fatigue_level: 1,
   tentative_month: '', road_condition: 3,
+  meta_title: '', meta_description: '', hero_subheadline: '', cta_primary_label: '🔥 Secure Your Slot Now – Limited Riders Only',
+  opening_hook: '', why_join: '', experience_section: '', about_destination: '',
+  target_audience: '', trust_section: '', internal_link_blog_tag: '',
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }
@@ -84,9 +106,16 @@ export default function AdminEvents() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<EventForm>(emptyForm);
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
+  const [seoItinerary, setSeoItinerary] = useState<ItineraryDay[]>([]);
+  const [seoFaq, setSeoFaq] = useState<FaqItem[]>([]);
+  const [seoIncluded, setSeoIncluded] = useState<string[]>([]);
+  const [seoExcluded, setSeoExcluded] = useState<string[]>([]);
+  const [seoGallery, setSeoGallery] = useState<GalleryImage[]>([]);
   const [participantsEvent, setParticipantsEvent] = useState<{ id: string; title: string } | null>(null);
   const [interestsEvent, setInterestsEvent] = useState<{ id: string; title: string } | null>(null);
   const [routeData, setRouteData] = useState<RouteData | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data: events, isLoading } = useQuery({
     queryKey: ['admin-events'],
@@ -111,8 +140,8 @@ export default function AdminEvents() {
         status: finalStatus, difficulty: form.difficulty, distance: form.distance,
         highlights: form.highlights.split(',').map(h => h.trim()).filter(Boolean),
         requirements: form.requirements.split(',').map(r => r.trim()).filter(Boolean),
-        includes: form.includes.split(',').map(i => i.trim()).filter(Boolean),
-        excludes: form.excludes.split(',').map(e => e.trim()).filter(Boolean),
+        includes: seoIncluded.length ? seoIncluded : form.includes.split(',').map(i => i.trim()).filter(Boolean),
+        excludes: seoExcluded.length ? seoExcluded : form.excludes.split(',').map(e => e.trim()).filter(Boolean),
         insurance_enabled: form.insurance_enabled,
         insurance_description: form.insurance_description,
         towing_enabled: form.towing_enabled,
@@ -127,6 +156,21 @@ export default function AdminEvents() {
         tentative_month: form.tentative_month || null,
         road_condition: form.road_condition,
         route_data: routeData,
+        // SEO landing fields
+        meta_title: form.meta_title || null,
+        meta_description: form.meta_description || null,
+        hero_subheadline: form.hero_subheadline || null,
+        cta_primary_label: form.cta_primary_label || null,
+        opening_hook: form.opening_hook || null,
+        why_join: form.why_join || null,
+        experience_section: form.experience_section || null,
+        about_destination: form.about_destination || null,
+        target_audience: form.target_audience || null,
+        trust_section: form.trust_section || null,
+        internal_link_blog_tag: form.internal_link_blog_tag || null,
+        itinerary: seoItinerary,
+        faq: seoFaq,
+        gallery: seoGallery,
       } as any;
 
       let eventId = editId;
@@ -145,20 +189,11 @@ export default function AdminEvents() {
         eventId = data.id;
       }
 
-      // Save itineraries
-      if (eventId) {
+      // Legacy event_itineraries: cleanup once SEO itinerary is in use
+      if (eventId && seoItinerary.length > 0) {
         await supabase.from('event_itineraries' as any).delete().eq('event_id', eventId);
-        if (itineraries.length > 0) {
-          const rows = itineraries.map(it => ({
-            event_id: eventId!,
-            day_number: it.day_number,
-            date: it.date || null,
-            title: it.title,
-            description: it.description,
-          }));
-          await (supabase.from('event_itineraries' as any) as any).insert(rows);
-        }
       }
+
 
       // Notify interested users if date was confirmed
       if (wasConfirmed && eventId) {
@@ -203,7 +238,11 @@ export default function AdminEvents() {
     onError: (e: Error) => toast({ title: 'Gagal menghapus', description: e.message, variant: 'destructive' }),
   });
 
-  const openCreate = () => { setEditId(null); setForm(emptyForm); setItineraries([]); setRouteData(null); setOpen(true); };
+  const openCreate = () => {
+    setEditId(null); setForm(emptyForm); setItineraries([]); setRouteData(null);
+    setSeoItinerary([]); setSeoFaq([]); setSeoIncluded([]); setSeoExcluded([]); setSeoGallery([]);
+    setOpen(true);
+  };
 
   const openEdit = async (event: any) => {
     setEditId(event.id);
@@ -229,15 +268,40 @@ export default function AdminEvents() {
       fatigue_level: event.fatigue_level || 1,
       tentative_month: event.tentative_month || '',
       road_condition: event.road_condition ?? 3,
+      meta_title: event.meta_title || '',
+      meta_description: event.meta_description || '',
+      hero_subheadline: event.hero_subheadline || '',
+      cta_primary_label: event.cta_primary_label || '🔥 Secure Your Slot Now – Limited Riders Only',
+      opening_hook: event.opening_hook || '',
+      why_join: event.why_join || '',
+      experience_section: event.experience_section || '',
+      about_destination: event.about_destination || '',
+      target_audience: event.target_audience || '',
+      trust_section: event.trust_section || '',
+      internal_link_blog_tag: event.internal_link_blog_tag || '',
     });
     setRouteData((event as any).route_data || null);
-    // Load itineraries
-    const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
-    setItineraries((data || []).map((it: any) => ({
-      id: it.id, day_number: it.day_number, date: it.date || '', title: it.title, description: it.description,
-    })));
+    const existingSeo: ItineraryDay[] = Array.isArray(event.itinerary) ? event.itinerary : [];
+    setSeoFaq(Array.isArray(event.faq) ? event.faq : []);
+    setSeoIncluded(((event as any).includes || []) as string[]);
+    setSeoExcluded(((event as any).excludes || []) as string[]);
+    setSeoGallery(Array.isArray(event.gallery) ? event.gallery : []);
+    // Graceful migration: if SEO itinerary empty, hydrate from legacy event_itineraries
+    if (existingSeo.length === 0) {
+      const { data } = await (supabase.from('event_itineraries' as any) as any).select('*').eq('event_id', event.id).order('day_number');
+      const migrated: ItineraryDay[] = (data || []).map((it: any, idx: number) => ({
+        day: it.day_number || idx + 1,
+        title: it.title || '',
+        description: (it.description || '').replace(/<[^>]*>/g, ''),
+      }));
+      setSeoItinerary(migrated);
+    } else {
+      setSeoItinerary(existingSeo);
+    }
+    setItineraries([]);
     setOpen(true);
   };
+
 
   const addItineraryDay = () => {
     const nextDay = itineraries.length + 1;
@@ -265,7 +329,7 @@ export default function AdminEvents() {
         <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
       ) : (
         <div className="space-y-3">
-          {events?.map((event) => (
+          {paginate(events || [], page, pageSize).map((event) => (
             <div key={event.id} className="flex items-center justify-between p-4 rounded-lg border border-border bg-card">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
@@ -310,15 +374,35 @@ export default function AdminEvents() {
             </div>
           ))}
           {!events?.length && <p className="text-muted-foreground text-center py-8">Belum ada event.</p>}
+          {!!events?.length && (
+            <DataPagination
+              page={page}
+              pageSize={pageSize}
+              total={events.length}
+              onPageChange={setPage}
+              onPageSizeChange={setPageSize}
+              className="pt-2"
+            />
+          )}
         </div>
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editId ? 'Edit Event' : 'Tambah Event'}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <Tabs defaultValue="dasar" className="w-full">
+            <TabsList className="grid grid-cols-6 w-full h-auto">
+              <TabsTrigger value="dasar" className="text-xs">📋 Dasar</TabsTrigger>
+              <TabsTrigger value="seo" className="text-xs">🔍 SEO</TabsTrigger>
+              <TabsTrigger value="landing" className="text-xs">📝 Konten</TabsTrigger>
+              <TabsTrigger value="itinerary" className="text-xs">🗓️ Itinerary</TabsTrigger>
+              <TabsTrigger value="checklist" className="text-xs">✅ Include</TabsTrigger>
+              <TabsTrigger value="faq" className="text-xs">❓ FAQ</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dasar" className="space-y-4 mt-4">
             <Input placeholder="Judul Event" value={form.title} onChange={(e) => {
               const newTitle = e.target.value;
               const autoSlug = !editId || form.slug === generateSlug(form.title);
@@ -332,10 +416,6 @@ export default function AdminEvents() {
               </div>
               <p className="text-xs text-muted-foreground mt-1">Otomatis dari judul. Bisa diedit manual.</p>
             </div>
-            <div>
-              <label className="text-sm font-medium mb-1 block">Deskripsi Event</label>
-              <RichTextEditor value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="Deskripsi event..." />
-            </div>
             <div className="grid grid-cols-2 gap-4">
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -345,6 +425,7 @@ export default function AdminEvents() {
                   <SelectItem value="race">Race</SelectItem>
                   <SelectItem value="gathering">Gathering</SelectItem>
                   <SelectItem value="workshop">Workshop</SelectItem>
+                  <SelectItem value="motocamp">🏕️ Motocamp</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={form.difficulty} onValueChange={(v) => setForm({ ...form, difficulty: v })}>
@@ -413,11 +494,7 @@ export default function AdminEvents() {
             </div>
             <Input type="number" placeholder="Maks Peserta" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: Number(e.target.value) })} />
             <EventImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
-            <Input placeholder="Highlights (pisahkan koma)" value={form.highlights} onChange={(e) => setForm({ ...form, highlights: e.target.value })} />
-            <Input placeholder="Persyaratan (pisahkan koma)" value={form.requirements} onChange={(e) => setForm({ ...form, requirements: e.target.value })} />
-            <Input placeholder="Include (pisahkan koma)" value={form.includes} onChange={(e) => setForm({ ...form, includes: e.target.value })} />
-            <Input placeholder="Exclude (pisahkan koma)" value={form.excludes} onChange={(e) => setForm({ ...form, excludes: e.target.value })} />
-            
+
             {/* Asuransi */}
             <div className="flex items-center gap-3 p-3 rounded-lg border border-border">
               <input type="checkbox" id="insurance" checked={form.insurance_enabled} onChange={(e) => setForm({ ...form, insurance_enabled: e.target.checked })} className="h-4 w-4 rounded border-input" />
@@ -563,47 +640,99 @@ export default function AdminEvents() {
               </SelectContent>
             </Select>
 
-            {/* 🗺️ Route Editor */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base flex items-center gap-2">
-                  🗺️ Rute Touring (GPX + Waypoint)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RouteEditor value={routeData} onChange={setRouteData} />
-              </CardContent>
-            </Card>
+            </TabsContent>
 
-            {/* Itinerary Section */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+
+            <TabsContent value="seo" className="space-y-4 mt-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Meta Title (Google)</label>
+                <Input placeholder="Sumba Motor Tour 360 (Exploride) – Ultimate Adventure | Book Now" value={form.meta_title} onChange={(e) => setForm({ ...form, meta_title: e.target.value })} maxLength={70} />
+                <p className="text-xs text-muted-foreground mt-1">{form.meta_title.length}/70 karakter (ideal &lt; 60)</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Meta Description</label>
+                <Textarea rows={3} maxLength={170} placeholder="Join Sumba Exploride 360: epic motor adventure across savanna, beach & off-road trails. Limited slots. Book now." value={form.meta_description} onChange={(e) => setForm({ ...form, meta_description: e.target.value })} />
+                <p className="text-xs text-muted-foreground mt-1">{form.meta_description.length}/170 karakter (ideal &lt; 160)</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Hero Subheadline (di bawah H1)</label>
+                <Textarea rows={2} placeholder="Mis: 5 hari menaklukkan savana, pantai tersembunyi & jalur off-road eksklusif." value={form.hero_subheadline} onChange={(e) => setForm({ ...form, hero_subheadline: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Label CTA Utama</label>
+                <Input placeholder="🔥 Secure Your Slot Now – Limited Riders Only" value={form.cta_primary_label} onChange={(e) => setForm({ ...form, cta_primary_label: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Tag Blog Terkait (Internal Link)</label>
+                <Input placeholder="mis: sumba" value={form.internal_link_blog_tag} onChange={(e) => setForm({ ...form, internal_link_blog_tag: e.target.value })} />
+                <p className="text-xs text-muted-foreground mt-1">Otomatis tampilkan blog dengan tag ini di bagian related.</p>
+              </div>
+              <GalleryEditor value={seoGallery} onChange={setSeoGallery} />
+            </TabsContent>
+
+            <TabsContent value="landing" className="space-y-5 mt-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">🎣 Opening Hook (2–3 paragraf, emosional)</label>
+                <RichTextEditor value={form.opening_hook} onChange={(v) => setForm({ ...form, opening_hook: v })} placeholder="Bayangkan motormu meraung di tengah savana Sumba..." minHeight="120px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">💎 Why Join This Tour</label>
+                <RichTextEditor value={form.why_join} onChange={(v) => setForm({ ...form, why_join: v })} placeholder="Bullet list: terrain unik, off-road, full support..." minHeight="120px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">🌟 What You Will Experience</label>
+                <RichTextEditor value={form.experience_section} onChange={(v) => setForm({ ...form, experience_section: v })} placeholder="Riding experience, landscape, cultural exposure, adrenaline..." minHeight="120px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">🌴 About Destination (300–500 kata, SEO)</label>
+                <RichTextEditor value={form.about_destination} onChange={(v) => setForm({ ...form, about_destination: v })} placeholder="Sumba adalah pulau dengan lanskap savana, pantai..." minHeight="200px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">🎯 Who Is This Trip For</label>
+                <RichTextEditor value={form.target_audience} onChange={(v) => setForm({ ...form, target_audience: v })} placeholder="Skill level, rider type, expectations..." minHeight="100px" />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">🛡️ Why Riders Trust Us (Trust Section)</label>
+                <RichTextEditor value={form.trust_section} onChange={(v) => setForm({ ...form, trust_section: v })} placeholder="Pengalaman, jumlah riders, dokumentasi, profesionalisme..." minHeight="100px" />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="itinerary" className="space-y-6 mt-4">
+              {/* Rute Touring Keseluruhan */}
+              <Card>
+                <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center gap-2">
-                    <CalendarDays className="h-4 w-4 text-primary" /> Itinerary Perhari
+                    🗺️ Rute Touring Keseluruhan (GPX + Waypoint)
                   </CardTitle>
-                  <Button type="button" variant="outline" size="sm" onClick={addItineraryDay}><Plus className="h-3 w-3 mr-1" /> Tambah Hari</Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {itineraries.map((it, i) => (
-                  <div key={i} className="p-3 rounded-lg border border-border space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Hari {it.day_number}</span>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeItinerary(i)}><Trash2 className="h-3 w-3" /></Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input type="date" value={it.date} onChange={(e) => updateItinerary(i, 'date', e.target.value)} placeholder="Tanggal" />
-                      <Input value={it.title} onChange={(e) => updateItinerary(i, 'title', e.target.value)} placeholder="Judul hari ini" />
-                    </div>
-                    <RichTextEditor value={it.description} onChange={(v) => updateItinerary(i, 'description', v)} placeholder="Deskripsi kegiatan hari ini..." minHeight="100px" />
-                  </div>
-                ))}
-                {!itineraries.length && <p className="text-sm text-muted-foreground text-center py-2">Belum ada itinerary.</p>}
-              </CardContent>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <RouteEditor value={routeData} onChange={setRouteData} />
+                </CardContent>
+              </Card>
 
-            <div className="flex gap-3">
+              {/* Itinerary Per Hari + Rute Per Hari */}
+              <div>
+                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <CalendarDays className="h-4 w-4 text-primary" /> Itinerary Per Hari
+                </h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Per hari: judul, deskripsi, gambar SEO (alt), dan rute opsional (start → end, jarak, Google Maps).
+                </p>
+                <ItineraryEditor value={seoItinerary} onChange={setSeoItinerary} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="checklist" className="space-y-5 mt-4">
+              <ChecklistEditor label="✅ What's Included" value={seoIncluded} onChange={setSeoIncluded} placeholder="mis: Penginapan 4 malam" />
+              <ChecklistEditor label="❌ What's Excluded" value={seoExcluded} onChange={setSeoExcluded} placeholder="mis: Tiket pesawat" variant="destructive" />
+            </TabsContent>
+
+            <TabsContent value="faq" className="mt-4">
+              <FaqEditor value={seoFaq} onChange={setSeoFaq} />
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex gap-3 pt-4 border-t mt-4">
               <Button
                 variant="outline"
                 className="flex-1"
@@ -622,7 +751,6 @@ export default function AdminEvents() {
                 {editId ? 'Simpan & Publikasi' : 'Tambah & Publikasi'}
               </Button>
             </div>
-          </div>
         </DialogContent>
       </Dialog>
       {participantsEvent && (

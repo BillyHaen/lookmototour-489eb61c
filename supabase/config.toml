@@ -5,3 +5,17 @@ project_id = "efrwzkdfkfvedtdrxrfg"
     verify_jwt = false
   [functions.process-email-queue]
     verify_jwt = true
+  [functions.recommend-sponsors]
+    verify_jwt = false
+  [functions.send-transactional-email]
+    verify_jwt = false
+  [functions.preview-transactional-email]
+    verify_jwt = false
+  [functions.handle-email-unsubscribe]
+    verify_jwt = false
+  [functions.handle-email-suppression]
+    verify_jwt = false
+  [functions.send-test-email]
+    verify_jwt = false
+  [functions.log-audit-event]
+    verify_jwt = false

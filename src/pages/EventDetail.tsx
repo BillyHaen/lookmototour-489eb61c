@@ -1,9 +1,16 @@
 import { useParams, Link } from 'react-router-dom';
 import RichTextContent from '@/components/RichTextContent';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck, Shield } from 'lucide-react';
+import { CalendarDays, MapPin, Users, Gauge, Clock, ArrowLeft, MessageCircle, Loader2, ShieldCheck, AlertTriangle, CheckCircle2, XCircle, Truck, Shield, Zap, Star } from 'lucide-react';
+import ItinerarySection from '@/components/EventLanding/ItinerarySection';
+import IncludedExcludedSection from '@/components/EventLanding/IncludedExcludedSection';
+import FaqSection from '@/components/EventLanding/FaqSection';
+import GallerySection from '@/components/EventLanding/GallerySection';
+import FinalCtaBanner from '@/components/EventLanding/FinalCtaBanner';
 import ShareButton from '@/components/ShareButton';
 import EventRecommendations from '@/components/EventRecommendations';
+import TripParticipants from '@/components/TripParticipants';
+import TripSponsors from '@/components/TripSponsors';
 import { useSeoMeta } from '@/hooks/useSeoMeta';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -29,16 +36,8 @@ export default function EventDetail() {
   const { user } = useAuth();
   const { data: isConfirmedParticipant } = useIsConfirmedParticipant(event?.id);
 
-  const { data: itineraries } = useQuery({
-    queryKey: ['event-itineraries', event?.id],
-    queryFn: async () => {
-      const { data, error } = await (supabase.from('event_itineraries' as any) as any)
-        .select('*').eq('event_id', event!.id).order('day_number');
-      if (error) return [];
-      return data as any[];
-    },
-    enabled: !!event?.id,
-  });
+  // Legacy event_itineraries removed — itinerary now lives in events.itinerary JSONB
+
 
   const { data: interestCount } = useQuery({
     queryKey: ['event-interest-count', event?.id],
@@ -61,11 +60,15 @@ export default function EventDetail() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const ev: any = event;
+  const metaTitle = ev?.meta_title || (event ? `${event.title} – Motor Adventure Tour | LookMotoTour` : 'Event');
+  const metaDesc = ev?.meta_description || event?.description?.replace(/<[^>]*>/g, '').slice(0, 160);
+
   useSeoMeta({
-    title: event ? `${event.title} - Event` : 'Event',
-    description: event?.description?.replace(/<[^>]*>/g, '').slice(0, 160),
+    title: metaTitle,
+    description: metaDesc,
     image: event?.image_url,
-    url: window.location.href,
+    url: typeof window !== 'undefined' ? window.location.href : undefined,
   });
 
   if (isLoading) {
@@ -105,13 +108,44 @@ export default function EventDetail() {
     <div className="min-h-screen">
       <Navbar />
       <div className="pt-20">
-        <div className="relative h-64 md:h-96 overflow-hidden">
-          <img src={event.image_url || eventPlaceholder} alt={event.title} className="w-full h-full object-cover" width={1920} height={600} />
-          <div className="absolute inset-0 bg-gradient-hero" />
-          <div className="absolute bottom-6 left-0 right-0 container">
-            <Button variant="outline" size="sm" className="mb-4" style={{ borderColor: 'hsl(0 0% 80%)', color: 'hsl(0 0% 100%)', backgroundColor: 'hsla(0 0% 100% / 0.1)' }} asChild>
-              <Link to="/events"><ArrowLeft className="h-4 w-4 mr-1" /> Kembali</Link>
-            </Button>
+        <div className="relative h-72 md:h-[28rem] overflow-hidden">
+          <img
+            src={event.image_url || eventPlaceholder}
+            alt={`${event.title} – ${event.location} motor adventure tour`}
+            className="w-full h-full object-cover"
+            width={1920}
+            height={600}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/70" />
+          <div className="absolute inset-0 flex flex-col justify-end pb-8">
+            <div className="container">
+              <Button variant="outline" size="sm" className="mb-4 w-fit" style={{ borderColor: 'hsl(0 0% 80%)', color: 'hsl(0 0% 100%)', backgroundColor: 'hsla(0 0% 100% / 0.1)' }} asChild>
+                <Link to="/events"><ArrowLeft className="h-4 w-4 mr-1" /> Kembali</Link>
+              </Button>
+              <h1 className="font-heading font-bold text-3xl md:text-5xl lg:text-6xl text-white drop-shadow-lg max-w-4xl">
+                {event.title}
+              </h1>
+              {ev.hero_subheadline && (
+                <p className="mt-3 text-lg md:text-xl text-white/90 max-w-3xl drop-shadow">
+                  {ev.hero_subheadline}
+                </p>
+              )}
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Button
+                  size="lg"
+                  className="gap-2 text-base font-semibold shadow-lg"
+                  onClick={() => document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' })}
+                >
+                  <Zap className="h-5 w-5" />
+                  {ev.cta_primary_label || '🔥 Secure Your Slot Now – Limited Riders Only'}
+                </Button>
+                {!forceFull && spotsLeft > 0 && spotsLeft <= 10 && (
+                  <span className="px-3 py-1.5 rounded-full bg-destructive text-destructive-foreground text-sm font-bold animate-pulse">
+                    🔥 Hanya {spotsLeft} slot tersisa!
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -132,9 +166,79 @@ export default function EventDetail() {
                     <Badge variant="outline">{TOURING_STYLES[(event as any).touring_style as TouringStyle]?.icon} {TOURING_STYLES[(event as any).touring_style as TouringStyle]?.label}</Badge>
                   )}
                 </div>
-                <h1 className="font-heading font-bold text-2xl md:text-4xl mb-2">{event.title}</h1>
-                <RichTextContent content={event.description} className="text-muted-foreground" />
+                {ev.opening_hook && (
+                  <div className="mt-2">
+                    <RichTextContent content={ev.opening_hook} className="text-base leading-relaxed" />
+                  </div>
+                )}
               </div>
+
+
+              {/* Why Join */}
+              {ev.why_join && (
+                <section className="border-t border-border pt-6">
+                  <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4">Why Join {event.title}?</h2>
+                  <RichTextContent content={ev.why_join} />
+                </section>
+              )}
+
+              {/* What You Will Experience */}
+              {ev.experience_section && (
+                <section className="border-t border-border pt-6">
+                  <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4">What You'll Experience</h2>
+                  <RichTextContent content={ev.experience_section} />
+                  {(ev.gallery || []).length > 0 && <GallerySection gallery={ev.gallery} />}
+                </section>
+              )}
+
+              {/* Itinerary + Route (new SEO-friendly structure) */}
+              <ItinerarySection itinerary={ev.itinerary || []} />
+
+              {/* Rute Touring Keseluruhan — visible to logged-in users */}
+              {user ? (
+                <RoutePreview routeData={(event as any).route_data} />
+              ) : (
+                (event as any).route_data && (
+                  <Card className="border-2 border-destructive/40 bg-destructive/5">
+                    <CardContent className="pt-6">
+                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
+                        <MapPin className="h-5 w-5 text-destructive" /> Rute Touring Keseluruhan
+                      </h3>
+                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
+                        <Lock className="h-8 w-8 mx-auto" />
+                        <p className="font-semibold">Login/Daftar untuk melihat</p>
+                        <div className="flex gap-2 justify-center">
+                          <Button size="sm" variant="secondary" asChild>
+                            <Link to="/login">Login</Link>
+                          </Button>
+                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
+                            <Link to="/register">Daftar</Link>
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              )}
+
+              {/* About Destination — SEO body */}
+              {ev.about_destination && (
+                <section className="border-t border-border pt-6">
+                  <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4">About {event.location} Adventure Tour</h2>
+                  <RichTextContent content={ev.about_destination} />
+                </section>
+              )}
+
+              {/* Included / Excluded */}
+              <IncludedExcludedSection included={ev.included || event.includes} excluded={ev.excluded || event.excludes} />
+
+              {/* Target Audience */}
+              {ev.target_audience && (
+                <section className="border-t border-border pt-6">
+                  <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4">Who Is This Trip For</h2>
+                  <RichTextContent content={ev.target_audience} />
+                </section>
+              )}
 
               <div className={`grid grid-cols-2 ${isTentative ? 'md:grid-cols-3' : 'md:grid-cols-4'} gap-4`}>
                 {[
@@ -278,66 +382,8 @@ export default function EventDetail() {
                 );
               })()}
 
-              <div>
-                <h2 className="font-heading font-semibold text-xl mb-3">Highlight Event</h2>
-                <div className="grid grid-cols-2 gap-2">
-                  {(event.highlights || []).map((h) => (
-                    <div key={h} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                      <span className="text-primary">✓</span> {h}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              {/* Highlights / Requirements / Includes / Excludes are now rendered via SEO sections (Why Join, Target Audience, IncludedExcludedSection) above */}
 
-              {/* Persyaratan */}
-              {(event as any).requirements && (event as any).requirements.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-accent" /> Persyaratan
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).requirements as string[]).map((r) => (
-                      <div key={r} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-accent">•</span> {r}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Include */}
-              {(event as any).includes && (event as any).includes.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary" /> Include
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).includes as string[]).map((item) => (
-                      <div key={item} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-primary">✓</span> {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Exclude */}
-              {(event as any).excludes && (event as any).excludes.length > 0 && (
-                <div>
-                  <h2 className="font-heading font-semibold text-xl mb-3 flex items-center gap-2">
-                    <XCircle className="h-5 w-5 text-destructive" /> Exclude
-                  </h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    {((event as any).excludes as string[]).map((item) => (
-                      <div key={item} className="flex items-center gap-2 p-3 rounded-lg bg-muted text-sm">
-                        <span className="text-destructive">✗</span> {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Asuransi */}
               {(event as any).insurance_enabled && (
                 <Card className="border-primary/20">
                   <CardContent className="flex items-start gap-3 pt-6">
@@ -371,85 +417,11 @@ export default function EventDetail() {
                 </Card>
               )}
 
-              {/* 🗺️ Route Preview */}
-              {user ? (
-                <RoutePreview routeData={(event as any).route_data} />
-              ) : (
-                (event as any).route_data && (
-                  <Card className="border-2 border-destructive/40 bg-destructive/5">
-                    <CardContent className="pt-6">
-                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
-                        <MapPin className="h-5 w-5 text-destructive" /> Rute Touring
-                      </h3>
-                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
-                        <Lock className="h-8 w-8 mx-auto" />
-                        <p className="font-semibold">Login/Daftar untuk melihat</p>
-                        <div className="flex gap-2 justify-center">
-                          <Button size="sm" variant="secondary" asChild>
-                            <Link to="/login">Login</Link>
-                          </Button>
-                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
-                            <Link to="/register">Daftar</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              )}
-
-              {/* Itinerary */}
-              {itineraries && itineraries.length > 0 && (
-                user ? (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-xl flex items-center gap-2">
-                        <CalendarDays className="h-5 w-5 text-primary" /> Itinerary Perjalanan
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {itineraries.map((it: any) => (
-                          <div key={it.id} className="relative pl-6 pb-4 border-l-2 border-primary/20 last:border-l-0">
-                            <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-primary" />
-                            <div>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-heading font-semibold">Hari {it.day_number}</span>
-                                {it.date && <Badge variant="outline" className="text-xs">{formatDate(it.date)}</Badge>}
-                              </div>
-                              <p className="font-medium">{it.title}</p>
-                              <RichTextContent content={it.description} className="text-sm text-muted-foreground" />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card className="border-2 border-destructive/40 bg-destructive/5">
-                    <CardContent className="pt-6">
-                      <h3 className="font-heading font-semibold text-lg flex items-center gap-2 mb-3">
-                        <CalendarDays className="h-5 w-5 text-destructive" /> Itinerary Perjalanan
-                      </h3>
-                      <div className="rounded-lg bg-destructive text-destructive-foreground p-6 text-center space-y-3">
-                        <Lock className="h-8 w-8 mx-auto" />
-                        <p className="font-semibold">Login/Daftar untuk melihat</p>
-                        <div className="flex gap-2 justify-center">
-                          <Button size="sm" variant="secondary" asChild>
-                            <Link to="/login">Login</Link>
-                          </Button>
-                          <Button size="sm" variant="outline" className="bg-transparent text-destructive-foreground border-destructive-foreground/40 hover:bg-destructive-foreground/10 hover:text-destructive-foreground" asChild>
-                            <Link to="/register">Daftar</Link>
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              )}
+              {/* Route Preview & per-day itinerary moved into ItinerarySection above (SEO-friendly) */}
             </div>
 
-            <div className="space-y-4">
+
+            <div className="space-y-4" id="booking-section">
               <div className="p-6 rounded-xl bg-card shadow-card border border-border space-y-4 sticky top-24">
                 {isTentative ? (
                   <div className="text-center py-4">
@@ -541,8 +513,79 @@ export default function EventDetail() {
             </div>
           </div>
 
+          {/* Why Riders Trust Us */}
+          {ev.trust_section && (
+            <section className="border-t border-border pt-10 mt-10">
+              <h2 className="font-heading font-bold text-2xl md:text-3xl mb-4 flex items-center gap-2">
+                <Star className="h-6 w-6 text-primary" /> Why Riders Trust LookMotoTour
+              </h2>
+              <RichTextContent content={ev.trust_section} />
+            </section>
+          )}
+
+          {/* FAQ */}
+          <FaqSection faq={ev.faq || []} />
+
+          {/* Final CTA Banner */}
+          <FinalCtaBanner
+            ctaLabel={ev.cta_primary_label || 'Book Your Adventure Today'}
+            spotsLeft={spotsLeft}
+            onCtaClick={() => document.getElementById('booking-section')?.scrollIntoView({ behavior: 'smooth' })}
+          />
+
+          {/* Trip Sponsors */}
+          <div className="mt-8"><TripSponsors eventId={event.id} /></div>
+
+          {/* Riders yang ikut trip ini */}
+          <TripParticipants eventId={event.id} />
+
           {/* Rekomendasi Event */}
           <EventRecommendations currentEvent={event} />
+
+          {/* Internal links — homepage anchor for SEO */}
+          <div className="mt-10 pt-6 border-t border-border text-sm text-muted-foreground">
+            <p>
+              Lihat lebih banyak{' '}
+              <Link to="/" className="text-primary hover:underline font-medium">
+                motor adventure tour Indonesia
+              </Link>
+              {' '}atau baca panduan lengkap di{' '}
+              <Link to="/blog" className="text-primary hover:underline font-medium">
+                blog perjalanan kami
+              </Link>.
+            </p>
+          </div>
+
+          {/* JSON-LD: Event schema */}
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'Event',
+                name: event.title,
+                description: metaDesc,
+                startDate: event.date,
+                endDate: event.end_date || event.date,
+                eventStatus: 'https://schema.org/EventScheduled',
+                eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+                location: {
+                  '@type': 'Place',
+                  name: event.location,
+                  address: { '@type': 'PostalAddress', addressLocality: event.location, addressCountry: 'ID' },
+                },
+                image: event.image_url ? [event.image_url] : undefined,
+                offers: {
+                  '@type': 'Offer',
+                  price: ev.price_single || event.price || 0,
+                  priceCurrency: 'IDR',
+                  availability: spotsLeft > 0 ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+                  url: typeof window !== 'undefined' ? window.location.href : '',
+                },
+                organizer: { '@type': 'Organization', name: 'LookMotoTour', url: 'https://lookmototour.com' },
+              }),
+            }}
+          />
         </div>
       </div>
       <Footer />

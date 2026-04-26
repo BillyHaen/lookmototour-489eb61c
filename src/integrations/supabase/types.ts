@@ -14,6 +14,111 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievements: {
+        Row: {
+          code: string
+          criteria_type: string
+          description: string
+          icon: string
+          name: string
+          sort_order: number
+          threshold: number
+        }
+        Insert: {
+          code: string
+          criteria_type: string
+          description?: string
+          icon?: string
+          name: string
+          sort_order?: number
+          threshold: number
+        }
+        Update: {
+          code?: string
+          criteria_type?: string
+          description?: string
+          icon?: string
+          name?: string
+          sort_order?: number
+          threshold?: number
+        }
+        Relationships: []
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          status: string
+          table_name: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          status?: string
+          table_name?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          status?: string
+          table_name?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      blog_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       blog_comments: {
         Row: {
           content: string
@@ -59,15 +164,77 @@ export type Database = {
           },
         ]
       }
+      blog_post_categories: {
+        Row: {
+          category_id: string
+          post_id: string
+        }
+        Insert: {
+          category_id: string
+          post_id: string
+        }
+        Update: {
+          category_id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "blog_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_categories_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_post_tags: {
+        Row: {
+          post_id: string
+          tag_id: string
+        }
+        Insert: {
+          post_id: string
+          tag_id: string
+        }
+        Update: {
+          post_id?: string
+          tag_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_post_tags_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_post_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "blog_tags"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       blog_posts: {
         Row: {
           author_id: string
           content: string
           created_at: string
           excerpt: string
+          gallery: Json
           id: string
           image_url: string | null
           published_at: string | null
+          scheduled_at: string | null
           slug: string
           status: string
           title: string
@@ -78,9 +245,11 @@ export type Database = {
           content?: string
           created_at?: string
           excerpt?: string
+          gallery?: Json
           id?: string
           image_url?: string | null
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title: string
@@ -91,13 +260,36 @@ export type Database = {
           content?: string
           created_at?: string
           excerpt?: string
+          gallery?: Json
           id?: string
           image_url?: string | null
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      blog_tags: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
         }
         Relationships: []
       }
@@ -164,6 +356,42 @@ export type Database = {
         }
         Relationships: []
       }
+      email_template_overrides: {
+        Row: {
+          body_html: string
+          body_text: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          subject: string
+          template_name: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body_html?: string
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          subject?: string
+          template_name: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body_html?: string
+          body_text?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          subject?: string
+          template_name?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       email_unsubscribe_tokens: {
         Row: {
           created_at: string
@@ -185,6 +413,33 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+        }
+        Relationships: []
+      }
+      endorsements: {
+        Row: {
+          content: string
+          created_at: string
+          from_user_id: string
+          id: string
+          rating: number
+          to_user_id: string
+        }
+        Insert: {
+          content?: string
+          created_at?: string
+          from_user_id: string
+          id?: string
+          rating: number
+          to_user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          rating?: number
+          to_user_id?: string
         }
         Relationships: []
       }
@@ -337,8 +592,10 @@ export type Database = {
       }
       events: {
         Row: {
+          about_destination: string | null
           category: string
           created_at: string
+          cta_primary_label: string | null
           current_participants: number
           date: string
           deleted_at: string | null
@@ -347,17 +604,26 @@ export type Database = {
           distance: string | null
           end_date: string | null
           excludes: string[] | null
+          experience_section: string | null
+          faq: Json
           fatigue_level: number
           force_full: boolean
+          gallery: Json
+          hero_subheadline: string | null
           highlights: string[] | null
           id: string
           image_url: string | null
           includes: string[] | null
           insurance_description: string | null
           insurance_enabled: boolean
+          internal_link_blog_tag: string | null
+          itinerary: Json
           location: string
           max_participants: number
+          meta_description: string | null
+          meta_title: string | null
           motor_types: string[]
+          opening_hook: string | null
           price: number
           price_couple: number
           price_sharing: number
@@ -369,6 +635,7 @@ export type Database = {
           route_data: Json | null
           slug: string
           status: string
+          target_audience: string | null
           tentative_month: string | null
           title: string
           touring_style: string
@@ -376,11 +643,15 @@ export type Database = {
           towing_enabled: boolean
           towing_pergi_price: number
           towing_pulang_price: number
+          trust_section: string | null
           updated_at: string
+          why_join: string | null
         }
         Insert: {
+          about_destination?: string | null
           category?: string
           created_at?: string
+          cta_primary_label?: string | null
           current_participants?: number
           date: string
           deleted_at?: string | null
@@ -389,17 +660,26 @@ export type Database = {
           distance?: string | null
           end_date?: string | null
           excludes?: string[] | null
+          experience_section?: string | null
+          faq?: Json
           fatigue_level?: number
           force_full?: boolean
+          gallery?: Json
+          hero_subheadline?: string | null
           highlights?: string[] | null
           id?: string
           image_url?: string | null
           includes?: string[] | null
           insurance_description?: string | null
           insurance_enabled?: boolean
+          internal_link_blog_tag?: string | null
+          itinerary?: Json
           location?: string
           max_participants?: number
+          meta_description?: string | null
+          meta_title?: string | null
           motor_types?: string[]
+          opening_hook?: string | null
           price?: number
           price_couple?: number
           price_sharing?: number
@@ -411,6 +691,7 @@ export type Database = {
           route_data?: Json | null
           slug?: string
           status?: string
+          target_audience?: string | null
           tentative_month?: string | null
           title: string
           touring_style?: string
@@ -418,11 +699,15 @@ export type Database = {
           towing_enabled?: boolean
           towing_pergi_price?: number
           towing_pulang_price?: number
+          trust_section?: string | null
           updated_at?: string
+          why_join?: string | null
         }
         Update: {
+          about_destination?: string | null
           category?: string
           created_at?: string
+          cta_primary_label?: string | null
           current_participants?: number
           date?: string
           deleted_at?: string | null
@@ -431,17 +716,26 @@ export type Database = {
           distance?: string | null
           end_date?: string | null
           excludes?: string[] | null
+          experience_section?: string | null
+          faq?: Json
           fatigue_level?: number
           force_full?: boolean
+          gallery?: Json
+          hero_subheadline?: string | null
           highlights?: string[] | null
           id?: string
           image_url?: string | null
           includes?: string[] | null
           insurance_description?: string | null
           insurance_enabled?: boolean
+          internal_link_blog_tag?: string | null
+          itinerary?: Json
           location?: string
           max_participants?: number
+          meta_description?: string | null
+          meta_title?: string | null
           motor_types?: string[]
+          opening_hook?: string | null
           price?: number
           price_couple?: number
           price_sharing?: number
@@ -453,6 +747,7 @@ export type Database = {
           route_data?: Json | null
           slug?: string
           status?: string
+          target_audience?: string | null
           tentative_month?: string | null
           title?: string
           touring_style?: string
@@ -460,7 +755,214 @@ export type Database = {
           towing_enabled?: boolean
           towing_pergi_price?: number
           towing_pulang_price?: number
+          trust_section?: string | null
           updated_at?: string
+          why_join?: string | null
+        }
+        Relationships: []
+      }
+      follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+        }
+        Relationships: []
+      }
+      garage_bikes: {
+        Row: {
+          brand: string
+          created_at: string
+          description: string | null
+          id: string
+          model: string
+          photo_url: string | null
+          updated_at: string
+          user_id: string
+          year: number | null
+        }
+        Insert: {
+          brand?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          model?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id: string
+          year?: number | null
+        }
+        Update: {
+          brand?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          model?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      garage_gear: {
+        Row: {
+          brand: string
+          category: string
+          created_at: string
+          id: string
+          name: string
+          photo_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          brand?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          brand?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      gear_rentals: {
+        Row: {
+          created_at: string
+          daily_price: number
+          deposit_amount: number
+          end_date: string
+          event_id: string | null
+          id: string
+          pickup_notes: string | null
+          product_id: string
+          qty: number
+          registration_id: string | null
+          return_notes: string | null
+          start_date: string
+          status: Database["public"]["Enums"]["gear_rental_status"]
+          total_days: number
+          total_price: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          daily_price?: number
+          deposit_amount?: number
+          end_date: string
+          event_id?: string | null
+          id?: string
+          pickup_notes?: string | null
+          product_id: string
+          qty?: number
+          registration_id?: string | null
+          return_notes?: string | null
+          start_date: string
+          status?: Database["public"]["Enums"]["gear_rental_status"]
+          total_days?: number
+          total_price?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          daily_price?: number
+          deposit_amount?: number
+          end_date?: string
+          event_id?: string | null
+          id?: string
+          pickup_notes?: string | null
+          product_id?: string
+          qty?: number
+          registration_id?: string | null
+          return_notes?: string | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["gear_rental_status"]
+          total_days?: number
+          total_price?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gear_rentals_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gear_rentals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gear_rentals_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "event_registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_library: {
+        Row: {
+          bucket: string
+          created_at: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id: string
+          mime_type: string | null
+          size_bytes: number | null
+          uploaded_by: string
+        }
+        Insert: {
+          bucket: string
+          created_at?: string
+          file_name: string
+          file_type: string
+          file_url: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          uploaded_by: string
+        }
+        Update: {
+          bucket?: string
+          created_at?: string
+          file_name?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+          size_bytes?: number | null
+          uploaded_by?: string
         }
         Relationships: []
       }
@@ -494,75 +996,185 @@ export type Database = {
         }
         Relationships: []
       }
+      product_recommendations_log: {
+        Row: {
+          computed_at: string
+          event_id: string | null
+          id: string
+          product_id: string
+          reason: Json
+          score: number
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string
+          event_id?: string | null
+          id?: string
+          product_id: string
+          reason?: Json
+          score?: number
+          user_id: string
+        }
+        Update: {
+          computed_at?: string
+          event_id?: string | null
+          id?: string
+          product_id?: string
+          reason?: Json
+          score?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_recommendations_log_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_recommendations_log_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category: string
           created_at: string
+          daily_rent_price: number
           description: string
+          gear_type: string | null
           id: string
           image_url: string | null
           is_active: boolean
+          is_purchasable: boolean
+          is_rentable: boolean
+          min_difficulty: number
+          motor_brands: string[]
           name: string
           price: number
+          rent_deposit: number
+          sold_count: number
           stock: number
+          suitable_motor_types: string[]
+          suitable_trip_styles: string[]
+          total_inventory: number
           updated_at: string
+          vendor_id: string | null
         }
         Insert: {
           category?: string
           created_at?: string
+          daily_rent_price?: number
           description?: string
+          gear_type?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_purchasable?: boolean
+          is_rentable?: boolean
+          min_difficulty?: number
+          motor_brands?: string[]
           name: string
           price?: number
+          rent_deposit?: number
+          sold_count?: number
           stock?: number
+          suitable_motor_types?: string[]
+          suitable_trip_styles?: string[]
+          total_inventory?: number
           updated_at?: string
+          vendor_id?: string | null
         }
         Update: {
           category?: string
           created_at?: string
+          daily_rent_price?: number
           description?: string
+          gear_type?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_purchasable?: boolean
+          is_rentable?: boolean
+          min_difficulty?: number
+          motor_brands?: string[]
           name?: string
           price?: number
+          rent_deposit?: number
+          sold_count?: number
           stock?: number
+          suitable_motor_types?: string[]
+          suitable_trip_styles?: string[]
+          total_inventory?: number
           updated_at?: string
+          vendor_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
           avatar_url: string | null
+          banner_url: string | null
           bio: string | null
           created_at: string
           id: string
+          location: string | null
           name: string
           phone: string | null
+          riding_style: string | null
+          total_km: number
+          total_trips: number
+          trust_score: number
           updated_at: string
           user_id: string
+          username: string | null
         }
         Insert: {
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
           id?: string
+          location?: string | null
           name?: string
           phone?: string | null
+          riding_style?: string | null
+          total_km?: number
+          total_trips?: number
+          trust_score?: number
           updated_at?: string
           user_id: string
+          username?: string | null
         }
         Update: {
           avatar_url?: string | null
+          banner_url?: string | null
           bio?: string | null
           created_at?: string
           id?: string
+          location?: string | null
           name?: string
           phone?: string | null
+          riding_style?: string | null
+          total_km?: number
+          total_trips?: number
+          trust_score?: number
           updated_at?: string
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -614,6 +1226,494 @@ export type Database = {
           key?: string
           updated_at?: string
           value?: Json
+        }
+        Relationships: []
+      }
+      sponsor_ai_config: {
+        Row: {
+          id: number
+          updated_at: string
+          use_ai_rerank: boolean
+          weight_behavior: number
+          weight_performance: number
+          weight_priority: number
+          weight_relevance: number
+          weight_trip_context: number
+        }
+        Insert: {
+          id?: number
+          updated_at?: string
+          use_ai_rerank?: boolean
+          weight_behavior?: number
+          weight_performance?: number
+          weight_priority?: number
+          weight_relevance?: number
+          weight_trip_context?: number
+        }
+        Update: {
+          id?: number
+          updated_at?: string
+          use_ai_rerank?: boolean
+          weight_behavior?: number
+          weight_performance?: number
+          weight_priority?: number
+          weight_relevance?: number
+          weight_trip_context?: number
+        }
+        Relationships: []
+      }
+      sponsor_benefit_claims: {
+        Row: {
+          benefit_id: string
+          claim_code: string
+          created_at: string
+          event_id: string | null
+          id: string
+          status: Database["public"]["Enums"]["sponsor_claim_status"]
+          user_id: string
+        }
+        Insert: {
+          benefit_id: string
+          claim_code: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["sponsor_claim_status"]
+          user_id: string
+        }
+        Update: {
+          benefit_id?: string
+          claim_code?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          status?: Database["public"]["Enums"]["sponsor_claim_status"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_benefit_claims_benefit_id_fkey"
+            columns: ["benefit_id"]
+            isOneToOne: false
+            referencedRelation: "sponsor_benefits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_benefit_claims_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_benefits: {
+        Row: {
+          applicable_trips: string[]
+          claimed_count: number
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          quota: number | null
+          sponsor_id: string
+          terms: string | null
+          title: string
+          type: Database["public"]["Enums"]["sponsor_benefit_type"]
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          applicable_trips?: string[]
+          claimed_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          quota?: number | null
+          sponsor_id: string
+          terms?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["sponsor_benefit_type"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          applicable_trips?: string[]
+          claimed_count?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          quota?: number | null
+          sponsor_id?: string
+          terms?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["sponsor_benefit_type"]
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_benefits_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_blacklist: {
+        Row: {
+          created_at: string
+          id: string
+          segment: string
+          sponsor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          segment: string
+          sponsor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          segment?: string
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_blacklist_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_boosts: {
+        Row: {
+          boost_multiplier: number
+          created_at: string
+          expires_at: string | null
+          id: string
+          sponsor_id: string
+        }
+        Insert: {
+          boost_multiplier?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          sponsor_id: string
+        }
+        Update: {
+          boost_multiplier?: number
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_boosts_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_events: {
+        Row: {
+          created_at: string
+          event_id: string | null
+          event_type: Database["public"]["Enums"]["sponsor_event_type"]
+          id: string
+          metadata: Json | null
+          revenue_amount: number
+          sponsor_id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id?: string | null
+          event_type: Database["public"]["Enums"]["sponsor_event_type"]
+          id?: string
+          metadata?: Json | null
+          revenue_amount?: number
+          sponsor_id: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string | null
+          event_type?: Database["public"]["Enums"]["sponsor_event_type"]
+          id?: string
+          metadata?: Json | null
+          revenue_amount?: number
+          sponsor_id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_events_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_media: {
+        Row: {
+          created_at: string
+          id: string
+          sort_order: number
+          sponsor_id: string
+          title: string | null
+          type: Database["public"]["Enums"]["sponsor_media_type"]
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          sort_order?: number
+          sponsor_id: string
+          title?: string | null
+          type?: Database["public"]["Enums"]["sponsor_media_type"]
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          sort_order?: number
+          sponsor_id?: string
+          title?: string | null
+          type?: Database["public"]["Enums"]["sponsor_media_type"]
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_media_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_packages: {
+        Row: {
+          base_price: number
+          cost_per_click: number
+          cost_per_conversion: number
+          cost_per_lead: number
+          created_at: string
+          end_date: string | null
+          id: string
+          is_active: boolean
+          package_type: Database["public"]["Enums"]["sponsor_package_type"]
+          sponsor_id: string
+          start_date: string | null
+          updated_at: string
+        }
+        Insert: {
+          base_price?: number
+          cost_per_click?: number
+          cost_per_conversion?: number
+          cost_per_lead?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          package_type?: Database["public"]["Enums"]["sponsor_package_type"]
+          sponsor_id: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Update: {
+          base_price?: number
+          cost_per_click?: number
+          cost_per_conversion?: number
+          cost_per_lead?: number
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          package_type?: Database["public"]["Enums"]["sponsor_package_type"]
+          sponsor_id?: string
+          start_date?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_packages_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_performance_daily: {
+        Row: {
+          clicks: number
+          conversions: number
+          date: string
+          impressions: number
+          leads: number
+          revenue: number
+          sponsor_id: string
+        }
+        Insert: {
+          clicks?: number
+          conversions?: number
+          date: string
+          impressions?: number
+          leads?: number
+          revenue?: number
+          sponsor_id: string
+        }
+        Update: {
+          clicks?: number
+          conversions?: number
+          date?: string
+          impressions?: number
+          leads?: number
+          revenue?: number
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_performance_daily_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_trip_relations: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          priority: number
+          sponsor_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          priority?: number
+          sponsor_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          priority?: number
+          sponsor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_trip_relations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sponsor_trip_relations_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsor_user_scores: {
+        Row: {
+          computed_at: string
+          reason: Json
+          score: number
+          sponsor_id: string
+          user_id: string
+        }
+        Insert: {
+          computed_at?: string
+          reason?: Json
+          score?: number
+          sponsor_id: string
+          user_id: string
+        }
+        Update: {
+          computed_at?: string
+          reason?: Json
+          score?: number
+          sponsor_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_user_scores_sponsor_id_fkey"
+            columns: ["sponsor_id"]
+            isOneToOne: false
+            referencedRelation: "sponsors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          category: Database["public"]["Enums"]["sponsor_category"]
+          created_at: string
+          description: string | null
+          hero_image_url: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          slug: string
+          status: Database["public"]["Enums"]["sponsor_status"]
+          tagline: string | null
+          updated_at: string
+          website_url: string | null
+        }
+        Insert: {
+          category?: Database["public"]["Enums"]["sponsor_category"]
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          slug: string
+          status?: Database["public"]["Enums"]["sponsor_status"]
+          tagline?: string | null
+          updated_at?: string
+          website_url?: string | null
+        }
+        Update: {
+          category?: Database["public"]["Enums"]["sponsor_category"]
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          status?: Database["public"]["Enums"]["sponsor_status"]
+          tagline?: string | null
+          updated_at?: string
+          website_url?: string | null
         }
         Relationships: []
       }
@@ -849,6 +1949,7 @@ export type Database = {
           event_id: string | null
           id: string
           published_at: string | null
+          scheduled_at: string | null
           slug: string
           status: string
           title: string
@@ -861,6 +1962,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title: string
@@ -873,6 +1975,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           published_at?: string | null
+          scheduled_at?: string | null
           slug?: string
           status?: string
           title?: string
@@ -885,6 +1988,32 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_achievements: {
+        Row: {
+          achievement_code: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          achievement_code: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          achievement_code?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_achievements_achievement_code_fkey"
+            columns: ["achievement_code"]
+            isOneToOne: false
+            referencedRelation: "achievements"
+            referencedColumns: ["code"]
           },
         ]
       }
@@ -909,19 +2038,71 @@ export type Database = {
         }
         Relationships: []
       }
+      vendors: {
+        Row: {
+          contact_email: string | null
+          contact_phone: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          contact_email?: string | null
+          contact_phone?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      claim_sponsor_benefit: {
+        Args: { _benefit_id: string; _event_id?: string }
+        Returns: {
+          claim_code: string
+          claim_id: string
+        }[]
+      }
+      create_registration_with_rentals: {
+        Args: { _event_id: string; _payload: Json; _rentals?: Json }
+        Returns: string
+      }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      difficulty_to_int: { Args: { _d: string }; Returns: number }
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      generate_unique_username: { Args: { _seed: string }; Returns: string }
       get_approved_testimonials_with_profiles: {
         Args: never
         Returns: {
@@ -944,6 +2125,16 @@ export type Database = {
           interest_count: number
         }[]
       }
+      get_product_availability: {
+        Args: { _end_date?: string; _product_id: string; _start_date?: string }
+        Returns: {
+          available_to_buy: number
+          available_to_rent: number
+          currently_rented: number
+          sold: number
+          total_inventory: number
+        }[]
+      }
       get_public_profile: {
         Args: { _user_id: string }
         Returns: {
@@ -951,6 +2142,43 @@ export type Database = {
           bio: string
           name: string
           user_id: string
+        }[]
+      }
+      get_rider_public_profile: {
+        Args: { _username: string }
+        Returns: {
+          avatar_url: string
+          banner_url: string
+          bio: string
+          follower_count: number
+          following_count: number
+          location: string
+          member_since: string
+          name: string
+          riding_style: string
+          total_km: number
+          total_trips: number
+          trust_score: number
+          user_id: string
+          username: string
+        }[]
+      }
+      get_sponsor_performance: {
+        Args: { _end?: string; _sponsor_id: string; _start?: string }
+        Returns: {
+          clicks: number
+          conversion_rate: number
+          conversions: number
+          date: string
+          estimated_payout: number
+          impressions: number
+          leads: number
+          revenue: number
+          total_clicks: number
+          total_conversions: number
+          total_impressions: number
+          total_leads: number
+          total_revenue: number
         }[]
       }
       get_tracking_by_token: {
@@ -1013,10 +2241,65 @@ export type Database = {
           read_ct: number
         }[]
       }
+      recalc_rider_stats: { Args: { _user_id: string }; Returns: undefined }
+      recommend_rental_gear: {
+        Args: { _event_id: string; _motor_brand?: string; _motor_type?: string }
+        Returns: {
+          available_qty: number
+          daily_rent_price: number
+          description: string
+          gear_type: string
+          image_url: string
+          name: string
+          product_id: string
+          reason: Json
+          rent_deposit: number
+          score: number
+          subtotal: number
+          trip_days: number
+          vendor_id: string
+          vendor_logo_url: string
+          vendor_name: string
+        }[]
+      }
+      slugify: { Args: { _input: string }; Returns: string }
+      track_sponsor_event: {
+        Args: {
+          _event_id?: string
+          _event_type: Database["public"]["Enums"]["sponsor_event_type"]
+          _metadata?: Json
+          _revenue?: number
+          _sponsor_id: string
+        }
+        Returns: string
+      }
       user_has_active_tracking: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
+      gear_rental_status:
+        | "pending"
+        | "confirmed"
+        | "picked_up"
+        | "returned"
+        | "cancelled"
+      sponsor_benefit_type:
+        | "discount"
+        | "free_item"
+        | "experience"
+        | "test_ride"
+      sponsor_category:
+        | "dealer"
+        | "gear"
+        | "accessories"
+        | "apparel"
+        | "service"
+        | "other"
+      sponsor_claim_status: "pending" | "claimed" | "used"
+      sponsor_event_type: "impression" | "click" | "lead" | "conversion"
+      sponsor_media_type: "banner" | "campaign" | "video"
+      sponsor_package_type: "bronze" | "silver" | "gold" | "custom"
+      sponsor_status: "active" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1145,6 +2428,32 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      gear_rental_status: [
+        "pending",
+        "confirmed",
+        "picked_up",
+        "returned",
+        "cancelled",
+      ],
+      sponsor_benefit_type: [
+        "discount",
+        "free_item",
+        "experience",
+        "test_ride",
+      ],
+      sponsor_category: [
+        "dealer",
+        "gear",
+        "accessories",
+        "apparel",
+        "service",
+        "other",
+      ],
+      sponsor_claim_status: ["pending", "claimed", "used"],
+      sponsor_event_type: ["impression", "click", "lead", "conversion"],
+      sponsor_media_type: ["banner", "campaign", "video"],
+      sponsor_package_type: ["bronze", "silver", "gold", "custom"],
+      sponsor_status: ["active", "inactive"],
     },
   },
 } as const

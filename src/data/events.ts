@@ -1,4 +1,4 @@
-export type EventCategory = 'touring' | 'adventure' | 'race' | 'gathering' | 'workshop';
+export type EventCategory = 'touring' | 'adventure' | 'race' | 'gathering' | 'workshop' | 'motocamp';
 
 export interface MotoEvent {
   id: string;
@@ -152,6 +152,7 @@ export const EVENT_CATEGORIES: Record<EventCategory, { label: string; color: str
   race: { label: 'Race', color: 'bg-destructive', icon: '🏁' },
   gathering: { label: 'Gathering', color: 'bg-secondary', icon: '🤝' },
   workshop: { label: 'Workshop', color: 'bg-muted', icon: '🔧' },
+  motocamp: { label: 'Motocamp', color: 'bg-accent', icon: '🏕️' },
 };
 
 export const SAMPLE_EVENTS: MotoEvent[] = [

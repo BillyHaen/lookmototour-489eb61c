@@ -7,6 +7,9 @@ import Footer from "@/components/Footer";
 import HeroSection from "@/components/HeroSection";
 import EventCard from "@/components/EventCard";
 import TestimonialSection from "@/components/TestimonialSection";
+import SupportedBy from "@/components/SupportedBy";
+import PersonalizedSponsorStrip from "@/components/PersonalizedSponsorStrip";
+import { useAuth } from "@/hooks/useAuth";
 import { useEvents } from "@/hooks/useEvents";
 import { useBlogPosts } from "@/hooks/useBlog";
 import { useSeoMeta } from "@/hooks/useSeoMeta";
@@ -22,6 +25,7 @@ const FEATURES = [
 ];
 
 export default function Index() {
+  const { user } = useAuth();
   const { data: events, isLoading } = useEvents();
   const { data: blogPosts, isLoading: blogLoading } = useBlogPosts();
   const { data: interestCounts } = useQuery({
@@ -198,6 +202,8 @@ export default function Index() {
       {/* Testimonials */}
       <TestimonialSection />
 
+      {/* Supported By / Personalized */}
+      {user ? <PersonalizedSponsorStrip /> : <SupportedBy />}
       {/* CTA */}
       <section className="py-20 bg-gradient-dark text-center">
         <div className="container max-w-2xl">

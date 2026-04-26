@@ -12,9 +12,19 @@ interface ShareButtonProps {
   slug?: string;
 }
 
+function getPagePath(contentType: string, slug: string): string {
+  switch (contentType) {
+    case 'blog_post': return `/blog/${slug}`;
+    case 'trip_journal': return `/jurnal/${slug}`;
+    case 'event': return `/events/${slug}`;
+    default: return '/';
+  }
+}
+
+const SHARE_BASE = 'https://s.lookmototour.com';
+
 function getShareUrl(contentType: string, slug: string): string {
-  const base = import.meta.env.VITE_SUPABASE_URL;
-  return `${base}/functions/v1/share-meta?type=${contentType}&slug=${encodeURIComponent(slug)}&site=${encodeURIComponent(window.location.origin)}`;
+  return `${SHARE_BASE}/s/${contentType}/${encodeURIComponent(slug)}`;
 }
 
 export default function ShareButton({ contentType, contentId, title, description, slug }: ShareButtonProps) {

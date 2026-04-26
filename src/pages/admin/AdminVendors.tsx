@@ -115,6 +115,9 @@ export default function AdminVendors() {
                   </div>
                   <p className="text-xs text-muted-foreground truncate">{v.contact_phone || '—'}</p>
                   <p className="text-xs text-muted-foreground truncate">{v.contact_email || '—'}</p>
+                  <p className="text-xs text-muted-foreground truncate mt-1">
+                    Owner: {v.owner_user_id ? <span className="text-primary">Terhubung ke user</span> : <span className="italic">Belum terhubung</span>}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 mt-3">

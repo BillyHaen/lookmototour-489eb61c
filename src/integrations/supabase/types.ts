@@ -2063,6 +2063,7 @@ export type Database = {
           is_active: boolean
           logo_url: string | null
           name: string
+          owner_user_id: string | null
           slug: string
           updated_at: string
         }
@@ -2075,6 +2076,7 @@ export type Database = {
           is_active?: boolean
           logo_url?: string | null
           name: string
+          owner_user_id?: string | null
           slug: string
           updated_at?: string
         }
@@ -2087,6 +2089,7 @@ export type Database = {
           is_active?: boolean
           logo_url?: string | null
           name?: string
+          owner_user_id?: string | null
           slug?: string
           updated_at?: string
         }
@@ -2097,6 +2100,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_link_vendor_to_user: {
+        Args: { _user_id: string; _vendor_id: string }
+        Returns: undefined
+      }
       admin_revoke_achievement: {
         Args: { _code: string; _user_id: string }
         Returns: undefined
@@ -2107,6 +2114,13 @@ export type Database = {
           _km: number
           _trips: number
           _trust_score: number
+          _user_id: string
+        }
+        Returns: undefined
+      }
+      admin_set_user_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: undefined
@@ -2154,6 +2168,7 @@ export type Database = {
           interest_count: number
         }[]
       }
+      get_my_vendor_id: { Args: never; Returns: string }
       get_product_availability: {
         Args: { _end_date?: string; _product_id: string; _start_date?: string }
         Returns: {
@@ -2171,6 +2186,14 @@ export type Database = {
           bio: string
           name: string
           user_id: string
+        }[]
+      }
+      get_renter_contact_for_vendor: {
+        Args: { _rental_id: string }
+        Returns: {
+          name: string
+          phone: string
+          product_name: string
         }[]
       }
       get_rider_public_profile: {
@@ -2253,6 +2276,7 @@ export type Database = {
         Args: { _event_id: string; _user_id: string }
         Returns: boolean
       }
+      is_vendor: { Args: never; Returns: boolean }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -2305,7 +2329,7 @@ export type Database = {
       user_has_active_tracking: { Args: never; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "user"
+      app_role: "admin" | "user" | "vendor"
       gear_rental_status:
         | "pending"
         | "confirmed"
@@ -2456,7 +2480,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user"],
+      app_role: ["admin", "user", "vendor"],
       gear_rental_status: [
         "pending",
         "confirmed",

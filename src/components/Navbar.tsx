@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, User, LogOut, Shield, ShoppingBag, Navigation } from 'lucide-react';
+import { Menu, X, User, LogOut, Shield, ShoppingBag, Navigation, Building2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsAdmin } from '@/hooks/useAdmin';
+import { useUserRole } from '@/hooks/useUserRole';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import UserAvatar from '@/components/UserAvatar';
@@ -26,6 +27,8 @@ export default function Navbar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { data: isAdmin } = useIsAdmin();
+  const { data: userRole } = useUserRole();
+  const isVendor = userRole === 'vendor';
   const { data: hasActiveTracking } = useActiveTrackingCount();
 
   const { data: profile } = useQuery({
@@ -76,6 +79,11 @@ export default function Navbar() {
               {isAdmin && (
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/admin" className="gap-2"><Shield className="h-4 w-4" /> Admin</Link>
+                </Button>
+              )}
+              {(isVendor || isAdmin) && (
+                <Button variant="default" size="sm" asChild className="gap-2">
+                  <Link to="/vendor"><Building2 className="h-4 w-4" /> Vendor</Link>
                 </Button>
               )}
               <Button variant="ghost" size="sm" asChild>
@@ -135,6 +143,11 @@ export default function Navbar() {
                 {isAdmin && (
                   <Link to="/admin" onClick={() => setOpen(false)} className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted">
                     Admin CMS
+                  </Link>
+                )}
+                {(isVendor || isAdmin) && (
+                  <Link to="/vendor" onClick={() => setOpen(false)} className="px-4 py-3 rounded-lg text-sm font-medium bg-primary/10 text-primary hover:bg-primary/20 flex items-center gap-2">
+                    <Building2 className="h-4 w-4" /> Vendor Dashboard
                   </Link>
                 )}
                 <Link to="/profile" onClick={() => setOpen(false)} className="px-4 py-3 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted">

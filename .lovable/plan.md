@@ -1,93 +1,70 @@
 
-## Perbaiki preview share rider yang masih gagal
+## Perbaiki dropdown role vendor yang tidak muncul di Admin Users
 
 ### Diagnosis
-Masalah utamanya bukan di data rider. Data profil untuk `billyhn` sudah ada lengkap (nama, avatar, trust score). Yang gagal adalah jalur prerender untuk crawler sosial:
+Masalah utamanya bukan di tabel role. Dari source saat ini, `src/pages/admin/AdminUsers.tsx` memang masih punya opsi:
 
-- URL publik masih mengembalikan **HTML SPA biasa**, bukan HTML dengan OG tags rider
-- `share-meta` sudah punya logic untuk rider, tetapi **request produksi belum benar-benar melewati jalur itu**
-- `s.lookmototour.com/s/rider/...` juga belum memberi hasil preview yang andal
-- Akibatnya WhatsApp tetap membaca meta default/logo website
+- `User`
+- `Vendor`
+- `Admin`
+
+untuk semua user non-admin-terproteksi.
+
+Jadi jika di UI yang tampil hanya `User` dan `Admin`, berarti ada ketidaksesuaian antara source saat ini dan bundle frontend yang sedang terbuka/published, atau ada regresi render di komponen role selector yang belum dipaksa sinkron.
+
+Tambahan temuan:
+- tabel `user_roles` saat ini memang hanya berisi `admin` dan `user`, tetapi itu **tidak seharusnya menghilangkan** opsi `Vendor` dari dropdown
+- user yang sudah terhubung ke record vendor ada di tabel `vendors.owner_user_id`, jadi jalur vendor di backend memang sudah ada
+- tidak ada service worker di project, jadi masalah lebih condong ke bundle/render path, bukan cache PWA
 
 ### Yang akan diperbaiki
+1. Pastikan dropdown role di halaman `/admin/users` selalu menampilkan:
+   - `Admin` saja untuk admin yang diproteksi
+   - `User`, `Vendor`, `Admin` untuk semua user lain
+2. Rapikan logika opsi role supaya tidak bergantung implisit pada data yang datang dari query role
+3. Pastikan kondisi “admin tidak punya fitur vendor” hanya berlaku untuk user yang memang role-nya admin, bukan menghilangkan opsi vendor untuk user lain
+4. Force refresh pada bagian frontend terkait agar perubahan benar-benar masuk ke bundle yang dipublish
+5. Verifikasi langsung di preview dan site publish bahwa opsi `Vendor` muncul lagi
 
-#### 1. Pastikan request crawler benar-benar diproses server-side
-Rapikan jalur prerender agar **dua URL ini sama-sama didukung**:
-- `https://lookmototour.com/riders/:username`
-- `https://s.lookmototour.com/s/rider/:username`
+### Implementasi
+#### 1) Rapikan role selector di `AdminUsers`
+- Ubah render dropdown menjadi helper yang eksplisit, misalnya:
+  - protected admin → `['admin']`
+  - user lain → `['user', 'vendor', 'admin']`
+- Pisahkan aturan:
+  - “admin tidak punya fitur vendor”
+  - “non-admin boleh dipromosikan ke vendor”
+- Jika perlu, gunakan identifier admin terproteksi yang sama seperti sekarang agar perilaku untuk akun utama tetap aman
 
-Worker akan:
-- deteksi crawler (`WhatsApp`, `facebookexternalhit`, `Facebot`, `TelegramBot`, `Twitterbot`, dll)
-- untuk path rider, ambil HTML dari `share-meta`
-- kembalikan response `text/html` dengan OG meta rider
-- untuk user biasa, tetap lanjut ke app seperti biasa
+#### 2) Cegah regresi dari state/render
+- Pastikan nilai `Select` tetap valid walau role yang tersimpan saat ini adalah `user`
+- Hindari kondisi yang bisa menyaring item `vendor` hanya karena role user sekarang belum `vendor`
+- Tambahkan fallback render yang konsisten walau query `roles` belum selesai
 
-#### 2. Tambah dukungan route share domain yang konsisten
-Saat ini tombol share memakai `s.lookmototour.com/s/rider/:username`, tapi alur ini belum cukup kuat. Akan dibuat konsisten:
+#### 3) Sinkronkan publish output
+- Touch/update file frontend yang relevan supaya menghasilkan bundle baru
+- Publish ulang frontend setelah perubahan, karena gejalanya menunjukkan source dan UI live tidak sinkron
 
-- Worker menangani `/s/rider/:username`
-- Untuk non-crawler, route share ini akan **redirect 302** ke `/riders/:username`
-- Untuk crawler, route share ini akan langsung mengembalikan HTML OG rider
+#### 4) Verifikasi end-to-end
+Akan diuji:
+- login admin
+- buka `/admin/users`
+- buka dropdown untuk user biasa → harus muncul `User`, `Vendor`, `Admin`
+- buka dropdown untuk admin terproteksi → hanya `Admin`
+- ubah 1 user ke `Vendor` → tidak error
+- pastikan link vendor selector tetap muncul hanya saat role user adalah `vendor`
 
-Dengan ini:
-- tombol share tetap bisa pakai short/share URL
-- user yang buka link tetap masuk ke halaman rider normal
-- crawler mendapat meta yang benar
+### Hasil akhir yang diharapkan
+- opsi `Vendor` muncul kembali di menu role untuk user biasa
+- akun admin utama tetap tidak bisa diubah ke role lain
+- aturan “admin tidak punya fitur vendor” tetap berjalan
+- tampilan preview dan published konsisten
 
-#### 3. Keras-kan `share-meta` untuk rider
-Perbaiki output `share-meta` agar lebih aman untuk WhatsApp/FB:
+### Detail teknis
+File utama yang akan disentuh:
+- `src/pages/admin/AdminUsers.tsx`
 
-- title: `Riders {nama} – {badge}`
-- description: `Riders {nama} – {badge} ada di LOOKMOTOTOUR...`
-- image: prioritaskan `avatar_url`, fallback `banner_url`, fallback logo
-- tambahkan `og:image:secure_url`
-- gunakan `twitter:card=summary_large_image`
-- pastikan URL absolut HTTPS
-- set cache singkat agar update avatar/nama cepat ikut berubah
+Kemungkinan penyesuaian kecil tambahan bila diperlukan:
+- helper role di area admin agar aturan opsi lebih eksplisit dan tidak ambigu saat build/publish
 
-#### 4. Sinkronkan tombol share rider
-Rapikan `RiderShareButton` supaya:
-- copy link dan native share memakai URL yang benar-benar didukung worker
-- teks share konsisten dengan preview
-- tidak ada mismatch antara URL yang dishare vs URL yang diprerender
-
-#### 5. Tambahkan fallback route yang aman di app
-Agar share URL tidak terasa rusak untuk manusia:
-- buat route React khusus `/s/rider/:username`
-- route ini cukup redirect ke `/riders/:username`
-
-Ini jadi lapisan cadangan kalau ada request yang lolos tanpa worker.
-
-### File yang akan diubah
-
-| File | Perubahan |
-|---|---|
-| `worker/index.ts` | Perluas routing crawler untuk `/riders/:username` dan `/s/rider/:username`, plus redirect untuk non-crawler |
-| `wrangler.jsonc` | Rapikan config worker/assets bila perlu agar binding dan deployment sesuai |
-| `supabase/functions/share-meta/index.ts` | Keras-kan output OG/Twitter untuk rider |
-| `src/components/rider/RiderShareButton.tsx` | Sinkronkan URL share yang dipakai tombol |
-| `src/App.tsx` | Tambah route fallback `/s/rider/:username` |
-| `src/pages/...` (route redirect sederhana) | Redirect human traffic dari short share URL ke profil rider |
-
-### Validasi yang akan dilakukan
-1. Buka:
-   - `/riders/billyhn`
-   - `/s/rider/billyhn`
-   untuk user biasa → tetap masuk ke halaman rider normal
-2. Simulasi crawler ke kedua URL → response HTML harus berisi:
-   - `og:title` rider
-   - `og:description` rider
-   - `og:image` avatar rider
-3. Pastikan image yang keluar adalah avatar Billy, bukan logo default
-4. Tempel URL ke WhatsApp lagi → preview harus menampilkan:
-   - avatar rider
-   - nama rider
-   - badge
-   - excerpt
-5. Uji juga share via tombol Bagikan dan copy URL langsung
-
-### Hasil akhir
-Setelah perbaikan ini, preview rider akan konsisten baik saat:
-- link disalin langsung dari address bar `/riders/:username`
-- link dibagikan dari tombol share
-- link short share `/s/rider/:username` dipakai di WhatsApp / sosial media
+Tidak perlu perubahan database untuk bug spesifik ini, karena gejalanya ada di layer frontend/render dropdown, bukan di schema atau RLS.

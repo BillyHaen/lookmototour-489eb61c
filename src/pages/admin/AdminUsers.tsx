@@ -190,14 +190,26 @@ export default function AdminUsers() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0 flex-wrap" onClick={e => e.stopPropagation()}>
                   <Badge variant={role === 'admin' ? 'default' : role === 'vendor' ? 'outline' : 'secondary'}>{role}</Badge>
-                  <Select value={role} onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as any })} disabled={isProtectedAdmin}>
-                    <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {!isProtectedAdmin && <SelectItem value="user">User</SelectItem>}
-                      {!isProtectedAdmin && <SelectItem value="vendor">Vendor</SelectItem>}
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  {(() => {
+                    const availableRoles: Array<'user' | 'vendor' | 'admin'> = isProtectedAdmin
+                      ? ['admin']
+                      : ['user', 'vendor', 'admin'];
+                    const roleLabels: Record<string, string> = { user: 'User', vendor: 'Vendor', admin: 'Admin' };
+                    return (
+                      <Select
+                        value={role}
+                        onValueChange={(v) => setRoleMutation.mutate({ userId: profile.user_id, role: v as any })}
+                        disabled={isProtectedAdmin}
+                      >
+                        <SelectTrigger className="w-[110px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {availableRoles.map((r) => (
+                            <SelectItem key={r} value={r}>{roleLabels[r]}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  })()}
                   {role === 'vendor' && (
                     <Select
                       value={(vendors?.find((v: any) => v.owner_user_id === profile.user_id)?.id) || 'none'}

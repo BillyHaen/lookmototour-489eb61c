@@ -1,70 +1,60 @@
+## Popup Slider — Implementation Plan
 
-## Perbaiki dropdown role vendor yang tidak muncul di Admin Users
+### 1. Database Migration
+Create 3 tabel + storage bucket:
 
-### Diagnosis
-Masalah utamanya bukan di tabel role. Dari source saat ini, `src/pages/admin/AdminUsers.tsx` memang masih punya opsi:
+**`popup_campaigns`**: id, name, is_active, force_show_logged_in, start_at, end_at, target_device (`all|mobile|desktop`), frequency (`once|daily|every_session|always`), priority, ab_enabled, ab_variant (`A|B|null`), ab_group_key (untuk pasangkan A & B), created_at, updated_at.
 
-- `User`
-- `Vendor`
-- `Admin`
+**`popup_slides`**: id, campaign_id (FK), order_index, image_url, content_html, cta_label, cta_url.
 
-untuk semua user non-admin-terproteksi.
+**`popup_events`** (analytics): id, campaign_id, slide_id, variant, event_type (`view|slide_view|click_cta|close|dismiss_outside`), user_id (nullable), session_id, device, created_at. Index on `(campaign_id, created_at)`.
 
-Jadi jika di UI yang tampil hanya `User` dan `Admin`, berarti ada ketidaksesuaian antara source saat ini dan bundle frontend yang sedang terbuka/published, atau ada regresi render di komponen role selector yang belum dipaksa sinkron.
+**RLS**:
+- campaigns/slides: SELECT publik utk row aktif & dalam window jadwal; ALL utk admin.
+- events: INSERT publik (anon+auth), SELECT admin only.
 
-Tambahan temuan:
-- tabel `user_roles` saat ini memang hanya berisi `admin` dan `user`, tetapi itu **tidak seharusnya menghilangkan** opsi `Vendor` dari dropdown
-- user yang sudah terhubung ke record vendor ada di tabel `vendors.owner_user_id`, jadi jalur vendor di backend memang sudah ada
-- tidak ada service worker di project, jadi masalah lebih condong ke bundle/render path, bukan cache PWA
+**Storage**: bucket `popup-images` (public read, admin write).
 
-### Yang akan diperbaiki
-1. Pastikan dropdown role di halaman `/admin/users` selalu menampilkan:
-   - `Admin` saja untuk admin yang diproteksi
-   - `User`, `Vendor`, `Admin` untuk semua user lain
-2. Rapikan logika opsi role supaya tidak bergantung implisit pada data yang datang dari query role
-3. Pastikan kondisi “admin tidak punya fitur vendor” hanya berlaku untuk user yang memang role-nya admin, bukan menghilangkan opsi vendor untuk user lain
-4. Force refresh pada bagian frontend terkait agar perubahan benar-benar masuk ke bundle yang dipublish
-5. Verifikasi langsung di preview dan site publish bahwa opsi `Vendor` muncul lagi
+### 2. Admin UI — `src/pages/admin/AdminPopups.tsx`
+- Daftar kampanye: nama, status, jadwal, variant, views, clicks, CTR.
+- Form Create/Edit:
+  - Field umum (nama, active, force_show_logged_in, target_device, frequency, priority).
+  - Date-range picker untuk start_at & end_at.
+  - Toggle A/B + dropdown variant + ab_group_key.
+  - Slide manager: drag-reorder, upload image (validasi 2MB jpg/png/webp), rich text editor (komponen RTE existing).
+- Tab Analytics per kampanye: Total views, unique viewers, CTA clicks, CTR, dismiss rate; tabel A vs B; filter range tanggal.
+- Tambah link "Popup Slider" di `AdminLayout.tsx` sidebar.
 
-### Implementasi
-#### 1) Rapikan role selector di `AdminUsers`
-- Ubah render dropdown menjadi helper yang eksplisit, misalnya:
-  - protected admin → `['admin']`
-  - user lain → `['user', 'vendor', 'admin']`
-- Pisahkan aturan:
-  - “admin tidak punya fitur vendor”
-  - “non-admin boleh dipromosikan ke vendor”
-- Jika perlu, gunakan identifier admin terproteksi yang sama seperti sekarang agar perilaku untuk akun utama tetap aman
+### 3. Frontend Display
 
-#### 2) Cegah regresi dari state/render
-- Pastikan nilai `Select` tetap valid walau role yang tersimpan saat ini adalah `user`
-- Hindari kondisi yang bisa menyaring item `vendor` hanya karena role user sekarang belum `vendor`
-- Tambahkan fallback render yang konsisten walau query `roles` belum selesai
+**Hook `src/hooks/usePopupCampaign.ts`**:
+- Fetch kampanye aktif (is_active true, dalam window jadwal) urut priority.
+- Filter device match via `window.matchMedia`.
+- Skip jika user logged-in kecuali `force_show_logged_in=true`.
+- Cek frekuensi via localStorage `popup_seen_<campaign_id>`.
+- Bila A/B: random pilih variant per `ab_group_key`, simpan di localStorage (konsisten utk visitor).
+- Generate `session_id` (uuid di sessionStorage) utk anon tracking.
 
-#### 3) Sinkronkan publish output
-- Touch/update file frontend yang relevan supaya menghasilkan bundle baru
-- Publish ulang frontend setelah perubahan, karena gejalanya menunjukkan source dan UI live tidak sinkron
+**Komponen `src/components/PopupSlider.tsx`**:
+- shadcn Dialog mobile-first (`max-w-md`, `rounded-2xl`).
+- Embla Carousel: swipe touch + thumb nav kiri/kanan + dots.
+- Close X kanan atas; klik overlay/Esc → close.
+- Image `object-contain max-h-[70vh]`, content_html sanitized via DOMPurify.
+- CTA button bila ada cta_url.
+- Mount `<PopupSlider />` di `App.tsx` agar muncul di route publik.
 
-#### 4) Verifikasi end-to-end
-Akan diuji:
-- login admin
-- buka `/admin/users`
-- buka dropdown untuk user biasa → harus muncul `User`, `Vendor`, `Admin`
-- buka dropdown untuk admin terproteksi → hanya `Admin`
-- ubah 1 user ke `Vendor` → tidak error
-- pastikan link vendor selector tetap muncul hanya saat role user adalah `vendor`
+**Tracking** (insert ke `popup_events`, fire-and-forget):
+- `view` saat mount, `slide_view` saat ganti slide, `click_cta` saat CTA, `close` saat X, `dismiss_outside` saat overlay/Esc.
 
-### Hasil akhir yang diharapkan
-- opsi `Vendor` muncul kembali di menu role untuk user biasa
-- akun admin utama tetap tidak bisa diubah ke role lain
-- aturan “admin tidak punya fitur vendor” tetap berjalan
-- tampilan preview dan published konsisten
+### 4. Files
+- `supabase/migrations/<new>.sql`
+- `src/pages/admin/AdminPopups.tsx`
+- `src/components/admin/PopupSlideEditor.tsx` (sub-komponen)
+- `src/hooks/usePopupCampaign.ts`
+- `src/components/PopupSlider.tsx`
+- Edit: `src/pages/admin/AdminLayout.tsx`, `src/App.tsx`
 
-### Detail teknis
-File utama yang akan disentuh:
-- `src/pages/admin/AdminUsers.tsx`
-
-Kemungkinan penyesuaian kecil tambahan bila diperlukan:
-- helper role di area admin agar aturan opsi lebih eksplisit dan tidak ambigu saat build/publish
-
-Tidak perlu perubahan database untuk bug spesifik ini, karena gejalanya ada di layer frontend/render dropdown, bukan di schema atau RLS.
+### Catatan Teknis
+- DOMPurify sudah/akan diinstall utk sanitasi HTML.
+- Embla sudah tersedia via shadcn carousel.
+- Overflow-x-hidden pada container popup utk mobile-friendly.

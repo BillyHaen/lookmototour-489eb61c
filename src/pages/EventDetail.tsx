@@ -452,7 +452,7 @@ export default function EventDetail() {
                         )}
                       </div>
                       {(event as any).price_sharing === 0 && (event as any).price_couple === 0 && (event as any).price_single === 0 && event.price === 0 && (
-                        <p className="font-heading font-bold text-3xl text-primary text-center">GRATIS</p>
+                        <p className="font-heading font-bold text-3xl text-primary text-center">{formatPrice(0)}</p>
                       )}
                     </div>
 

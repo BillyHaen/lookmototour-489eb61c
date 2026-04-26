@@ -27,6 +27,7 @@ import ItineraryEditor, { type ItineraryDay } from '@/components/admin/Itinerary
 import FaqEditor, { type FaqItem } from '@/components/admin/FaqEditor';
 import ChecklistEditor from '@/components/admin/ChecklistEditor';
 import GalleryEditor, { type GalleryImage } from '@/components/admin/GalleryEditor';
+import CreditRewardConfig from '@/components/admin/CreditRewardConfig';
 
 interface EventForm {
   title: string;
@@ -73,6 +74,9 @@ interface EventForm {
   target_audience: string;
   trust_section: string;
   internal_link_blog_tag: string;
+  credit_reward_mode: 'none' | 'fixed' | 'percent';
+  credit_reward_value: number;
+  credit_expiry_days: number | null;
 }
 
 function generateSlug(title: string): string {
@@ -96,6 +100,7 @@ const emptyForm: EventForm = {
   meta_title: '', meta_description: '', hero_subheadline: '', cta_primary_label: '🔥 Secure Your Slot Now – Limited Riders Only',
   opening_hook: '', why_join: '', experience_section: '', about_destination: '',
   target_audience: '', trust_section: '', internal_link_blog_tag: '',
+  credit_reward_mode: 'none', credit_reward_value: 0, credit_expiry_days: null,
 };
 
 interface Itinerary { id?: string; day_number: number; date: string; title: string; description: string; }
@@ -171,6 +176,9 @@ export default function AdminEvents() {
         itinerary: seoItinerary,
         faq: seoFaq,
         gallery: seoGallery,
+        credit_reward_mode: form.credit_reward_mode,
+        credit_reward_value: form.credit_reward_value,
+        credit_expiry_days: form.credit_expiry_days,
       } as any;
 
       let eventId = editId;
@@ -279,6 +287,9 @@ export default function AdminEvents() {
       target_audience: event.target_audience || '',
       trust_section: event.trust_section || '',
       internal_link_blog_tag: event.internal_link_blog_tag || '',
+      credit_reward_mode: (event as any).credit_reward_mode || 'none',
+      credit_reward_value: (event as any).credit_reward_value || 0,
+      credit_expiry_days: (event as any).credit_expiry_days ?? null,
     });
     setRouteData((event as any).route_data || null);
     const existingSeo: ItineraryDay[] = Array.isArray(event.itinerary) ? event.itinerary : [];
@@ -493,6 +504,14 @@ export default function AdminEvents() {
               </div>
             </div>
             <Input type="number" placeholder="Maks Peserta" value={form.max_participants} onChange={(e) => setForm({ ...form, max_participants: Number(e.target.value) })} />
+
+            <CreditRewardConfig
+              mode={form.credit_reward_mode}
+              value={form.credit_reward_value}
+              expiryDays={form.credit_expiry_days}
+              onChange={(c) => setForm({ ...form, credit_reward_mode: c.mode, credit_reward_value: c.value, credit_expiry_days: c.expiryDays })}
+            />
+
             <EventImageUpload value={form.image_url} onChange={(url) => setForm({ ...form, image_url: url })} />
 
             {/* Asuransi */}

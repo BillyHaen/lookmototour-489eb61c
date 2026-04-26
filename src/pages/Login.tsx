@@ -9,7 +9,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
+import { resolveUserRole } from '@/hooks/useUserRole';
 import { Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import Navbar from '@/components/Navbar';
@@ -32,6 +34,18 @@ export default function Login() {
     defaultValues: { email: '', password: '' },
   });
 
+  const redirectByRole = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return navigate('/');
+      const role = await resolveUserRole(user.id);
+      if (role === 'vendor') return navigate('/vendor');
+      navigate('/');
+    } catch {
+      navigate('/');
+    }
+  };
+
   const onSubmit = async (data: z.infer<typeof schema>) => {
     setLoading(true);
     const { error } = await signIn(data.email, data.password);
@@ -40,7 +54,7 @@ export default function Login() {
       toast({ title: 'Login gagal', description: error.message, variant: 'destructive' });
     } else {
       toast({ title: 'Login berhasil! 🎉' });
-      navigate('/');
+      await redirectByRole();
     }
   };
 
@@ -57,7 +71,7 @@ export default function Login() {
       }
       if (result.redirected) return;
       toast({ title: 'Login berhasil! 🎉' });
-      navigate('/');
+      await redirectByRole();
     } catch (err: any) {
       toast({ title: 'Login Google gagal', description: err.message, variant: 'destructive' });
       setGoogleLoading(false);

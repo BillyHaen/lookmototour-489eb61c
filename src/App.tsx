@@ -44,6 +44,7 @@ import AdminEmails from "./pages/admin/AdminEmails";
 import AdminAuditLogs from "./pages/admin/AdminAuditLogs";
 import VendorProducts from "./pages/vendor/VendorProducts";
 import VendorRentals from "./pages/vendor/VendorRentals";
+import ShareRedirect from "./pages/ShareRedirect";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -97,6 +98,12 @@ const App = () => (
             <Route path="/vendor" element={<VendorProducts />} />
             <Route path="/vendor/products" element={<VendorProducts />} />
             <Route path="/vendor/rentals" element={<VendorRentals />} />
+            <Route path="/s/rider/:slug" element={<ShareRedirect to={(s) => `/riders/${s}`} />} />
+            <Route path="/s/blog_post/:slug" element={<ShareRedirect to={(s) => `/blog/${s}`} />} />
+            <Route path="/s/blog/:slug" element={<ShareRedirect to={(s) => `/blog/${s}`} />} />
+            <Route path="/s/trip_journal/:slug" element={<ShareRedirect to={(s) => `/jurnal/${s}`} />} />
+            <Route path="/s/jurnal/:slug" element={<ShareRedirect to={(s) => `/jurnal/${s}`} />} />
+            <Route path="/s/event/:slug" element={<ShareRedirect to={(s) => `/events/${s}`} />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

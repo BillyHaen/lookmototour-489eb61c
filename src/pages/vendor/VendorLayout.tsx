@@ -54,13 +54,14 @@ export default function VendorLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
+  const hasVendorAccess = role === 'vendor' || (!!vendor && role !== 'admin');
 
   useEffect(() => {
     if (!authLoading && !user) navigate('/login');
-    if (!authLoading && !roleLoading && user && role && role !== 'vendor' && role !== 'admin') {
+    if (!authLoading && !roleLoading && !vendorLoading && user && role && !hasVendorAccess) {
       navigate('/');
     }
-  }, [authLoading, user, role, roleLoading, navigate]);
+  }, [authLoading, user, role, roleLoading, vendorLoading, hasVendorAccess, navigate]);
 
   if (authLoading || roleLoading || vendorLoading) {
     return (
@@ -70,9 +71,9 @@ export default function VendorLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  if (!user || (role !== 'vendor' && role !== 'admin')) return null;
+  if (!user || !hasVendorAccess) return null;
 
-  if (role === 'vendor' && !vendor) {
+  if (hasVendorAccess && !vendor) {
     return (
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="max-w-md text-center space-y-3">

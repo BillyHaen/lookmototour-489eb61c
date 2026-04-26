@@ -11,6 +11,7 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { lovable } from '@/integrations/lovable/index';
+import { resolveUserRole } from '@/hooks/useUserRole';
 import { Loader2 } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import Navbar from '@/components/Navbar';
@@ -37,10 +38,8 @@ export default function Login() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return navigate('/');
-      const { data: isAdmin } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'admin' as any });
-      if (isAdmin) return navigate('/');
-      const { data: isVendor } = await supabase.rpc('has_role', { _user_id: user.id, _role: 'vendor' as any });
-      if (isVendor) return navigate('/vendor');
+      const role = await resolveUserRole(user.id);
+      if (role === 'vendor') return navigate('/vendor');
       navigate('/');
     } catch {
       navigate('/');
